@@ -1,5 +1,5 @@
 const { pool } = require('../config/database');
-const { generateOrderNumber, paginate, paginatedResponse, calculateOrderTotal } = require('../utils/helpers');
+const { generateOrderNumber, generateTrackingToken, paginate, paginatedResponse } = require('../utils/helpers');
 
 // Récupérer les commandes (selon le rôle)
 const getCommandes = async (req, res) => {
@@ -41,12 +41,12 @@ const getCommandes = async (req, res) => {
     }
 
     if (date_debut) {
-      whereClause += ' AND c.date_commande >= ?';
+      whereClause += ' AND DATE(c.date_commande) >= ?';
       params.push(date_debut);
     }
 
     if (date_fin) {
-      whereClause += ' AND c.date_commande <= ?';
+      whereClause += ' AND DATE(c.date_commande) <= ?';
       params.push(date_fin);
     }
 
@@ -71,10 +71,20 @@ const getCommandes = async (req, res) => {
     );
 
     // Parser les items JSON
-    const commandesFormatted = commandes.map(cmd => ({
-      ...cmd,
-      items: typeof cmd.items_json === 'string' ? JSON.parse(cmd.items_json) : cmd.items_json
-    }));
+    const commandesFormatted = commandes.map(cmd => {
+      let items = [];
+      try {
+        items = typeof cmd.items_json === 'string' ? JSON.parse(cmd.items_json) : (cmd.items_json || []);
+      } catch (e) {
+        console.error('Erreur parsing items_json:', e);
+        items = [];
+      }
+      return {
+        ...cmd,
+        items,
+        items_json: undefined // Ne pas renvoyer le JSON brut
+      };
+    });
 
     res.json({
       success: true,
@@ -112,8 +122,9 @@ const getCommandeById = async (req, res) => {
       });
     }
 
-    // Vérifier les droits d'accès
     const commande = commandes[0];
+
+    // Vérifier les droits d'accès
     if (req.user.role === 'client' && commande.utilisateur_id !== req.user.id) {
       return res.status(403).json({
         success: false,
@@ -134,13 +145,23 @@ const getCommandeById = async (req, res) => {
       }
     }
 
+    // Parser les items
+    let items = [];
+    try {
+      items = typeof commande.items_json === 'string' 
+        ? JSON.parse(commande.items_json) 
+        : (commande.items_json || []);
+    } catch (e) {
+      console.error('Erreur parsing items_json:', e);
+      items = [];
+    }
+
     res.json({
       success: true,
       data: {
         ...commande,
-        items: typeof commande.items_json === 'string' 
-          ? JSON.parse(commande.items_json) 
-          : commande.items_json
+        items,
+        items_json: undefined
       }
     });
   } catch (error) {
@@ -152,21 +173,91 @@ const getCommandeById = async (req, res) => {
   }
 };
 
+// Récupérer une commande par token de suivi (pour les invités)
+const getCommandeByToken = async (req, res) => {
+  try {
+    const { token } = req.params;
+
+    const [commandes] = await pool.query(
+      `SELECT c.*, r.nom as restaurant_nom, r.telephone as restaurant_telephone,
+              r.adresse as restaurant_adresse, r.ville as restaurant_ville
+       FROM commandes c
+       LEFT JOIN restaurants r ON c.restaurant_id = r.id
+       WHERE c.token_suivi = ?`,
+      [token]
+    );
+
+    if (commandes.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'Commande non trouvée.'
+      });
+    }
+
+    const commande = commandes[0];
+
+    // Parser les items
+    let items = [];
+    try {
+      items = typeof commande.items_json === 'string' 
+        ? JSON.parse(commande.items_json) 
+        : (commande.items_json || []);
+    } catch (e) {
+      items = [];
+    }
+
+    res.json({
+      success: true,
+      data: {
+        id: commande.id,
+        numero_commande: commande.numero_commande,
+        montant_total: commande.montant_total,
+        statut: commande.statut,
+        date_commande: commande.date_commande,
+        restaurant_nom: commande.restaurant_nom,
+        restaurant_telephone: commande.restaurant_telephone,
+        items
+      }
+    });
+  } catch (error) {
+    console.error('Erreur récupération commande par token:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Erreur lors de la récupération de la commande.'
+    });
+  }
+};
+
 // Créer une commande
 const createCommande = async (req, res) => {
   try {
-    const { restaurant_id, items, telephone_client, notes } = req.body;
+    const { restaurant_id, items, telephone_client, email_client, notes } = req.body;
+
+    // Validation des items
+    if (!items || !Array.isArray(items) || items.length === 0) {
+      return res.status(400).json({
+        success: false,
+        message: 'La commande doit contenir au moins un article.'
+      });
+    }
 
     // Vérifier que le restaurant existe et est actif
     const [restaurants] = await pool.query(
-      'SELECT id, nom FROM restaurants WHERE id = ? AND actif = 1',
+      'SELECT id, nom, actif FROM restaurants WHERE id = ?',
       [restaurant_id]
     );
 
     if (restaurants.length === 0) {
       return res.status(404).json({
         success: false,
-        message: 'Restaurant non trouvé ou inactif.'
+        message: 'Restaurant non trouvé.'
+      });
+    }
+
+    if (!restaurants[0].actif) {
+      return res.status(400).json({
+        success: false,
+        message: 'Ce restaurant n\'accepte pas de commandes actuellement.'
       });
     }
 
@@ -177,10 +268,14 @@ const createCommande = async (req, res) => {
       [platIds, restaurant_id]
     );
 
-    if (plats.length !== items.length) {
+    // Vérifier que tous les plats existent
+    const platIdsFound = plats.map(p => p.id);
+    const missingPlats = platIds.filter(id => !platIdsFound.includes(id));
+    
+    if (missingPlats.length > 0) {
       return res.status(400).json({
         success: false,
-        message: 'Un ou plusieurs plats sont invalides.'
+        message: `Plat(s) invalide(s) ou n'appartenant pas à ce restaurant.`
       });
     }
 
@@ -191,6 +286,13 @@ const createCommande = async (req, res) => {
     for (const item of items) {
       const plat = plats.find(p => p.id === item.plat_id);
       
+      if (!plat) {
+        return res.status(400).json({
+          success: false,
+          message: `Le plat avec l'ID ${item.plat_id} n'existe pas.`
+        });
+      }
+
       if (!plat.disponible) {
         return res.status(400).json({
           success: false,
@@ -198,33 +300,47 @@ const createCommande = async (req, res) => {
         });
       }
 
-      const sousTotal = parseFloat(plat.prix) * item.quantite;
+      const quantite = parseInt(item.quantite) || 1;
+      if (quantite < 1) {
+        return res.status(400).json({
+          success: false,
+          message: 'La quantité doit être au moins 1.'
+        });
+      }
+
+      const sousTotal = parseFloat(plat.prix) * quantite;
       montantTotal += sousTotal;
 
       itemsJson.push({
         plat_id: plat.id,
         nom_plat: plat.nom,
         prix_unitaire: parseFloat(plat.prix),
-        quantite: item.quantite,
-        sous_total: sousTotal
+        quantite: quantite,
+        sous_total: parseFloat(sousTotal.toFixed(2))
       });
     }
 
-    // Générer le numéro de commande
+    // Arrondir le montant total
+    montantTotal = parseFloat(montantTotal.toFixed(2));
+
+    // Générer le numéro de commande et le token de suivi
     const numeroCommande = generateOrderNumber();
+    const tokenSuivi = !req.user ? generateTrackingToken() : null;
 
     // Créer la commande
     const [result] = await pool.query(
       `INSERT INTO commandes 
        (restaurant_id, utilisateur_id, numero_commande, montant_total, 
-        telephone_client, notes, items_json, statut)
-       VALUES (?, ?, ?, ?, ?, ?, ?, 'en_attente')`,
+        telephone_client, email_client, token_suivi, notes, items_json, statut)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'en_attente')`,
       [
         restaurant_id,
         req.user?.id || null,
         numeroCommande,
         montantTotal,
         telephone_client,
+        email_client || null,
+        tokenSuivi,
         notes || null,
         JSON.stringify(itemsJson)
       ]
@@ -242,18 +358,36 @@ const createCommande = async (req, res) => {
     // Émettre un événement WebSocket si disponible
     if (req.io) {
       req.io.to(`restaurant_${restaurant_id}`).emit('nouvelle_commande', {
-        ...newCommande[0],
-        items: itemsJson
+        id: newCommande[0].id,
+        numero_commande: newCommande[0].numero_commande,
+        montant_total: newCommande[0].montant_total,
+        statut: newCommande[0].statut,
+        telephone_client: newCommande[0].telephone_client,
+        items: itemsJson,
+        date_commande: newCommande[0].date_commande
       });
+    }
+
+    // Préparer la réponse
+    const responseData = {
+      id: newCommande[0].id,
+      numero_commande: newCommande[0].numero_commande,
+      montant_total: newCommande[0].montant_total,
+      statut: newCommande[0].statut,
+      restaurant_nom: newCommande[0].restaurant_nom,
+      items: itemsJson,
+      date_commande: newCommande[0].date_commande
+    };
+
+    // Ajouter le token de suivi pour les commandes invité
+    if (tokenSuivi) {
+      responseData.token_suivi = tokenSuivi;
     }
 
     res.status(201).json({
       success: true,
       message: 'Commande créée avec succès.',
-      data: {
-        ...newCommande[0],
-        items: itemsJson
-      }
+      data: responseData
     });
   } catch (error) {
     console.error('Erreur création commande:', error);
@@ -278,7 +412,8 @@ const updateStatut = async (req, res) => {
     if (!validStatuts.includes(statut)) {
       return res.status(400).json({
         success: false,
-        message: 'Statut invalide.'
+        message: 'Statut invalide.',
+        statuts_valides: validStatuts
       });
     }
 
@@ -295,9 +430,40 @@ const updateStatut = async (req, res) => {
       });
     }
 
+    const commande = commandes[0];
+
+    // Vérifier les droits pour les restaurateurs
+    if (req.user.role === 'restaurateur') {
+      const [restaurants] = await pool.query(
+        'SELECT id FROM restaurants WHERE utilisateur_id = ? AND id = ?',
+        [req.user.id, commande.restaurant_id]
+      );
+      if (restaurants.length === 0) {
+        return res.status(403).json({
+          success: false,
+          message: 'Vous n\'êtes pas autorisé à modifier cette commande.'
+        });
+      }
+    }
+
+    // Vérifier les transitions de statut valides
+    const currentStatut = commande.statut;
+    const invalidTransitions = {
+      'livree': ['en_attente', 'confirmee', 'en_preparation', 'prete'],
+      'recuperee': ['en_attente', 'confirmee', 'en_preparation', 'prete'],
+      'annulee': ['en_attente', 'confirmee', 'en_preparation', 'prete', 'livree', 'recuperee']
+    };
+
+    if (invalidTransitions[currentStatut] && invalidTransitions[currentStatut].includes(statut)) {
+      return res.status(400).json({
+        success: false,
+        message: `Impossible de passer du statut "${currentStatut}" à "${statut}".`
+      });
+    }
+
     // Mettre à jour les heures selon le statut
-    let heureField = null;
     const now = new Date().toISOString().slice(0, 19).replace('T', ' ');
+    let heureField = null;
 
     switch (statut) {
       case 'confirmee':
@@ -318,7 +484,7 @@ const updateStatut = async (req, res) => {
     let query = 'UPDATE commandes SET statut = ?';
     const params = [statut];
 
-    if (heureField) {
+    if (heureField && !commande[heureField]) {
       query += `, ${heureField} = ?`;
       params.push(now);
     }
@@ -337,22 +503,30 @@ const updateStatut = async (req, res) => {
       [id]
     );
 
+    // Parser les items
+    let items = [];
+    try {
+      items = typeof updatedCommande[0].items_json === 'string'
+        ? JSON.parse(updatedCommande[0].items_json)
+        : (updatedCommande[0].items_json || []);
+    } catch (e) {
+      items = [];
+    }
+
     // Émettre un événement WebSocket
     if (req.io) {
-      const commande = updatedCommande[0];
-      req.io.to(`restaurant_${commande.restaurant_id}`).emit('statut_commande', {
-        id: commande.id,
-        numero_commande: commande.numero_commande,
-        statut: commande.statut
-      });
+      const eventData = {
+        id: updatedCommande[0].id,
+        numero_commande: updatedCommande[0].numero_commande,
+        statut: updatedCommande[0].statut,
+        ancien_statut: currentStatut
+      };
+
+      req.io.to(`restaurant_${commande.restaurant_id}`).emit('statut_commande', eventData);
       
       // Notifier le client si connecté
       if (commande.utilisateur_id) {
-        req.io.to(`user_${commande.utilisateur_id}`).emit('statut_commande', {
-          id: commande.id,
-          numero_commande: commande.numero_commande,
-          statut: commande.statut
-        });
+        req.io.to(`user_${commande.utilisateur_id}`).emit('statut_commande', eventData);
       }
     }
 
@@ -361,9 +535,8 @@ const updateStatut = async (req, res) => {
       message: `Commande ${statut.replace('_', ' ')}.`,
       data: {
         ...updatedCommande[0],
-        items: typeof updatedCommande[0].items_json === 'string'
-          ? JSON.parse(updatedCommande[0].items_json)
-          : updatedCommande[0].items_json
+        items,
+        items_json: undefined
       }
     });
   } catch (error) {
@@ -395,10 +568,11 @@ const annulerCommande = async (req, res) => {
     const commande = commandes[0];
 
     // Vérifier si la commande peut être annulée
-    if (['livree', 'recuperee', 'annulee'].includes(commande.statut)) {
+    const statutsNonAnnulables = ['livree', 'recuperee', 'annulee'];
+    if (statutsNonAnnulables.includes(commande.statut)) {
       return res.status(400).json({
         success: false,
-        message: 'Cette commande ne peut plus être annulée.'
+        message: `Cette commande ne peut plus être annulée (statut: ${commande.statut}).`
       });
     }
 
@@ -406,8 +580,22 @@ const annulerCommande = async (req, res) => {
     if (req.user.role === 'client' && commande.utilisateur_id !== req.user.id) {
       return res.status(403).json({
         success: false,
-        message: 'Accès refusé.'
+        message: 'Vous ne pouvez pas annuler cette commande.'
       });
+    }
+
+    // Vérifier pour les restaurateurs
+    if (req.user.role === 'restaurateur') {
+      const [restaurants] = await pool.query(
+        'SELECT id FROM restaurants WHERE utilisateur_id = ? AND id = ?',
+        [req.user.id, commande.restaurant_id]
+      );
+      if (restaurants.length === 0) {
+        return res.status(403).json({
+          success: false,
+          message: 'Vous ne pouvez pas annuler cette commande.'
+        });
+      }
     }
 
     await pool.query(
@@ -421,11 +609,18 @@ const annulerCommande = async (req, res) => {
         id: commande.id,
         numero_commande: commande.numero_commande
       });
+
+      if (commande.utilisateur_id) {
+        req.io.to(`user_${commande.utilisateur_id}`).emit('commande_annulee', {
+          id: commande.id,
+          numero_commande: commande.numero_commande
+        });
+      }
     }
 
     res.json({
       success: true,
-      message: 'Commande annulée.'
+      message: 'Commande annulée avec succès.'
     });
   } catch (error) {
     console.error('Erreur annulation commande:', error);
@@ -450,7 +645,7 @@ const getStatistiques = async (req, res) => {
       if (restaurants.length === 0) {
         return res.status(404).json({
           success: false,
-          message: 'Restaurant non trouvé.'
+          message: 'Vous n\'avez pas de restaurant.'
         });
       }
       restaurantId = restaurants[0].id;
@@ -468,8 +663,8 @@ const getStatistiques = async (req, res) => {
     const [general] = await pool.query(
       `SELECT 
         COUNT(*) as total_commandes,
-        SUM(montant_total) as ca_total,
-        AVG(montant_total) as panier_moyen,
+        COALESCE(SUM(montant_total), 0) as ca_total,
+        COALESCE(AVG(montant_total), 0) as panier_moyen,
         SUM(CASE WHEN statut = 'annulee' THEN 1 ELSE 0 END) as commandes_annulees
        FROM commandes ${whereClause}`,
       params
@@ -479,7 +674,7 @@ const getStatistiques = async (req, res) => {
     const [jour] = await pool.query(
       `SELECT 
         COUNT(*) as commandes_jour,
-        SUM(montant_total) as ca_jour
+        COALESCE(SUM(montant_total), 0) as ca_jour
        FROM commandes 
        ${whereClause ? whereClause + ' AND' : 'WHERE'} DATE(date_commande) = CURDATE()`,
       params
@@ -489,10 +684,21 @@ const getStatistiques = async (req, res) => {
     const [semaine] = await pool.query(
       `SELECT 
         COUNT(*) as commandes_semaine,
-        SUM(montant_total) as ca_semaine
+        COALESCE(SUM(montant_total), 0) as ca_semaine
        FROM commandes 
        ${whereClause ? whereClause + ' AND' : 'WHERE'} 
        date_commande >= DATE_SUB(CURDATE(), INTERVAL 7 DAY)`,
+      params
+    );
+
+    // Statistiques du mois
+    const [mois] = await pool.query(
+      `SELECT 
+        COUNT(*) as commandes_mois,
+        COALESCE(SUM(montant_total), 0) as ca_mois
+       FROM commandes 
+       ${whereClause ? whereClause + ' AND' : 'WHERE'} 
+       date_commande >= DATE_SUB(CURDATE(), INTERVAL 30 DAY)`,
       params
     );
 
@@ -500,17 +706,43 @@ const getStatistiques = async (req, res) => {
     const [parStatut] = await pool.query(
       `SELECT statut, COUNT(*) as count
        FROM commandes ${whereClause}
-       GROUP BY statut`,
+       GROUP BY statut
+       ORDER BY FIELD(statut, 'en_attente', 'confirmee', 'en_preparation', 'prete', 'livree', 'recuperee', 'annulee')`,
+      params
+    );
+
+    // Commandes récentes
+    const [commandesRecentes] = await pool.query(
+      `SELECT id, numero_commande, montant_total, statut, date_commande, telephone_client
+       FROM commandes 
+       ${whereClause}
+       ORDER BY date_commande DESC
+       LIMIT 5`,
       params
     );
 
     res.json({
       success: true,
       data: {
-        general: general[0],
-        jour: jour[0],
-        semaine: semaine[0],
-        par_statut: parStatut
+        general: {
+          ...general[0],
+          ca_total: parseFloat(general[0].ca_total) || 0,
+          panier_moyen: parseFloat(general[0].panier_moyen) || 0
+        },
+        jour: {
+          ...jour[0],
+          ca_jour: parseFloat(jour[0].ca_jour) || 0
+        },
+        semaine: {
+          ...semaine[0],
+          ca_semaine: parseFloat(semaine[0].ca_semaine) || 0
+        },
+        mois: {
+          ...mois[0],
+          ca_mois: parseFloat(mois[0].ca_mois) || 0
+        },
+        par_statut: parStatut,
+        commandes_recentes: commandesRecentes
       }
     });
   } catch (error) {
@@ -525,6 +757,7 @@ const getStatistiques = async (req, res) => {
 module.exports = {
   getCommandes,
   getCommandeById,
+  getCommandeByToken,
   createCommande,
   updateStatut,
   annulerCommande,
