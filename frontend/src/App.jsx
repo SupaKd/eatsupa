@@ -2,6 +2,9 @@ import { useState } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import './styles/main.scss';
 
+// Layouts
+import AdminLayout from '@components/AdminLayout';
+
 // Pages publiques
 import Header from '@components/Header';
 import Footer from '@components/Footer';
@@ -13,9 +16,16 @@ import OrderConfirmationPage from '@pages/client/OrderConfirmationPage';
 import OrderTrackingPage from '@pages/client/OrderTrackingPage';
 import LoginPage from '@pages/client/LoginPage';
 import RegisterPage from '@pages/client/RegisterPage';
-
-// dashboard user
 import MyOrdersPage from '@pages/client/MyOrdersPage';
+
+// Pages Admin
+import AdminDashboardPage from '@pages/admin/AdminDashboardPage';
+import AdminUsersPage from '@pages/admin/AdminUsersPage';
+import AdminRestaurantsPage from '@pages/admin/AdminRestaurantsPage';
+import AdminOrdersPage from '@pages/admin/AdminOrdersPage';
+
+// Protection des routes
+import ProtectedRoute from '@components/ProtectedRoute';
 
 function App() {
   const [isCartOpen, setIsCartOpen] = useState(false);
@@ -25,32 +35,66 @@ function App() {
 
   return (
     <div className="app">
-      <Header onCartClick={openCart} />
-      
-      <main className="app__main">
-        <Routes>
-          {/* Pages publiques */}
-          <Route path="/" element={<HomePage />} />
-          <Route path="/restaurant/:id" element={<RestaurantPage />} />
-          <Route path="/commander" element={<CheckoutPage />} />
-          <Route path="/commande/:id/confirmation" element={<OrderConfirmationPage />} />
-          <Route path="/suivi/:token" element={<OrderTrackingPage />} />
-          
-          {/* Authentification */}
-          <Route path="/login" element={<LoginPage />} />
-          <Route path="/register" element={<RegisterPage />} />
-          
-          {/* Pages utilisateur */}
-          <Route path="/mes-commandes" element={<MyOrdersPage />} />
-          
-          {/* 404 */}
-          <Route path="*" element={<NotFoundPage />} />
-        </Routes>
-      </main>
+      <Routes>
+        {/* Routes Admin - Sans Header/Footer, avec AdminLayout */}
+        <Route
+          path="/admin/*"
+          element={
+            <ProtectedRoute allowedRoles={['admin']}>
+              <AdminLayout>
+                <Routes>
+                  <Route index element={<AdminDashboardPage />} />
+                  <Route path="users" element={<AdminUsersPage />} />
+                  <Route path="restaurants" element={<AdminRestaurantsPage />} />
+                  <Route path="orders" element={<AdminOrdersPage />} />
+                </Routes>
+              </AdminLayout>
+            </ProtectedRoute>
+          }
+        />
 
-      <Footer />
-      
-      <CartSidebar isOpen={isCartOpen} onClose={closeCart} />
+        {/* Routes Publiques - Avec Header/Footer */}
+        <Route
+          path="/*"
+          element={
+            <>
+              <Header onCartClick={openCart} />
+              
+              <main className="app__main">
+                <Routes>
+                  {/* Pages publiques */}
+                  <Route path="/" element={<HomePage />} />
+                  <Route path="/restaurant/:id" element={<RestaurantPage />} />
+                  <Route path="/commander" element={<CheckoutPage />} />
+                  <Route path="/commande/:id/confirmation" element={<OrderConfirmationPage />} />
+                  <Route path="/suivi/:token" element={<OrderTrackingPage />} />
+                  
+                  {/* Authentification */}
+                  <Route path="/login" element={<LoginPage />} />
+                  <Route path="/register" element={<RegisterPage />} />
+                  
+                  {/* Pages utilisateur protégées */}
+                  <Route
+                    path="/mes-commandes"
+                    element={
+                      <ProtectedRoute allowedRoles={['client', 'admin']}>
+                        <MyOrdersPage />
+                      </ProtectedRoute>
+                    }
+                  />
+                  
+                  {/* 404 */}
+                  <Route path="*" element={<NotFoundPage />} />
+                </Routes>
+              </main>
+
+              <Footer />
+              
+              <CartSidebar isOpen={isCartOpen} onClose={closeCart} />
+            </>
+          }
+        />
+      </Routes>
     </div>
   );
 }
