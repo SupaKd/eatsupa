@@ -1,7 +1,7 @@
 import { useState, useEffect } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { restaurantAPI } from '@services/api';
-import RestaurantCard from '../components/client/RestaurantCard';
+import RestaurantCard from '../../components/client/RestaurantCard';
 
 function HomePage() {
   const [searchParams, setSearchParams] = useSearchParams();

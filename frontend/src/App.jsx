@@ -2,23 +2,19 @@ import { useState } from 'react';
 import { Routes, Route } from 'react-router-dom';
 import './styles/main.scss';
 
-// Layout
+// Pages publiques
 import Header from '@components/Header';
 import Footer from '@components/Footer';
 import CartSidebar from '@components/client/CartSidebar';
-
-// Pages publiques
-import HomePage from '@pages/HomePage';
-import RestaurantPage from '@pages/RestaurantPage';
+import HomePage from '@pages/client/HomePage';
+import RestaurantPage from '@pages/client/RestaurantPage';
 import CheckoutPage from '@pages/client/CheckoutPage';
 import OrderConfirmationPage from '@pages/client/OrderConfirmationPage';
 import OrderTrackingPage from '@pages/client/OrderTrackingPage';
+import LoginPage from '@pages/client/LoginPage';
+import RegisterPage from '@pages/client/RegisterPage';
 
-// Auth
-import LoginPage from '@pages/LoginPage';
-import RegisterPage from '@pages/RegisterPage';
-
-// Pages utilisateur
+// dashboard user
 import MyOrdersPage from '@pages/client/MyOrdersPage';
 
 function App() {
