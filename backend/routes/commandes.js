@@ -40,7 +40,11 @@ const commandeValidation = [
     .optional()
     .trim()
     .isLength({ max: 500 })
-    .withMessage('Les notes ne peuvent pas dépasser 500 caractères.')
+    .withMessage('Les notes ne peuvent pas dépasser 500 caractères.'),
+  body('mode_paiement')
+    .optional()
+    .isIn(['sur_place', 'en_ligne'])
+    .withMessage('Mode de paiement invalide. Valeurs acceptées: sur_place, en_ligne')
 ];
 
 // Validation pour la mise à jour du statut

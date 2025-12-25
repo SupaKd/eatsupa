@@ -4,7 +4,7 @@ const { generateOrderNumber, generateTrackingToken, paginate, paginatedResponse 
 // Récupérer les commandes (selon le rôle)
 const getCommandes = async (req, res) => {
   try {
-    const { page = 1, limit = 10, statut, restaurant_id, date_debut, date_fin } = req.query;
+    const { page = 1, limit = 10, statut, restaurant_id, date_debut, date_fin, paiement_statut } = req.query;
     const { limit: queryLimit, offset } = paginate(page, limit);
 
     let whereClause = 'WHERE 1=1';
@@ -38,6 +38,11 @@ const getCommandes = async (req, res) => {
     if (statut) {
       whereClause += ' AND c.statut = ?';
       params.push(statut);
+    }
+
+    if (paiement_statut) {
+      whereClause += ' AND c.paiement_statut = ?';
+      params.push(paiement_statut);
     }
 
     if (date_debut) {
@@ -213,6 +218,8 @@ const getCommandeByToken = async (req, res) => {
         numero_commande: commande.numero_commande,
         montant_total: commande.montant_total,
         statut: commande.statut,
+        mode_paiement: commande.mode_paiement,
+        paiement_statut: commande.paiement_statut,
         date_commande: commande.date_commande,
         restaurant_nom: commande.restaurant_nom,
         restaurant_telephone: commande.restaurant_telephone,
@@ -231,7 +238,7 @@ const getCommandeByToken = async (req, res) => {
 // Créer une commande
 const createCommande = async (req, res) => {
   try {
-    const { restaurant_id, items, telephone_client, email_client, notes } = req.body;
+    const { restaurant_id, items, telephone_client, email_client, notes, mode_paiement = 'sur_place' } = req.body;
 
     // Validation des items
     if (!items || !Array.isArray(items) || items.length === 0) {
@@ -243,7 +250,7 @@ const createCommande = async (req, res) => {
 
     // Vérifier que le restaurant existe et est actif
     const [restaurants] = await pool.query(
-      'SELECT id, nom, actif FROM restaurants WHERE id = ?',
+      'SELECT id, nom, actif, paiement_sur_place, paiement_en_ligne, stripe_account_id, stripe_onboarding_complete FROM restaurants WHERE id = ?',
       [restaurant_id]
     );
 
@@ -254,11 +261,37 @@ const createCommande = async (req, res) => {
       });
     }
 
-    if (!restaurants[0].actif) {
+    const restaurant = restaurants[0];
+
+    if (!restaurant.actif) {
       return res.status(400).json({
         success: false,
         message: 'Ce restaurant n\'accepte pas de commandes actuellement.'
       });
+    }
+
+    // Vérifier le mode de paiement demandé
+    if (mode_paiement === 'sur_place' && !restaurant.paiement_sur_place) {
+      return res.status(400).json({
+        success: false,
+        message: 'Ce restaurant n\'accepte pas le paiement sur place.'
+      });
+    }
+
+    if (mode_paiement === 'en_ligne') {
+      if (!restaurant.paiement_en_ligne) {
+        return res.status(400).json({
+          success: false,
+          message: 'Ce restaurant n\'accepte pas le paiement en ligne.'
+        });
+      }
+      
+      if (!restaurant.stripe_account_id || !restaurant.stripe_onboarding_complete) {
+        return res.status(400).json({
+          success: false,
+          message: 'Le paiement en ligne n\'est pas encore configuré pour ce restaurant.'
+        });
+      }
     }
 
     // Vérifier et récupérer les plats
@@ -327,12 +360,19 @@ const createCommande = async (req, res) => {
     const numeroCommande = generateOrderNumber();
     const tokenSuivi = !req.user ? generateTrackingToken() : null;
 
+    // Déterminer le statut initial selon le mode de paiement
+    // Si paiement en ligne, la commande reste en attente jusqu'au paiement
+    // Si paiement sur place, elle peut être confirmée directement par le restaurateur
+    const statutInitial = 'en_attente';
+    const paiementStatut = mode_paiement === 'en_ligne' ? 'en_attente' : 'en_attente';
+
     // Créer la commande
     const [result] = await pool.query(
       `INSERT INTO commandes 
        (restaurant_id, utilisateur_id, numero_commande, montant_total, 
-        telephone_client, email_client, token_suivi, notes, items_json, statut)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, 'en_attente')`,
+        telephone_client, email_client, token_suivi, notes, items_json, 
+        statut, mode_paiement, paiement_statut)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         restaurant_id,
         req.user?.id || null,
@@ -342,7 +382,10 @@ const createCommande = async (req, res) => {
         email_client || null,
         tokenSuivi,
         notes || null,
-        JSON.stringify(itemsJson)
+        JSON.stringify(itemsJson),
+        statutInitial,
+        mode_paiement,
+        paiementStatut
       ]
     );
 
@@ -362,6 +405,8 @@ const createCommande = async (req, res) => {
         numero_commande: newCommande[0].numero_commande,
         montant_total: newCommande[0].montant_total,
         statut: newCommande[0].statut,
+        mode_paiement: newCommande[0].mode_paiement,
+        paiement_statut: newCommande[0].paiement_statut,
         telephone_client: newCommande[0].telephone_client,
         items: itemsJson,
         date_commande: newCommande[0].date_commande
@@ -374,6 +419,8 @@ const createCommande = async (req, res) => {
       numero_commande: newCommande[0].numero_commande,
       montant_total: newCommande[0].montant_total,
       statut: newCommande[0].statut,
+      mode_paiement: newCommande[0].mode_paiement,
+      paiement_statut: newCommande[0].paiement_statut,
       restaurant_nom: newCommande[0].restaurant_nom,
       items: itemsJson,
       date_commande: newCommande[0].date_commande
@@ -384,9 +431,17 @@ const createCommande = async (req, res) => {
       responseData.token_suivi = tokenSuivi;
     }
 
+    // Si paiement en ligne, indiquer qu'il faut procéder au paiement
+    if (mode_paiement === 'en_ligne') {
+      responseData.requires_payment = true;
+      responseData.payment_url = `/api/paiement/create-session`;
+    }
+
     res.status(201).json({
       success: true,
-      message: 'Commande créée avec succès.',
+      message: mode_paiement === 'en_ligne' 
+        ? 'Commande créée. Veuillez procéder au paiement.' 
+        : 'Commande créée avec succès.',
       data: responseData
     });
   } catch (error) {
@@ -598,9 +653,17 @@ const annulerCommande = async (req, res) => {
       }
     }
 
+    // Si la commande a été payée en ligne, il faudrait initier un remboursement
+    // NOTE: En production, ajouter la logique de remboursement Stripe ici
+    let paiementStatut = commande.paiement_statut;
+    if (commande.mode_paiement === 'en_ligne' && commande.paiement_statut === 'paye') {
+      // TODO: Implémenter le remboursement Stripe
+      paiementStatut = 'rembourse';
+    }
+
     await pool.query(
-      'UPDATE commandes SET statut = ? WHERE id = ?',
-      ['annulee', id]
+      'UPDATE commandes SET statut = ?, paiement_statut = ? WHERE id = ?',
+      ['annulee', paiementStatut, id]
     );
 
     // Émettre un événement WebSocket
@@ -670,6 +733,28 @@ const getStatistiques = async (req, res) => {
       params
     );
 
+    // Statistiques par mode de paiement
+    const [parModePaiement] = await pool.query(
+      `SELECT 
+        mode_paiement,
+        COUNT(*) as count,
+        SUM(montant_total) as total
+       FROM commandes ${whereClause}
+       GROUP BY mode_paiement`,
+      params
+    );
+
+    // Statistiques par statut de paiement
+    const [parPaiementStatut] = await pool.query(
+      `SELECT 
+        paiement_statut,
+        COUNT(*) as count,
+        SUM(montant_total) as total
+       FROM commandes ${whereClause}
+       GROUP BY paiement_statut`,
+      params
+    );
+
     // Statistiques du jour
     const [jour] = await pool.query(
       `SELECT 
@@ -713,7 +798,7 @@ const getStatistiques = async (req, res) => {
 
     // Commandes récentes
     const [commandesRecentes] = await pool.query(
-      `SELECT id, numero_commande, montant_total, statut, date_commande, telephone_client
+      `SELECT id, numero_commande, montant_total, statut, mode_paiement, paiement_statut, date_commande, telephone_client
        FROM commandes 
        ${whereClause}
        ORDER BY date_commande DESC
@@ -742,6 +827,8 @@ const getStatistiques = async (req, res) => {
           ca_mois: parseFloat(mois[0].ca_mois) || 0
         },
         par_statut: parStatut,
+        par_mode_paiement: parModePaiement,
+        par_paiement_statut: parPaiementStatut,
         commandes_recentes: commandesRecentes
       }
     });

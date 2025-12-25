@@ -38,11 +38,12 @@ const getAllRestaurants = async (req, res) => {
     );
     const total = countResult[0].total;
 
-    // Récupérer les restaurants
+    // Récupérer les restaurants avec les infos de paiement
     const [restaurants] = await pool.query(
       `SELECT r.id, r.nom, r.description, r.adresse, r.ville, r.code_postal,
               r.telephone, r.email, r.type_cuisine, r.horaires_ouverture,
               r.image, r.delai_preparation, r.frais_livraison, r.actif,
+              r.paiement_sur_place, r.paiement_en_ligne,
               r.created_at, r.updated_at,
               u.nom as proprietaire_nom, u.prenom as proprietaire_prenom
        FROM restaurants r
@@ -58,6 +59,8 @@ const getAllRestaurants = async (req, res) => {
       const estOuvert = isRestaurantOpen(r.horaires_ouverture);
       return {
         ...r,
+        paiement_sur_place: Boolean(r.paiement_sur_place),
+        paiement_en_ligne: Boolean(r.paiement_en_ligne),
         est_ouvert: estOuvert,
         prochaine_ouverture: !estOuvert ? getNextOpeningTime(r.horaires_ouverture) : null,
         heure_fermeture: estOuvert ? getClosingTime(r.horaires_ouverture) : null
@@ -131,10 +134,30 @@ const getRestaurantById = async (req, res) => {
     // Statut d'ouverture
     const estOuvert = isRestaurantOpen(restaurant.horaires_ouverture);
 
+    // Modes de paiement disponibles
+    const modesPaiement = [];
+    if (restaurant.paiement_sur_place) {
+      modesPaiement.push({
+        id: 'sur_place',
+        label: 'Paiement sur place',
+        description: 'Payez en espèces ou par carte à la récupération'
+      });
+    }
+    if (restaurant.paiement_en_ligne && restaurant.stripe_onboarding_complete) {
+      modesPaiement.push({
+        id: 'en_ligne',
+        label: 'Paiement en ligne',
+        description: 'Payez maintenant par carte bancaire'
+      });
+    }
+
     res.json({
       success: true,
       data: {
         ...restaurant,
+        paiement_sur_place: Boolean(restaurant.paiement_sur_place),
+        paiement_en_ligne: Boolean(restaurant.paiement_en_ligne && restaurant.stripe_onboarding_complete),
+        modes_paiement: modesPaiement,
         categories: categoriesWithPlats,
         est_ouvert: estOuvert,
         prochaine_ouverture: !estOuvert ? getNextOpeningTime(restaurant.horaires_ouverture) : null,
@@ -156,7 +179,8 @@ const createRestaurant = async (req, res) => {
     const {
       nom, description, adresse, ville, code_postal,
       telephone, email, type_cuisine, delai_preparation,
-      frais_livraison, horaires_ouverture
+      frais_livraison, horaires_ouverture,
+      paiement_sur_place = true, paiement_en_ligne = false
     } = req.body;
 
     // Vérifier si l'utilisateur a déjà un restaurant
@@ -175,8 +199,9 @@ const createRestaurant = async (req, res) => {
     const [result] = await pool.query(
       `INSERT INTO restaurants 
        (utilisateur_id, nom, description, adresse, ville, code_postal, 
-        telephone, email, type_cuisine, delai_preparation, frais_livraison, horaires_ouverture)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        telephone, email, type_cuisine, delai_preparation, frais_livraison, 
+        horaires_ouverture, paiement_sur_place, paiement_en_ligne)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         req.user.id,
         nom,
@@ -189,7 +214,9 @@ const createRestaurant = async (req, res) => {
         type_cuisine || null,
         delai_preparation || 30,
         frais_livraison || 0,
-        horaires_ouverture ? JSON.stringify(horaires_ouverture) : null
+        horaires_ouverture ? JSON.stringify(horaires_ouverture) : null,
+        paiement_sur_place ? 1 : 0,
+        paiement_en_ligne ? 1 : 0
       ]
     );
 
@@ -201,7 +228,11 @@ const createRestaurant = async (req, res) => {
     res.status(201).json({
       success: true,
       message: 'Restaurant créé avec succès.',
-      data: newRestaurant[0]
+      data: {
+        ...newRestaurant[0],
+        paiement_sur_place: Boolean(newRestaurant[0].paiement_sur_place),
+        paiement_en_ligne: Boolean(newRestaurant[0].paiement_en_ligne)
+      }
     });
   } catch (error) {
     console.error('Erreur création restaurant:', error);
@@ -231,7 +262,8 @@ const updateRestaurant = async (req, res) => {
     const allowedFields = [
       'nom', 'description', 'adresse', 'ville', 'code_postal',
       'telephone', 'email', 'type_cuisine', 'delai_preparation',
-      'frais_livraison', 'horaires_ouverture', 'actif'
+      'frais_livraison', 'horaires_ouverture', 'actif',
+      'paiement_sur_place', 'paiement_en_ligne'
     ];
 
     const updateFields = [];
@@ -242,7 +274,7 @@ const updateRestaurant = async (req, res) => {
         updateFields.push(`${field} = ?`);
         if (field === 'horaires_ouverture' && typeof updates[field] === 'object') {
           values.push(JSON.stringify(updates[field]));
-        } else if (field === 'actif') {
+        } else if (['actif', 'paiement_sur_place', 'paiement_en_ligne'].includes(field)) {
           values.push(updates[field] ? 1 : 0);
         } else {
           values.push(updates[field]);
@@ -272,7 +304,11 @@ const updateRestaurant = async (req, res) => {
     res.json({
       success: true,
       message: 'Restaurant mis à jour avec succès.',
-      data: updatedRestaurant[0]
+      data: {
+        ...updatedRestaurant[0],
+        paiement_sur_place: Boolean(updatedRestaurant[0].paiement_sur_place),
+        paiement_en_ligne: Boolean(updatedRestaurant[0].paiement_en_ligne)
+      }
     });
   } catch (error) {
     console.error('Erreur mise à jour restaurant:', error);
@@ -388,7 +424,10 @@ const getMyRestaurant = async (req, res) => {
         SUM(CASE WHEN DATE(date_commande) = CURDATE() THEN montant_total ELSE 0 END) as ca_jour,
         SUM(CASE WHEN date_commande >= DATE_SUB(CURDATE(), INTERVAL 7 DAY) THEN montant_total ELSE 0 END) as ca_semaine,
         SUM(CASE WHEN date_commande >= DATE_SUB(CURDATE(), INTERVAL 30 DAY) THEN montant_total ELSE 0 END) as ca_mois,
-        SUM(montant_total) as ca_total
+        SUM(montant_total) as ca_total,
+        SUM(CASE WHEN paiement_statut = 'paye' THEN montant_total ELSE 0 END) as total_paye,
+        SUM(CASE WHEN paiement_statut = 'en_attente' AND mode_paiement = 'sur_place' THEN montant_total ELSE 0 END) as en_attente_sur_place,
+        SUM(CASE WHEN paiement_statut = 'en_attente' AND mode_paiement = 'en_ligne' THEN montant_total ELSE 0 END) as en_attente_en_ligne
        FROM commandes WHERE restaurant_id = ?`,
       [restaurant.id]
     );
@@ -404,7 +443,7 @@ const getMyRestaurant = async (req, res) => {
 
     // Commandes récentes
     const [commandesRecentes] = await pool.query(
-      `SELECT id, numero_commande, montant_total, statut, date_commande, telephone_client
+      `SELECT id, numero_commande, montant_total, statut, mode_paiement, paiement_statut, date_commande, telephone_client
        FROM commandes 
        WHERE restaurant_id = ?
        ORDER BY date_commande DESC
@@ -420,6 +459,9 @@ const getMyRestaurant = async (req, res) => {
       data: {
         restaurant: {
           ...restaurant,
+          paiement_sur_place: Boolean(restaurant.paiement_sur_place),
+          paiement_en_ligne: Boolean(restaurant.paiement_en_ligne),
+          stripe_configure: Boolean(restaurant.stripe_account_id && restaurant.stripe_onboarding_complete),
           est_ouvert: estOuvert,
           prochaine_ouverture: !estOuvert ? getNextOpeningTime(restaurant.horaires_ouverture) : null,
           heure_fermeture: estOuvert ? getClosingTime(restaurant.horaires_ouverture) : null
@@ -430,6 +472,9 @@ const getMyRestaurant = async (req, res) => {
           ca_semaine: parseFloat(stats[0].ca_semaine) || 0,
           ca_mois: parseFloat(stats[0].ca_mois) || 0,
           ca_total: parseFloat(stats[0].ca_total) || 0,
+          total_paye: parseFloat(stats[0].total_paye) || 0,
+          en_attente_sur_place: parseFloat(stats[0].en_attente_sur_place) || 0,
+          en_attente_en_ligne: parseFloat(stats[0].en_attente_en_ligne) || 0,
           ...counts[0]
         },
         commandes_recentes: commandesRecentes
