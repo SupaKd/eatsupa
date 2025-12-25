@@ -16,13 +16,17 @@ function AdminDashboardPage() {
   const fetchDashboardStats = async () => {
     try {
       setLoading(true);
+      setError(null);
       const response = await adminAPI.getDashboard();
+      console.log('Dashboard response:', response.data);
       if (response.data.success) {
         setStats(response.data.data);
+      } else {
+        setError('Erreur lors du chargement des données');
       }
     } catch (err) {
       console.error('Erreur chargement stats:', err);
-      setError('Impossible de charger les statistiques');
+      setError(err.response?.data?.message || 'Impossible de charger les statistiques');
     } finally {
       setLoading(false);
     }
@@ -44,17 +48,34 @@ function AdminDashboardPage() {
     );
   }
 
-  if (error || !stats) {
+  if (error) {
     return (
       <div className="admin-page__error">
         <h2>Erreur</h2>
-        <p>{error || 'Impossible de charger les données'}</p>
+        <p>{error}</p>
+        <button onClick={fetchDashboardStats}>Réessayer</button>
+      </div>
+    );
+  }
+
+  if (!stats) {
+    return (
+      <div className="admin-page__error">
+        <h2>Aucune donnée</h2>
+        <p>Les statistiques ne sont pas disponibles pour le moment.</p>
         <button onClick={fetchDashboardStats}>Réessayer</button>
       </div>
     );
   }
 
   const { utilisateurs, restaurants, commandes, commandes_par_statut, top_restaurants } = stats;
+
+  // Valeurs par défaut si les données sont null/undefined
+  const safeUtilisateurs = utilisateurs || { total_utilisateurs: 0, total_clients: 0, total_restaurateurs: 0, nouveaux_aujourd_hui: 0 };
+  const safeRestaurants = restaurants || { total_restaurants: 0, restaurants_actifs: 0, nouveaux_aujourd_hui: 0 };
+  const safeCommandes = commandes || { total_commandes: 0, panier_moyen: 0, ca_total: 0, ca_semaine: 0, ca_mois: 0, commandes_aujourd_hui: 0, ca_aujourd_hui: 0 };
+  const safeCommandesParStatut = commandes_par_statut || [];
+  const safeTopRestaurants = top_restaurants || [];
 
   return (
     <div className="admin-dashboard">
@@ -63,7 +84,7 @@ function AdminDashboardPage() {
         <div>
           <h1 className="admin-dashboard__title">Tableau de bord</h1>
           <p className="admin-dashboard__subtitle">
-            Bienvenue, {user?.prenom} {user?.nom}
+            Bienvenue, {user?.prenom || 'Admin'} {user?.nom || ''}
           </p>
         </div>
         <button onClick={fetchDashboardStats} className="admin-dashboard__refresh">
@@ -90,14 +111,14 @@ function AdminDashboardPage() {
           </div>
           <div className="admin-stat-card__content">
             <p className="admin-stat-card__label">Utilisateurs</p>
-            <h3 className="admin-stat-card__value">{utilisateurs.total_utilisateurs}</h3>
+            <h3 className="admin-stat-card__value">{safeUtilisateurs.total_utilisateurs}</h3>
             <div className="admin-stat-card__details">
-              <span>{utilisateurs.total_clients} clients</span>
-              <span>{utilisateurs.total_restaurateurs} restaurateurs</span>
+              <span>{safeUtilisateurs.total_clients} clients</span>
+              <span>{safeUtilisateurs.total_restaurateurs} restaurateurs</span>
             </div>
-            {utilisateurs.nouveaux_aujourd_hui > 0 && (
+            {safeUtilisateurs.nouveaux_aujourd_hui > 0 && (
               <span className="admin-stat-card__badge">
-                +{utilisateurs.nouveaux_aujourd_hui} aujourd'hui
+                +{safeUtilisateurs.nouveaux_aujourd_hui} aujourd'hui
               </span>
             )}
           </div>
@@ -113,13 +134,13 @@ function AdminDashboardPage() {
           </div>
           <div className="admin-stat-card__content">
             <p className="admin-stat-card__label">Restaurants</p>
-            <h3 className="admin-stat-card__value">{restaurants.total_restaurants}</h3>
+            <h3 className="admin-stat-card__value">{safeRestaurants.total_restaurants}</h3>
             <div className="admin-stat-card__details">
-              <span>{restaurants.restaurants_actifs} actifs</span>
+              <span>{safeRestaurants.restaurants_actifs} actifs</span>
             </div>
-            {restaurants.nouveaux_aujourd_hui > 0 && (
+            {safeRestaurants.nouveaux_aujourd_hui > 0 && (
               <span className="admin-stat-card__badge">
-                +{restaurants.nouveaux_aujourd_hui} aujourd'hui
+                +{safeRestaurants.nouveaux_aujourd_hui} aujourd'hui
               </span>
             )}
           </div>
@@ -136,13 +157,13 @@ function AdminDashboardPage() {
           </div>
           <div className="admin-stat-card__content">
             <p className="admin-stat-card__label">Commandes</p>
-            <h3 className="admin-stat-card__value">{commandes.total_commandes}</h3>
+            <h3 className="admin-stat-card__value">{safeCommandes.total_commandes}</h3>
             <div className="admin-stat-card__details">
-              <span>Panier moyen: {formatPrice(commandes.panier_moyen)}</span>
+              <span>Panier moyen: {formatPrice(safeCommandes.panier_moyen)}</span>
             </div>
-            {commandes.commandes_aujourd_hui > 0 && (
+            {safeCommandes.commandes_aujourd_hui > 0 && (
               <span className="admin-stat-card__badge">
-                +{commandes.commandes_aujourd_hui} aujourd'hui
+                +{safeCommandes.commandes_aujourd_hui} aujourd'hui
               </span>
             )}
           </div>
@@ -158,14 +179,14 @@ function AdminDashboardPage() {
           </div>
           <div className="admin-stat-card__content">
             <p className="admin-stat-card__label">CA Total</p>
-            <h3 className="admin-stat-card__value">{formatPrice(commandes.ca_total)}</h3>
+            <h3 className="admin-stat-card__value">{formatPrice(safeCommandes.ca_total)}</h3>
             <div className="admin-stat-card__details">
-              <span>Semaine: {formatPrice(commandes.ca_semaine)}</span>
-              <span>Mois: {formatPrice(commandes.ca_mois)}</span>
+              <span>Semaine: {formatPrice(safeCommandes.ca_semaine)}</span>
+              <span>Mois: {formatPrice(safeCommandes.ca_mois)}</span>
             </div>
-            {commandes.ca_aujourd_hui > 0 && (
+            {safeCommandes.ca_aujourd_hui > 0 && (
               <span className="admin-stat-card__badge">
-                {formatPrice(commandes.ca_aujourd_hui)} aujourd'hui
+                {formatPrice(safeCommandes.ca_aujourd_hui)} aujourd'hui
               </span>
             )}
           </div>
@@ -184,28 +205,35 @@ function AdminDashboardPage() {
             </svg>
             Répartition des commandes
           </h2>
-          <div className="admin-orders-status">
-            {commandes_par_statut.map((item) => {
-              const statusInfo = getStatusInfo(item.statut);
-              const percentage = ((item.count / commandes.total_commandes) * 100).toFixed(1);
-              return (
-                <div key={item.statut} className={`admin-orders-status__item admin-orders-status__item--${statusInfo.color}`}>
-                  <div className="admin-orders-status__header">
-                    <span className="admin-orders-status__icon">{statusInfo.icon}</span>
-                    <span className="admin-orders-status__label">{statusInfo.label}</span>
+          {safeCommandesParStatut.length === 0 ? (
+            <div className="admin-empty-section">
+              <p>Aucune commande pour le moment</p>
+            </div>
+          ) : (
+            <div className="admin-orders-status">
+              {safeCommandesParStatut.map((item) => {
+                const statusInfo = getStatusInfo(item.statut);
+                const total = safeCommandes.total_commandes || 1;
+                const percentage = ((item.count / total) * 100).toFixed(1);
+                return (
+                  <div key={item.statut} className={`admin-orders-status__item admin-orders-status__item--${statusInfo.color}`}>
+                    <div className="admin-orders-status__header">
+                      <span className="admin-orders-status__icon">{statusInfo.icon}</span>
+                      <span className="admin-orders-status__label">{statusInfo.label}</span>
+                    </div>
+                    <div className="admin-orders-status__value">{item.count}</div>
+                    <div className="admin-orders-status__bar">
+                      <div 
+                        className="admin-orders-status__bar-fill"
+                        style={{ width: `${percentage}%` }}
+                      ></div>
+                    </div>
+                    <div className="admin-orders-status__percentage">{percentage}%</div>
                   </div>
-                  <div className="admin-orders-status__value">{item.count}</div>
-                  <div className="admin-orders-status__bar">
-                    <div 
-                      className="admin-orders-status__bar-fill"
-                      style={{ width: `${percentage}%` }}
-                    ></div>
-                  </div>
-                  <div className="admin-orders-status__percentage">{percentage}%</div>
-                </div>
-              );
-            })}
-          </div>
+                );
+              })}
+            </div>
+          )}
         </div>
 
         {/* Top restaurants */}
@@ -216,27 +244,33 @@ function AdminDashboardPage() {
             </svg>
             Top 5 Restaurants
           </h2>
-          <div className="admin-top-restaurants">
-            {top_restaurants.map((restaurant, index) => (
-              <div key={restaurant.id} className="admin-top-restaurant">
-                <div className="admin-top-restaurant__rank">#{index + 1}</div>
-                <div className="admin-top-restaurant__info">
-                  <h4 className="admin-top-restaurant__name">{restaurant.nom}</h4>
-                  <p className="admin-top-restaurant__location">{restaurant.ville}</p>
-                </div>
-                <div className="admin-top-restaurant__stats">
-                  <div className="admin-top-restaurant__stat">
-                    <span className="admin-top-restaurant__stat-label">Commandes</span>
-                    <span className="admin-top-restaurant__stat-value">{restaurant.nb_commandes || 0}</span>
+          {safeTopRestaurants.length === 0 ? (
+            <div className="admin-empty-section">
+              <p>Aucun restaurant pour le moment</p>
+            </div>
+          ) : (
+            <div className="admin-top-restaurants">
+              {safeTopRestaurants.map((restaurant, index) => (
+                <div key={restaurant.id} className="admin-top-restaurant">
+                  <div className="admin-top-restaurant__rank">#{index + 1}</div>
+                  <div className="admin-top-restaurant__info">
+                    <h4 className="admin-top-restaurant__name">{restaurant.nom}</h4>
+                    <p className="admin-top-restaurant__location">{restaurant.ville}</p>
                   </div>
-                  <div className="admin-top-restaurant__stat">
-                    <span className="admin-top-restaurant__stat-label">CA</span>
-                    <span className="admin-top-restaurant__stat-value">{formatPrice(restaurant.ca)}</span>
+                  <div className="admin-top-restaurant__stats">
+                    <div className="admin-top-restaurant__stat">
+                      <span className="admin-top-restaurant__stat-label">Commandes</span>
+                      <span className="admin-top-restaurant__stat-value">{restaurant.nb_commandes || 0}</span>
+                    </div>
+                    <div className="admin-top-restaurant__stat">
+                      <span className="admin-top-restaurant__stat-label">CA</span>
+                      <span className="admin-top-restaurant__stat-value">{formatPrice(restaurant.ca)}</span>
+                    </div>
                   </div>
                 </div>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          )}
         </div>
       </div>
 
@@ -260,7 +294,7 @@ function AdminDashboardPage() {
             </svg>
             <span>Gérer les restaurants</span>
           </Link>
-          <Link to="/admin/commandes" className="admin-quick-action">
+          <Link to="/admin/orders" className="admin-quick-action">
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
               <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
               <line x1="3" y1="6" x2="21" y2="6"></line>
@@ -270,12 +304,11 @@ function AdminDashboardPage() {
           </Link>
           <button onClick={fetchDashboardStats} className="admin-quick-action">
             <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <line x1="12" y1="1" x2="12" y2="23"></line>
-              <line x1="17" y1="5" x2="9.5" y2="5"></line>
-              <line x1="9.5" y1="12" x2="14.5" y2="12"></line>
-              <line x1="14.5" y1="19" x2="6" y2="19"></line>
+              <polyline points="23 4 23 10 17 10"></polyline>
+              <polyline points="1 20 1 14 7 14"></polyline>
+              <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
             </svg>
-            <span>Exporter les rapports</span>
+            <span>Actualiser les données</span>
           </button>
         </div>
       </div>

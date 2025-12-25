@@ -47,4 +47,7 @@ router.delete('/users/:id', adminController.deleteUser);
 router.get('/restaurants', adminController.getAllRestaurantsAdmin);
 router.patch('/restaurants/:id/toggle-status', adminController.toggleRestaurantStatus);
 
+// ========== COMMANDES ==========
+router.get('/commandes', adminController.getAllCommandesAdmin);
+
 module.exports = router;

@@ -80,7 +80,7 @@ const getUserById = async (req, res) => {
     let stats = null;
     if (users[0].role === 'client') {
       const [commandeStats] = await pool.query(
-        `SELECT COUNT(*) as total_commandes, SUM(montant_total) as total_depense
+        `SELECT COUNT(*) as total_commandes, COALESCE(SUM(montant_total), 0) as total_depense
          FROM commandes WHERE utilisateur_id = ?`,
         [id]
       );
@@ -231,7 +231,7 @@ const getAllRestaurantsAdmin = async (req, res) => {
     let whereClause = 'WHERE 1=1';
     const params = [];
 
-    if (actif !== undefined) {
+    if (actif !== undefined && actif !== '') {
       whereClause += ' AND r.actif = ?';
       params.push(actif === 'true' ? 1 : 0);
     }
@@ -249,7 +249,7 @@ const getAllRestaurantsAdmin = async (req, res) => {
     const [restaurants] = await pool.query(
       `SELECT r.*, u.nom as proprietaire_nom, u.prenom as proprietaire_prenom, u.email as proprietaire_email,
               (SELECT COUNT(*) FROM commandes WHERE restaurant_id = r.id) as total_commandes,
-              (SELECT SUM(montant_total) FROM commandes WHERE restaurant_id = r.id) as ca_total
+              (SELECT COALESCE(SUM(montant_total), 0) FROM commandes WHERE restaurant_id = r.id) as ca_total
        FROM restaurants r
        LEFT JOIN utilisateurs u ON r.utilisateur_id = u.id
        ${whereClause}
@@ -292,6 +292,73 @@ const toggleRestaurantStatus = async (req, res) => {
   }
 };
 
+// ========== GESTION DES COMMANDES (ADMIN) ==========
+
+const getAllCommandesAdmin = async (req, res) => {
+  try {
+    const { page = 1, limit = 20, statut, paiement_statut, restaurant_id, search } = req.query;
+    const { limit: queryLimit, offset } = paginate(page, limit);
+
+    let whereClause = 'WHERE 1=1';
+    const params = [];
+
+    if (statut) {
+      whereClause += ' AND c.statut = ?';
+      params.push(statut);
+    }
+
+    if (paiement_statut) {
+      whereClause += ' AND c.paiement_statut = ?';
+      params.push(paiement_statut);
+    }
+
+    if (restaurant_id) {
+      whereClause += ' AND c.restaurant_id = ?';
+      params.push(restaurant_id);
+    }
+
+    if (search) {
+      whereClause += ' AND (c.numero_commande LIKE ? OR c.telephone_client LIKE ? OR c.email_client LIKE ? OR u.email LIKE ?)';
+      params.push(`%${search}%`, `%${search}%`, `%${search}%`, `%${search}%`);
+    }
+
+    const [countResult] = await pool.query(
+      `SELECT COUNT(*) as total 
+       FROM commandes c 
+       LEFT JOIN utilisateurs u ON c.utilisateur_id = u.id
+       ${whereClause}`,
+      params
+    );
+    const total = countResult[0].total;
+
+    const [commandes] = await pool.query(
+      `SELECT c.*, 
+              r.nom as restaurant_nom,
+              u.nom as client_nom, 
+              u.prenom as client_prenom, 
+              u.email as client_email
+       FROM commandes c
+       LEFT JOIN restaurants r ON c.restaurant_id = r.id
+       LEFT JOIN utilisateurs u ON c.utilisateur_id = u.id
+       ${whereClause}
+       ORDER BY c.date_commande DESC
+       LIMIT ? OFFSET ?`,
+      [...params, queryLimit, offset]
+    );
+
+    res.json({
+      success: true,
+      ...paginatedResponse(commandes, page, queryLimit, total)
+    });
+  } catch (error) {
+    console.error('Erreur récupération commandes admin:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Erreur lors de la récupération des commandes.'
+    });
+  }
+};
+
 // ========== STATISTIQUES GLOBALES ==========
 
 const getDashboardStats = async (req, res) => {
@@ -317,12 +384,12 @@ const getDashboardStats = async (req, res) => {
     const [commandeStats] = await pool.query(`
       SELECT 
         COUNT(*) as total_commandes,
-        SUM(montant_total) as ca_total,
-        AVG(montant_total) as panier_moyen,
+        COALESCE(SUM(montant_total), 0) as ca_total,
+        COALESCE(AVG(montant_total), 0) as panier_moyen,
         SUM(CASE WHEN DATE(date_commande) = CURDATE() THEN 1 ELSE 0 END) as commandes_aujourd_hui,
-        SUM(CASE WHEN DATE(date_commande) = CURDATE() THEN montant_total ELSE 0 END) as ca_aujourd_hui,
-        SUM(CASE WHEN date_commande >= DATE_SUB(CURDATE(), INTERVAL 7 DAY) THEN montant_total ELSE 0 END) as ca_semaine,
-        SUM(CASE WHEN date_commande >= DATE_SUB(CURDATE(), INTERVAL 30 DAY) THEN montant_total ELSE 0 END) as ca_mois
+        COALESCE(SUM(CASE WHEN DATE(date_commande) = CURDATE() THEN montant_total ELSE 0 END), 0) as ca_aujourd_hui,
+        COALESCE(SUM(CASE WHEN date_commande >= DATE_SUB(CURDATE(), INTERVAL 7 DAY) THEN montant_total ELSE 0 END), 0) as ca_semaine,
+        COALESCE(SUM(CASE WHEN date_commande >= DATE_SUB(CURDATE(), INTERVAL 30 DAY) THEN montant_total ELSE 0 END), 0) as ca_mois
       FROM commandes
     `);
 
@@ -331,7 +398,7 @@ const getDashboardStats = async (req, res) => {
     `);
 
     const [topRestaurants] = await pool.query(`
-      SELECT r.id, r.nom, r.ville, COUNT(c.id) as nb_commandes, SUM(c.montant_total) as ca
+      SELECT r.id, r.nom, r.ville, COUNT(c.id) as nb_commandes, COALESCE(SUM(c.montant_total), 0) as ca
       FROM restaurants r
       LEFT JOIN commandes c ON r.id = c.restaurant_id
       GROUP BY r.id
@@ -363,5 +430,6 @@ module.exports = {
   deleteUser,
   getAllRestaurantsAdmin,
   toggleRestaurantStatus,
+  getAllCommandesAdmin,
   getDashboardStats
 };

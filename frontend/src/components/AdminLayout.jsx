@@ -1,9 +1,9 @@
-import { NavLink, Outlet, useNavigate } from 'react-router-dom';
+import { NavLink, useNavigate } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
 import { logout } from '@store/slices/authSlice';
 import { useState } from 'react';
 
-function AdminLayout() {
+function AdminLayout({ children }) {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const { user } = useSelector((state) => state.auth);
@@ -50,7 +50,7 @@ function AdminLayout() {
     },
     {
       label: 'Commandes',
-      path: '/admin/commandes',
+      path: '/admin/orders',
       icon: (
         <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
           <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
@@ -156,7 +156,7 @@ function AdminLayout() {
         </header>
 
         <main className="admin-content">
-          <Outlet />
+          {children}
         </main>
       </div>
 
