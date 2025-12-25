@@ -3,7 +3,7 @@
 -- https://www.phpmyadmin.net/
 --
 -- Hôte : localhost:8889
--- Généré le : mar. 23 déc. 2025 à 22:59
+-- Généré le : jeu. 25 déc. 2025 à 18:28
 -- Version du serveur : 8.0.40
 -- Version de PHP : 8.3.14
 
@@ -77,16 +77,20 @@ CREATE TABLE `commandes` (
   `heure_prete` datetime DEFAULT NULL,
   `heure_livraison` datetime DEFAULT NULL,
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
-  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `mode_paiement` enum('sur_place','en_ligne') COLLATE utf8mb4_unicode_ci DEFAULT 'sur_place' COMMENT 'Mode de paiement choisi',
+  `paiement_statut` enum('en_attente','paye','echoue','rembourse') COLLATE utf8mb4_unicode_ci DEFAULT 'en_attente' COMMENT 'Statut du paiement',
+  `stripe_payment_intent_id` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'ID du PaymentIntent Stripe',
+  `stripe_session_id` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'ID de la session Checkout Stripe'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Déchargement des données de la table `commandes`
 --
 
-INSERT INTO `commandes` (`id`, `restaurant_id`, `utilisateur_id`, `numero_commande`, `montant_total`, `statut`, `telephone_client`, `email_client`, `token_suivi`, `notes`, `items_json`, `date_commande`, `heure_confirmation`, `heure_preparation`, `heure_prete`, `heure_livraison`, `created_at`, `updated_at`) VALUES
-(1, 1, 4, 'CMD-1703000001-0001', 24.30, 'en_attente', '0634567890', NULL, NULL, 'Sans oignon SVP', '[{\"plat_id\": 1, \"nom_plat\": \"Classic Burger\", \"quantite\": 1, \"sous_total\": 9.9, \"prix_unitaire\": 9.9}, {\"plat_id\": 2, \"nom_plat\": \"Cheese Burger\", \"quantite\": 1, \"sous_total\": 10.9, \"prix_unitaire\": 10.9}, {\"plat_id\": 7, \"nom_plat\": \"Frites Maison\", \"quantite\": 1, \"sous_total\": 3.5, \"prix_unitaire\": 3.5}]', '2025-12-23 22:51:21', NULL, NULL, NULL, NULL, '2025-12-23 22:51:21', '2025-12-23 22:51:21'),
-(2, 2, 5, 'CMD-1703000002-0002', 29.30, 'confirmee', '0645678901', NULL, NULL, NULL, '[{\"plat_id\": 14, \"nom_plat\": \"Margherita\", \"quantite\": 1, \"sous_total\": 9.5, \"prix_unitaire\": 9.5}, {\"plat_id\": 16, \"nom_plat\": \"Quatre Fromages\", \"quantite\": 1, \"sous_total\": 13.9, \"prix_unitaire\": 13.9}, {\"plat_id\": 22, \"nom_plat\": \"Tiramisu Maison\", \"quantite\": 1, \"sous_total\": 6.5, \"prix_unitaire\": 6.5}]', '2025-12-23 21:51:21', NULL, NULL, NULL, NULL, '2025-12-23 22:51:21', '2025-12-23 22:51:21');
+INSERT INTO `commandes` (`id`, `restaurant_id`, `utilisateur_id`, `numero_commande`, `montant_total`, `statut`, `telephone_client`, `email_client`, `token_suivi`, `notes`, `items_json`, `date_commande`, `heure_confirmation`, `heure_preparation`, `heure_prete`, `heure_livraison`, `created_at`, `updated_at`, `mode_paiement`, `paiement_statut`, `stripe_payment_intent_id`, `stripe_session_id`) VALUES
+(1, 1, 4, 'CMD-1703000001-0001', 24.30, 'en_attente', '0634567890', NULL, NULL, 'Sans oignon SVP', '[{\"plat_id\": 1, \"nom_plat\": \"Classic Burger\", \"quantite\": 1, \"sous_total\": 9.9, \"prix_unitaire\": 9.9}, {\"plat_id\": 2, \"nom_plat\": \"Cheese Burger\", \"quantite\": 1, \"sous_total\": 10.9, \"prix_unitaire\": 10.9}, {\"plat_id\": 7, \"nom_plat\": \"Frites Maison\", \"quantite\": 1, \"sous_total\": 3.5, \"prix_unitaire\": 3.5}]', '2025-12-23 22:51:21', NULL, NULL, NULL, NULL, '2025-12-23 22:51:21', '2025-12-23 22:51:21', 'sur_place', 'en_attente', NULL, NULL),
+(2, 2, 5, 'CMD-1703000002-0002', 29.30, 'confirmee', '0645678901', NULL, NULL, NULL, '[{\"plat_id\": 14, \"nom_plat\": \"Margherita\", \"quantite\": 1, \"sous_total\": 9.5, \"prix_unitaire\": 9.5}, {\"plat_id\": 16, \"nom_plat\": \"Quatre Fromages\", \"quantite\": 1, \"sous_total\": 13.9, \"prix_unitaire\": 13.9}, {\"plat_id\": 22, \"nom_plat\": \"Tiramisu Maison\", \"quantite\": 1, \"sous_total\": 6.5, \"prix_unitaire\": 6.5}]', '2025-12-23 21:51:21', NULL, NULL, NULL, NULL, '2025-12-23 22:51:21', '2025-12-23 22:51:21', 'sur_place', 'en_attente', NULL, NULL);
 
 -- --------------------------------------------------------
 
@@ -178,16 +182,20 @@ CREATE TABLE `restaurants` (
   `frais_livraison` decimal(10,2) DEFAULT '0.00',
   `actif` tinyint(1) DEFAULT '1',
   `created_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP,
-  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP
+  `updated_at` timestamp NULL DEFAULT CURRENT_TIMESTAMP ON UPDATE CURRENT_TIMESTAMP,
+  `paiement_sur_place` tinyint(1) DEFAULT '1' COMMENT 'Accepte le paiement en face à face (espèces/CB sur place)',
+  `paiement_en_ligne` tinyint(1) DEFAULT '0' COMMENT 'Accepte le paiement en ligne par CB',
+  `stripe_account_id` varchar(255) COLLATE utf8mb4_unicode_ci DEFAULT NULL COMMENT 'ID du compte Stripe Connect du restaurant',
+  `stripe_onboarding_complete` tinyint(1) DEFAULT '0' COMMENT 'Onboarding Stripe terminé'
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_unicode_ci;
 
 --
 -- Déchargement des données de la table `restaurants`
 --
 
-INSERT INTO `restaurants` (`id`, `utilisateur_id`, `nom`, `description`, `adresse`, `ville`, `code_postal`, `telephone`, `email`, `type_cuisine`, `horaires_ouverture`, `image`, `delai_preparation`, `frais_livraison`, `actif`, `created_at`, `updated_at`) VALUES
-(1, 2, 'Le Burger Gourmand', 'Les meilleurs burgers artisanaux de la ville', '45 Avenue de la République', 'Lyon', '69003', '0478123456', 'contact@burgergourmand.fr', 'Burgers', '{\"jeudi\": {\"ouvert\": true, \"horaires\": [{\"fin\": \"14:30\", \"debut\": \"11:30\"}, {\"fin\": \"22:30\", \"debut\": \"18:00\"}]}, \"lundi\": {\"ouvert\": true, \"horaires\": [{\"fin\": \"14:30\", \"debut\": \"11:30\"}, {\"fin\": \"22:30\", \"debut\": \"18:00\"}]}, \"mardi\": {\"ouvert\": true, \"horaires\": [{\"fin\": \"14:30\", \"debut\": \"11:30\"}, {\"fin\": \"22:30\", \"debut\": \"18:00\"}]}, \"samedi\": {\"ouvert\": true, \"horaires\": [{\"fin\": \"23:30\", \"debut\": \"12:00\"}]}, \"dimanche\": {\"ouvert\": true, \"horaires\": [{\"fin\": \"21:00\", \"debut\": \"12:00\"}]}, \"mercredi\": {\"ouvert\": true, \"horaires\": [{\"fin\": \"14:30\", \"debut\": \"11:30\"}, {\"fin\": \"22:30\", \"debut\": \"18:00\"}]}, \"vendredi\": {\"ouvert\": true, \"horaires\": [{\"fin\": \"14:30\", \"debut\": \"11:30\"}, {\"fin\": \"23:00\", \"debut\": \"18:00\"}]}}', NULL, 25, 2.50, 1, '2025-12-23 22:51:21', '2025-12-23 22:51:21'),
-(2, 3, 'Pizza Bella', 'Pizzeria italienne authentique avec four à bois', '12 Rue des Italiens', 'Lyon', '69001', '0478234567', 'pizzabella@gmail.com', 'Italien', '{\"jeudi\": {\"ouvert\": true, \"horaires\": [{\"fin\": \"14:30\", \"debut\": \"11:30\"}, {\"fin\": \"22:30\", \"debut\": \"18:00\"}]}, \"lundi\": {\"ouvert\": true, \"horaires\": [{\"fin\": \"14:30\", \"debut\": \"11:30\"}, {\"fin\": \"22:30\", \"debut\": \"18:00\"}]}, \"mardi\": {\"ouvert\": true, \"horaires\": [{\"fin\": \"14:30\", \"debut\": \"11:30\"}, {\"fin\": \"22:30\", \"debut\": \"18:00\"}]}, \"samedi\": {\"ouvert\": true, \"horaires\": [{\"fin\": \"23:30\", \"debut\": \"12:00\"}]}, \"dimanche\": {\"ouvert\": true, \"horaires\": [{\"fin\": \"21:00\", \"debut\": \"12:00\"}]}, \"mercredi\": {\"ouvert\": true, \"horaires\": [{\"fin\": \"14:30\", \"debut\": \"11:30\"}, {\"fin\": \"22:30\", \"debut\": \"18:00\"}]}, \"vendredi\": {\"ouvert\": true, \"horaires\": [{\"fin\": \"14:30\", \"debut\": \"11:30\"}, {\"fin\": \"23:00\", \"debut\": \"18:00\"}]}}', NULL, 30, 3.00, 1, '2025-12-23 22:51:21', '2025-12-23 22:51:21');
+INSERT INTO `restaurants` (`id`, `utilisateur_id`, `nom`, `description`, `adresse`, `ville`, `code_postal`, `telephone`, `email`, `type_cuisine`, `horaires_ouverture`, `image`, `delai_preparation`, `frais_livraison`, `actif`, `created_at`, `updated_at`, `paiement_sur_place`, `paiement_en_ligne`, `stripe_account_id`, `stripe_onboarding_complete`) VALUES
+(1, 2, 'Le Burger Gourmand', 'Les meilleurs burgers artisanaux de la ville', '45 Avenue de la République', 'Lyon', '69003', '0478123456', 'contact@burgergourmand.fr', 'Burgers', '{\"jeudi\": {\"ouvert\": true, \"horaires\": [{\"fin\": \"14:30\", \"debut\": \"11:30\"}, {\"fin\": \"22:30\", \"debut\": \"18:00\"}]}, \"lundi\": {\"ouvert\": true, \"horaires\": [{\"fin\": \"14:30\", \"debut\": \"11:30\"}, {\"fin\": \"22:30\", \"debut\": \"18:00\"}]}, \"mardi\": {\"ouvert\": true, \"horaires\": [{\"fin\": \"14:30\", \"debut\": \"11:30\"}, {\"fin\": \"22:30\", \"debut\": \"18:00\"}]}, \"samedi\": {\"ouvert\": true, \"horaires\": [{\"fin\": \"23:30\", \"debut\": \"12:00\"}]}, \"dimanche\": {\"ouvert\": true, \"horaires\": [{\"fin\": \"21:00\", \"debut\": \"12:00\"}]}, \"mercredi\": {\"ouvert\": true, \"horaires\": [{\"fin\": \"14:30\", \"debut\": \"11:30\"}, {\"fin\": \"22:30\", \"debut\": \"18:00\"}]}, \"vendredi\": {\"ouvert\": true, \"horaires\": [{\"fin\": \"14:30\", \"debut\": \"11:30\"}, {\"fin\": \"23:00\", \"debut\": \"18:00\"}]}}', NULL, 25, 2.50, 1, '2025-12-23 22:51:21', '2025-12-23 22:51:21', 1, 0, NULL, 0),
+(2, 3, 'Pizza Bella', 'Pizzeria italienne authentique avec four à bois', '12 Rue des Italiens', 'Lyon', '69001', '0478234567', 'pizzabella@gmail.com', 'Italien', '{\"jeudi\": {\"ouvert\": true, \"horaires\": [{\"fin\": \"14:30\", \"debut\": \"11:30\"}, {\"fin\": \"22:30\", \"debut\": \"18:00\"}]}, \"lundi\": {\"ouvert\": true, \"horaires\": [{\"fin\": \"14:30\", \"debut\": \"11:30\"}, {\"fin\": \"22:30\", \"debut\": \"18:00\"}]}, \"mardi\": {\"ouvert\": true, \"horaires\": [{\"fin\": \"14:30\", \"debut\": \"11:30\"}, {\"fin\": \"22:30\", \"debut\": \"18:00\"}]}, \"samedi\": {\"ouvert\": true, \"horaires\": [{\"fin\": \"23:30\", \"debut\": \"12:00\"}]}, \"dimanche\": {\"ouvert\": true, \"horaires\": [{\"fin\": \"21:00\", \"debut\": \"12:00\"}]}, \"mercredi\": {\"ouvert\": true, \"horaires\": [{\"fin\": \"14:30\", \"debut\": \"11:30\"}, {\"fin\": \"22:30\", \"debut\": \"18:00\"}]}, \"vendredi\": {\"ouvert\": true, \"horaires\": [{\"fin\": \"14:30\", \"debut\": \"11:30\"}, {\"fin\": \"23:00\", \"debut\": \"18:00\"}]}}', NULL, 30, 3.00, 1, '2025-12-23 22:51:21', '2025-12-23 22:51:21', 1, 0, NULL, 0);
 
 -- --------------------------------------------------------
 
@@ -243,7 +251,9 @@ ALTER TABLE `commandes`
   ADD KEY `idx_statut` (`statut`),
   ADD KEY `idx_date` (`date_commande`),
   ADD KEY `idx_token_suivi` (`token_suivi`),
-  ADD KEY `idx_email_client` (`email_client`);
+  ADD KEY `idx_email_client` (`email_client`),
+  ADD KEY `idx_mode_paiement` (`mode_paiement`),
+  ADD KEY `idx_paiement_statut` (`paiement_statut`);
 
 --
 -- Index pour la table `commande_items`
@@ -271,7 +281,8 @@ ALTER TABLE `restaurants`
   ADD KEY `idx_utilisateur` (`utilisateur_id`),
   ADD KEY `idx_actif` (`actif`),
   ADD KEY `idx_ville` (`ville`),
-  ADD KEY `idx_type_cuisine` (`type_cuisine`);
+  ADD KEY `idx_type_cuisine` (`type_cuisine`),
+  ADD KEY `idx_paiement_en_ligne` (`paiement_en_ligne`);
 
 --
 -- Index pour la table `utilisateurs`
