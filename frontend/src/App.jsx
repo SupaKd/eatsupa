@@ -5,21 +5,21 @@ import './styles/main.scss';
 // Layout
 import Header from '@components/Header';
 import Footer from '@components/Footer';
-import CartSidebar from '@components/CartSidebar';
+import CartSidebar from '@components/client/CartSidebar';
 
 // Pages publiques
 import HomePage from '@pages/HomePage';
 import RestaurantPage from '@pages/RestaurantPage';
-import CheckoutPage from '@pages/CheckoutPage';
-import OrderConfirmationPage from '@pages/OrderConfirmationPage';
-import OrderTrackingPage from '@pages/OrderTrackingPage';
+import CheckoutPage from '@pages/client/CheckoutPage';
+import OrderConfirmationPage from '@pages/client/OrderConfirmationPage';
+import OrderTrackingPage from '@pages/client/OrderTrackingPage';
 
 // Auth
 import LoginPage from '@pages/LoginPage';
 import RegisterPage from '@pages/RegisterPage';
 
 // Pages utilisateur
-import MyOrdersPage from '@pages/MyOrdersPage';
+import MyOrdersPage from '@pages/client/MyOrdersPage';
 
 function App() {
   const [isCartOpen, setIsCartOpen] = useState(false);

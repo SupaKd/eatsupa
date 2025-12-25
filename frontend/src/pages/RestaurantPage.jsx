@@ -3,7 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { restaurantAPI } from '@services/api';
 import { selectCartItemsCount, selectCartRestaurant } from '@store/slices/cartSlice';
-import PlatCard from '@components/PlatCard';
+import PlatCard from '@components/client/PlatCard';
 
 function RestaurantPage() {
   const { id } = useParams();
