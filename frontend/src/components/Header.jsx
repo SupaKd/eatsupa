@@ -28,7 +28,7 @@ function Header({ onCartClick }) {
         {/* Logo */}
         <Link to="/" className="header__logo">
           <span className="header__logo-icon">🍽️</span>
-          <span className="header__logo-text">LocalFood</span>
+          <span className="header__logo-text">SupaFood</span>
         </Link>
 
         {/* Navigation Desktop */}
