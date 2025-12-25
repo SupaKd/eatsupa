@@ -17,6 +17,7 @@ import OrderTrackingPage from '@pages/client/OrderTrackingPage';
 import LoginPage from '@pages/client/LoginPage';
 import RegisterPage from '@pages/client/RegisterPage';
 import MyOrdersPage from '@pages/client/MyOrdersPage';
+import ProfilePage from '@pages/ProfilePage';
 
 // Pages Admin
 import AdminDashboardPage from '@pages/admin/AdminDashboardPage';
@@ -74,6 +75,14 @@ function App() {
                   <Route path="/register" element={<RegisterPage />} />
                   
                   {/* Pages utilisateur protégées */}
+                  <Route
+                    path="/profil"
+                    element={
+                      <ProtectedRoute allowedRoles={['client', 'restaurateur', 'admin']}>
+                        <ProfilePage />
+                      </ProtectedRoute>
+                    }
+                  />
                   <Route
                     path="/mes-commandes"
                     element={
