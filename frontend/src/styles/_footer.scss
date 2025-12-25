@@ -1,0 +1,123 @@
+.footer {
+    background-color: #111827;
+    color: #9ca3af;
+    padding: 3rem 0 0;
+    margin-top: auto;
+  
+    &__container {
+      max-width: 1280px;
+      margin: 0 auto;
+      padding: 0 1rem;
+    }
+  
+    &__grid {
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 2rem;
+      padding-bottom: 2rem;
+  
+      @media (max-width: 1024px) {
+        grid-template-columns: repeat(2, 1fr);
+      }
+  
+      @media (max-width: 640px) {
+        grid-template-columns: 1fr;
+      }
+    }
+  
+    &__brand {
+      @media (max-width: 1024px) {
+        grid-column: span 2;
+      }
+  
+      @media (max-width: 640px) {
+        grid-column: span 1;
+      }
+    }
+  
+    &__logo {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-weight: 700;
+      font-size: 1.25rem;
+      color: #fff;
+      margin-bottom: 1rem;
+  
+      &-icon {
+        font-size: 1.5rem;
+      }
+  
+      &-text {
+        background: linear-gradient(135deg, #f97316, #ea580c);
+        -webkit-background-clip: text;
+        -webkit-text-fill-color: transparent;
+        background-clip: text;
+      }
+    }
+  
+    &__description {
+      font-size: 0.9375rem;
+      line-height: 1.6;
+      max-width: 280px;
+    }
+  
+    &__title {
+      color: #fff;
+      font-size: 1rem;
+      font-weight: 600;
+      margin-bottom: 1rem;
+    }
+  
+    &__list {
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+  
+      a {
+        font-size: 0.9375rem;
+        transition: color 0.2s;
+  
+        &:hover {
+          color: #f97316;
+        }
+      }
+    }
+  
+    &__bottom {
+      display: flex;
+      align-items: center;
+      justify-content: space-between;
+      gap: 1rem;
+      padding: 1.5rem 0;
+      border-top: 1px solid #1f2937;
+  
+      @media (max-width: 640px) {
+        flex-direction: column;
+        text-align: center;
+      }
+    }
+  
+    &__copyright {
+      font-size: 0.875rem;
+    }
+  
+    &__legal {
+      display: flex;
+      align-items: center;
+      gap: 1.5rem;
+  
+      a {
+        font-size: 0.875rem;
+        transition: color 0.2s;
+  
+        &:hover {
+          color: #f97316;
+        }
+      }
+  
+      @media (max-width: 640px) {
+        gap: 1rem;
+      }
+    }
+  }
