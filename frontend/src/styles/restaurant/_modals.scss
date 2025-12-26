@@ -1,0 +1,447 @@
+// ========================================
+// RESTAURANT DASHBOARD - MODALS
+// Shared modal styles
+// ========================================
+
+// ----------------------------------------
+// MODAL OVERLAY
+// ----------------------------------------
+.modal-overlay {
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    z-index: 1000;
+    padding: 1rem;
+  }
+  
+  // ----------------------------------------
+  // MODAL CONTAINER
+  // ----------------------------------------
+  .modal {
+    background: white;
+    border-radius: 16px;
+    width: 100%;
+    max-width: 500px;
+    max-height: 90vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  
+    &--large {
+      max-width: 550px;
+    }
+  
+    &--xl {
+      max-width: 700px;
+    }
+  
+    &__header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      padding: 1.5rem;
+      border-bottom: 1px solid #f0f0f0;
+  
+      h2 {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: #212529;
+        margin-bottom: 0.25rem;
+      }
+  
+      p {
+        font-size: 0.875rem;
+        color: #6c757d;
+      }
+    }
+  
+    &__close {
+      background: none;
+      border: none;
+      padding: 0.5rem;
+      cursor: pointer;
+      color: #adb5bd;
+      transition: color 0.2s ease;
+  
+      &:hover {
+        color: #495057;
+      }
+    }
+  
+    &__content {
+      padding: 1.5rem;
+      overflow-y: auto;
+    }
+  
+    &__form {
+      padding: 1.5rem;
+      overflow-y: auto;
+    }
+  
+    &__error {
+      margin: 1rem 1.5rem 0;
+      padding: 0.75rem 1rem;
+      background: #f8d7da;
+      color: #842029;
+      border-radius: 8px;
+      font-size: 0.875rem;
+    }
+  
+    &__row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 1rem;
+  
+      @media (max-width: 480px) {
+        grid-template-columns: 1fr;
+      }
+    }
+  
+    &__field {
+      margin-bottom: 1rem;
+  
+      &--small {
+        max-width: 150px;
+      }
+  
+      label {
+        display: block;
+        font-size: 0.875rem;
+        font-weight: 500;
+        color: #495057;
+        margin-bottom: 0.5rem;
+      }
+  
+      input,
+      textarea,
+      select {
+        width: 100%;
+        padding: 0.625rem 0.875rem;
+        border: 1px solid #dee2e6;
+        border-radius: 8px;
+        font-size: 0.9375rem;
+        color: #212529;
+        transition: border-color 0.2s ease;
+  
+        &:focus {
+          outline: none;
+          border-color: #667eea;
+          box-shadow: 0 0 0 3px rgba(102, 126, 234, 0.1);
+        }
+  
+        &::placeholder {
+          color: #adb5bd;
+        }
+      }
+  
+      textarea {
+        resize: vertical;
+      }
+  
+      &--checkbox {
+        label {
+          display: flex;
+          align-items: center;
+          gap: 0.75rem;
+          cursor: pointer;
+        }
+  
+        input[type="checkbox"] {
+          width: 18px;
+          height: 18px;
+          accent-color: #667eea;
+        }
+      }
+    }
+  
+    &__image-preview {
+      margin-top: 0.75rem;
+      width: 100%;
+      max-width: 200px;
+      border-radius: 8px;
+      overflow: hidden;
+  
+      img {
+        width: 100%;
+        height: auto;
+      }
+    }
+  
+    &__footer,
+    &__actions {
+      display: flex;
+      gap: 1rem;
+      padding: 1.5rem;
+      border-top: 1px solid #f0f0f0;
+    }
+  
+    &__btn {
+      flex: 1;
+      padding: 0.75rem 1.5rem;
+      border-radius: 8px;
+      font-size: 0.875rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+  
+      &--primary {
+        background: #667eea;
+        border: none;
+        color: white;
+  
+        &:hover:not(:disabled) {
+          background: #5568d3;
+        }
+  
+        &:disabled {
+          opacity: 0.6;
+          cursor: not-allowed;
+        }
+      }
+  
+      &--secondary {
+        background: #f8f9fa;
+        border: 1px solid #dee2e6;
+        color: #495057;
+  
+        &:hover {
+          background: #e9ecef;
+        }
+      }
+  
+      &--danger {
+        background: white;
+        border: 1px solid #dc3545;
+        color: #dc3545;
+  
+        &:hover:not(:disabled) {
+          background: #dc3545;
+          color: white;
+        }
+      }
+    }
+  }
+  
+  // ----------------------------------------
+  // ORDER MODAL SPECIFIC
+  // ----------------------------------------
+  .order-modal {
+    background: white;
+    border-radius: 16px;
+    width: 100%;
+    max-width: 500px;
+    max-height: 90vh;
+    overflow: hidden;
+    display: flex;
+    flex-direction: column;
+  
+    &__header {
+      display: flex;
+      justify-content: space-between;
+      align-items: flex-start;
+      padding: 1.5rem;
+      border-bottom: 1px solid #f0f0f0;
+  
+      h2 {
+        font-size: 1.25rem;
+        font-weight: 700;
+        color: #212529;
+        margin-bottom: 0.25rem;
+      }
+    }
+  
+    &__close {
+      background: none;
+      border: none;
+      padding: 0.5rem;
+      cursor: pointer;
+      color: #adb5bd;
+      transition: color 0.2s ease;
+  
+      &:hover {
+        color: #495057;
+      }
+    }
+  
+    &__content {
+      padding: 1.5rem;
+      overflow-y: auto;
+    }
+  
+    &__status {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.5rem 1rem;
+      border-radius: 20px;
+      font-weight: 600;
+      font-size: 0.875rem;
+      margin-bottom: 1.5rem;
+  
+      &--yellow {
+        background: #fff3cd;
+        color: #856404;
+      }
+  
+      &--blue {
+        background: #cfe2ff;
+        color: #084298;
+      }
+  
+      &--orange {
+        background: #ffe5d0;
+        color: #984c0c;
+      }
+  
+      &--green {
+        background: #d4edda;
+        color: #155724;
+      }
+  
+      &--red {
+        background: #f8d7da;
+        color: #721c24;
+      }
+    }
+  
+    &__section {
+      margin-bottom: 1.5rem;
+  
+      h3 {
+        font-size: 0.75rem;
+        font-weight: 600;
+        text-transform: uppercase;
+        letter-spacing: 0.05em;
+        color: #6c757d;
+        margin-bottom: 0.75rem;
+      }
+    }
+  
+    &__client-info,
+    &__payment-info {
+      background: #f8f9fa;
+      padding: 1rem;
+      border-radius: 8px;
+    }
+  
+    &__client-row {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      font-size: 0.875rem;
+      color: #495057;
+  
+      & + & {
+        margin-top: 0.5rem;
+      }
+  
+      a {
+        color: #667eea;
+        font-weight: 500;
+  
+        &:hover {
+          text-decoration: underline;
+        }
+      }
+    }
+  
+    &__items {
+      border: 1px solid #e9ecef;
+      border-radius: 8px;
+      overflow: hidden;
+    }
+  
+    &__item {
+      display: flex;
+      align-items: center;
+      gap: 0.75rem;
+      padding: 0.75rem 1rem;
+      border-bottom: 1px solid #e9ecef;
+  
+      &:last-child {
+        border-bottom: none;
+      }
+  
+      &-qty {
+        font-weight: 600;
+        color: #667eea;
+        min-width: 24px;
+      }
+  
+      &-name {
+        flex: 1;
+        color: #495057;
+      }
+  
+      &-price {
+        font-weight: 500;
+        color: #212529;
+      }
+    }
+  
+    &__total {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding: 1rem;
+      background: #f8f9fa;
+      border-radius: 8px;
+      margin-top: 0.75rem;
+      font-weight: 700;
+      font-size: 1.125rem;
+    }
+  
+    &__notes {
+      background: #fff3cd;
+      color: #856404;
+      padding: 1rem;
+      border-radius: 8px;
+      font-size: 0.875rem;
+    }
+  
+    &__footer {
+      display: flex;
+      gap: 1rem;
+      padding: 1.5rem;
+      border-top: 1px solid #f0f0f0;
+    }
+  
+    &__btn {
+      flex: 1;
+      padding: 0.75rem 1.5rem;
+      border-radius: 8px;
+      font-size: 0.875rem;
+      font-weight: 600;
+      cursor: pointer;
+      transition: all 0.2s ease;
+  
+      &--danger {
+        background: white;
+        border: 1px solid #dc3545;
+        color: #dc3545;
+  
+        &:hover:not(:disabled) {
+          background: #dc3545;
+          color: white;
+        }
+      }
+  
+      &--primary {
+        background: #667eea;
+        border: none;
+        color: white;
+  
+        &:hover:not(:disabled) {
+          background: #5568d3;
+        }
+  
+        &:disabled {
+          opacity: 0.6;
+          cursor: not-allowed;
+        }
+      }
+    }
+  }

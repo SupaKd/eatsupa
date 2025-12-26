@@ -1,0 +1,371 @@
+// ========================================
+// RESTAURANT DASHBOARD - ORDERS PAGE
+// Orders management / Kanban board styles
+// ========================================
+
+// ----------------------------------------
+// PAGE STRUCTURE
+// ----------------------------------------
+.restaurant-orders {
+    &__loading {
+      display: flex;
+      flex-direction: column;
+      align-items: center;
+      justify-content: center;
+      min-height: 60vh;
+      color: #6c757d;
+  
+      &-spinner {
+        width: 40px;
+        height: 40px;
+        border: 4px solid #f8f9fa;
+        border-top-color: #667eea;
+        border-radius: 50%;
+        animation: spin 0.8s linear infinite;
+        margin-bottom: 1rem;
+      }
+    }
+  
+    &__header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 1.5rem;
+      gap: 1rem;
+  
+      @media (max-width: 640px) {
+        flex-direction: column;
+        align-items: flex-start;
+      }
+  
+      h1 {
+        font-size: 1.5rem;
+        font-weight: 700;
+        color: #212529;
+        margin-bottom: 0.25rem;
+      }
+  
+      p {
+        font-size: 0.875rem;
+        color: #6c757d;
+      }
+    }
+  
+    &__refresh {
+      display: inline-flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 0.625rem 1rem;
+      background: #f8f9fa;
+      border: 1px solid #dee2e6;
+      border-radius: 8px;
+      font-size: 0.875rem;
+      font-weight: 500;
+      color: #495057;
+      cursor: pointer;
+      transition: all 0.2s ease;
+  
+      &:hover:not(:disabled) {
+        background: #e9ecef;
+        border-color: #adb5bd;
+      }
+    }
+  
+    &__error {
+      text-align: center;
+      padding: 2rem;
+      background: #fee;
+      border-radius: 8px;
+      color: #dc3545;
+  
+      button {
+        margin-top: 1rem;
+        padding: 0.625rem 1.25rem;
+        background: #667eea;
+        color: white;
+        border: none;
+        border-radius: 8px;
+        font-weight: 600;
+        cursor: pointer;
+  
+        &:hover {
+          background: #5568d3;
+        }
+      }
+    }
+  
+    &__empty,
+    &__list {
+      display: flex;
+      flex-direction: column;
+      gap: 1rem;
+    }
+  }
+  
+  // ----------------------------------------
+  // FILTERS
+  // ----------------------------------------
+  .restaurant-orders__filters {
+    display: flex;
+    gap: 0.5rem;
+    flex-wrap: wrap;
+    margin-bottom: 1.5rem;
+  }
+  
+  .restaurant-orders__filter {
+    padding: 0.5rem 1rem;
+    background: white;
+    border: 1px solid #dee2e6;
+    border-radius: 20px;
+    font-size: 0.875rem;
+    font-weight: 500;
+    color: #495057;
+    cursor: pointer;
+    transition: all 0.2s ease;
+  
+    &:hover {
+      border-color: #667eea;
+      color: #667eea;
+    }
+  
+    &--active {
+      background: #667eea;
+      border-color: #667eea;
+      color: white;
+    }
+  }
+  
+  // ----------------------------------------
+  // KANBAN BOARD
+  // ----------------------------------------
+  .restaurant-orders__kanban {
+    display: grid;
+    grid-template-columns: repeat(4, 1fr);
+    gap: 1rem;
+    min-height: 500px;
+  
+    @media (max-width: 1200px) {
+      grid-template-columns: repeat(2, 1fr);
+    }
+  
+    @media (max-width: 768px) {
+      grid-template-columns: 1fr;
+    }
+  }
+  
+  .restaurant-orders__column {
+    background: #f8f9fa;
+    border-radius: 12px;
+    overflow: hidden;
+  
+    &-header {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      padding: 1rem;
+      font-weight: 600;
+  
+      &--yellow {
+        background: linear-gradient(135deg, #ffeeba, #fff3cd);
+        color: #856404;
+      }
+  
+      &--blue {
+        background: linear-gradient(135deg, #b8daff, #cce5ff);
+        color: #004085;
+      }
+  
+      &--orange {
+        background: linear-gradient(135deg, #ffeeba, #ffe5d0);
+        color: #984c0c;
+      }
+  
+      &--green {
+        background: linear-gradient(135deg, #c3e6cb, #d4edda);
+        color: #155724;
+      }
+    }
+  
+    &-icon {
+      font-size: 1.25rem;
+    }
+  
+    &-title {
+      flex: 1;
+    }
+  
+    &-count {
+      background: rgba(0, 0, 0, 0.1);
+      padding: 0.125rem 0.5rem;
+      border-radius: 10px;
+      font-size: 0.75rem;
+    }
+  
+    &-content {
+      padding: 0.75rem;
+      display: flex;
+      flex-direction: column;
+      gap: 0.75rem;
+      max-height: 600px;
+      overflow-y: auto;
+    }
+  
+    &-empty {
+      text-align: center;
+      padding: 2rem 1rem;
+      color: #adb5bd;
+      font-size: 0.875rem;
+    }
+  }
+  
+  // ----------------------------------------
+  // ORDER CARD (KANBAN)
+  // ----------------------------------------
+  .order-card-restaurant {
+    background: white;
+    border-radius: 10px;
+    padding: 1rem;
+    box-shadow: 0 1px 3px rgba(0, 0, 0, 0.1);
+    transition: all 0.2s ease;
+  
+    &:hover {
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15);
+    }
+  
+    &__header {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      margin-bottom: 0.75rem;
+    }
+  
+    &__number {
+      font-family: 'Monaco', 'Courier New', monospace;
+      font-size: 0.8125rem;
+      font-weight: 600;
+      color: #212529;
+      background: #f8f9fa;
+      padding: 0.25rem 0.5rem;
+      border-radius: 4px;
+    }
+  
+    &__time {
+      font-size: 0.75rem;
+      color: #6c757d;
+    }
+  
+    &__client {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+      font-size: 0.875rem;
+      color: #495057;
+      margin-bottom: 0.75rem;
+  
+      a {
+        color: #667eea;
+        font-weight: 500;
+  
+        &:hover {
+          text-decoration: underline;
+        }
+      }
+    }
+  
+    &__items {
+      margin-bottom: 0.75rem;
+    }
+  
+    &__item {
+      display: flex;
+      gap: 0.5rem;
+      font-size: 0.875rem;
+      padding: 0.25rem 0;
+  
+      &-qty {
+        font-weight: 600;
+        color: #667eea;
+        min-width: 24px;
+      }
+  
+      &-name {
+        color: #495057;
+      }
+    }
+  
+    &__notes {
+      font-size: 0.8125rem;
+      color: #856404;
+      background: #fff3cd;
+      padding: 0.5rem;
+      border-radius: 6px;
+      margin-bottom: 0.75rem;
+    }
+  
+    &__footer {
+      display: flex;
+      justify-content: space-between;
+      align-items: center;
+      padding-top: 0.75rem;
+      border-top: 1px solid #f0f0f0;
+      margin-bottom: 0.75rem;
+    }
+  
+    &__payment {
+      display: flex;
+      align-items: center;
+      gap: 0.5rem;
+    }
+  
+    &__total {
+      font-size: 1rem;
+      font-weight: 700;
+      color: #212529;
+    }
+  
+    &__actions {
+      display: flex;
+      gap: 0.5rem;
+    }
+  
+    &__btn {
+      flex: 1;
+      padding: 0.5rem 0.75rem;
+      border-radius: 6px;
+      font-size: 0.8125rem;
+      font-weight: 500;
+      cursor: pointer;
+      transition: all 0.2s ease;
+  
+      &--secondary {
+        background: #f8f9fa;
+        border: 1px solid #dee2e6;
+        color: #495057;
+  
+        &:hover {
+          background: #e9ecef;
+        }
+      }
+  
+      &--primary {
+        background: #667eea;
+        border: none;
+        color: white;
+  
+        &:hover:not(:disabled) {
+          background: #5a6fd6;
+        }
+  
+        &:disabled {
+          opacity: 0.6;
+          cursor: not-allowed;
+        }
+      }
+    }
+  }
+  
+  @keyframes spin {
+    to {
+      transform: rotate(360deg);
+    }
+  }

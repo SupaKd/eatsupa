@@ -15,5 +15,11 @@
 @import "client/ordertracking";
 @import "admin";
 @import "profil";
-@import "restaurantdashboard";
-@import "client/restaurantpages"
+
+@import "restaurant/layout";
+@import "restaurant/menu";
+@import "restaurant/orders";
+@import "restaurant/payment";
+@import "restaurant/settings";
+@import "restaurant/dashboard";
+@import "restaurant/components";

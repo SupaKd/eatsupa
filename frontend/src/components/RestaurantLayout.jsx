@@ -145,7 +145,7 @@ function RestaurantLayout({ children }) {
 
       {/* Main content */}
       <div className="restaurant-main">
-        <header className="restaurant-header">
+        <header className="rest-header">
           <button
             className="restaurant-header__burger"
             onClick={() => setSidebarOpen(true)}

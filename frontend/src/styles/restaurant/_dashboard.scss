@@ -1,265 +1,12 @@
 // ========================================
-// RESTAURANT DASHBOARD STYLES
+// RESTAURANT DASHBOARD - DASHBOARD PAGE
+// Main dashboard / home page styles
 // ========================================
 
-// Layout
-.restaurant-layout {
-    display: flex;
-    min-height: 100vh;
-    background-color: #f8f9fa;
-  }
-  
-  // Sidebar
-  .restaurant-sidebar {
-    width: 280px;
-    background: white;
-    border-right: 1px solid #e9ecef;
-    display: flex;
-    flex-direction: column;
-    position: fixed;
-    height: 100vh;
-    left: 0;
-    top: 0;
-    z-index: 100;
-    transition: transform 0.3s ease;
-  
-    @media (max-width: 968px) {
-      transform: translateX(-100%);
-  
-      &--open {
-        transform: translateX(0);
-      }
-    }
-  
-    &__header {
-      padding: 1.5rem;
-      border-bottom: 1px solid #e9ecef;
-      display: flex;
-      align-items: center;
-      justify-content: space-between;
-    }
-  
-    &__logo {
-      display: flex;
-      align-items: center;
-      gap: 0.75rem;
-      font-weight: 700;
-      font-size: 1.25rem;
-      color: #212529;
-      text-decoration: none;
-  
-      &-icon {
-        font-size: 1.5rem;
-      }
-    }
-  
-    &__close {
-      display: none;
-      background: none;
-      border: none;
-      padding: 0.5rem;
-      cursor: pointer;
-      color: #6c757d;
-  
-      @media (max-width: 968px) {
-        display: block;
-      }
-  
-      &:hover {
-        color: #212529;
-      }
-    }
-  
-    &__user {
-      padding: 1.5rem;
-      border-bottom: 1px solid #e9ecef;
-      display: flex;
-      gap: 1rem;
-      align-items: center;
-  
-      &-avatar {
-        width: 48px;
-        height: 48px;
-        border-radius: 50%;
-        background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-        display: flex;
-        align-items: center;
-        justify-content: center;
-        color: white;
-        font-weight: 600;
-        font-size: 1rem;
-        flex-shrink: 0;
-      }
-  
-      &-info {
-        flex: 1;
-        min-width: 0;
-      }
-  
-      &-name {
-        font-weight: 600;
-        color: #212529;
-        font-size: 0.9375rem;
-        white-space: nowrap;
-        overflow: hidden;
-        text-overflow: ellipsis;
-      }
-  
-      &-role {
-        font-size: 0.8125rem;
-        color: #6c757d;
-      }
-    }
-  
-    &__nav {
-      flex: 1;
-      padding: 1rem 0;
-      overflow-y: auto;
-  
-      &-item {
-        display: flex;
-        align-items: center;
-        gap: 0.75rem;
-        padding: 0.75rem 1.5rem;
-        color: #6c757d;
-        text-decoration: none;
-        transition: all 0.2s ease;
-        border-left: 3px solid transparent;
-  
-        &:hover {
-          background-color: #f8f9fa;
-          color: #212529;
-        }
-  
-        &--active {
-          background-color: #f8f9fa;
-          color: #667eea;
-          border-left-color: #667eea;
-          font-weight: 600;
-        }
-  
-        svg {
-          flex-shrink: 0;
-        }
-      }
-    }
-  
-    &__footer {
-      padding: 1rem;
-      border-top: 1px solid #e9ecef;
-  
-      &-item {
-        display: flex;
-        align-items: center;
-        gap: 0.75rem;
-        padding: 0.75rem 0.5rem;
-        color: #6c757d;
-        text-decoration: none;
-        background: none;
-        border: none;
-        width: 100%;
-        cursor: pointer;
-        transition: all 0.2s ease;
-        font-size: 0.875rem;
-  
-        &:hover {
-          color: #212529;
-        }
-  
-        svg {
-          flex-shrink: 0;
-        }
-      }
-    }
-  }
-  
-  // Main content
-  .restaurant-main {
-    flex: 1;
-    margin-left: 280px;
-    min-height: 100vh;
-  
-    @media (max-width: 968px) {
-      margin-left: 0;
-    }
-  }
-  
-  .restaurant-header {
-    background: white;
-    border-bottom: 1px solid #e9ecef;
-    padding: 1rem 2rem;
-    display: flex;
-    align-items: center;
-    justify-content: space-between;
-    position: sticky;
-    top: 0;
-    z-index: 50;
-  
-    &__burger {
-      display: none;
-      background: none;
-      border: none;
-      padding: 0.5rem;
-      cursor: pointer;
-      color: #212529;
-  
-      @media (max-width: 968px) {
-        display: block;
-      }
-    }
-  
-    &__title {
-      font-size: 1.125rem;
-      font-weight: 600;
-      color: #212529;
-    }
-  
-    &__actions {
-      display: flex;
-      gap: 0.75rem;
-    }
-  
-    &__action {
-      display: flex;
-      align-items: center;
-      justify-content: center;
-      width: 40px;
-      height: 40px;
-      border-radius: 8px;
-      background: #f8f9fa;
-      color: #6c757d;
-      text-decoration: none;
-      transition: all 0.2s ease;
-  
-      &:hover {
-        background: #e9ecef;
-        color: #212529;
-      }
-    }
-  }
-  
-  .restaurant-content {
-    padding: 2rem;
-  
-    @media (max-width: 768px) {
-      padding: 1rem;
-    }
-  }
-  
-  .restaurant-overlay {
-    display: none;
-  
-    @media (max-width: 968px) {
-      display: block;
-      position: fixed;
-      inset: 0;
-      background: rgba(0, 0, 0, 0.5);
-      z-index: 99;
-    }
-  }
-  
-  // Dashboard principal
-  .restaurant-dashboard {
+// ----------------------------------------
+// DASHBOARD HEADER
+// ----------------------------------------
+.restaurant-dashboard {
     &__header {
       display: flex;
       justify-content: space-between;
@@ -445,7 +192,9 @@
     }
   }
   
-  // Statut du restaurant
+  // ----------------------------------------
+  // RESTAURANT STATUS
+  // ----------------------------------------
   .restaurant-status {
     background: white;
     border-radius: 12px;
@@ -504,7 +253,9 @@
     }
   }
   
-  // Stats grid
+  // ----------------------------------------
+  // STATS GRID
+  // ----------------------------------------
   .dashboard-stats-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(250px, 1fr));
@@ -594,7 +345,9 @@
     }
   }
   
-  // Section
+  // ----------------------------------------
+  // DASHBOARD SECTIONS
+  // ----------------------------------------
   .dashboard-section {
     background: white;
     border-radius: 12px;
@@ -626,7 +379,7 @@
       color: #667eea;
       text-decoration: none;
       font-weight: 500;
-      transition: all 0.2s ease;
+      transition: color 0.2s ease;
   
       &:hover {
         color: #5568d3;
@@ -641,7 +394,9 @@
     font-size: 0.875rem;
   }
   
-  // Orders list
+  // ----------------------------------------
+  // DASHBOARD ORDERS LIST
+  // ----------------------------------------
   .dashboard-orders {
     display: flex;
     flex-direction: column;
@@ -785,7 +540,9 @@
     }
   }
   
-  // Info grid
+  // ----------------------------------------
+  // INFO GRID
+  // ----------------------------------------
   .dashboard-info-grid {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(120px, 1fr));
@@ -812,7 +569,9 @@
     }
   }
   
-  // Payment info
+  // ----------------------------------------
+  // PAYMENT INFO
+  // ----------------------------------------
   .dashboard-payment-info {
     padding-top: 1.5rem;
     border-top: 1px solid #e9ecef;
@@ -868,7 +627,9 @@
     }
   }
   
-  // Quick actions
+  // ----------------------------------------
+  // QUICK ACTIONS
+  // ----------------------------------------
   .dashboard-quick-actions {
     margin-top: 2rem;
   
@@ -914,6 +675,6 @@
     svg {
       flex-shrink: 0;
       color: #6c757d;
-      transition: all 0.2s ease;
+      transition: color 0.2s ease;
     }
   }
