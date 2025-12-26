@@ -4,6 +4,7 @@ import './styles/main.scss';
 
 // Layouts
 import AdminLayout from '@components/AdminLayout';
+import RestaurantLayout from '@components/RestaurantLayout';
 
 // Pages publiques
 import Header from '@components/Header';
@@ -24,6 +25,9 @@ import AdminDashboardPage from '@pages/admin/AdminDashboardPage';
 import AdminUsersPage from '@pages/admin/AdminUsersPage';
 import AdminRestaurantsPage from '@pages/admin/AdminRestaurantsPage';
 import AdminOrdersPage from '@pages/admin/AdminOrdersPage';
+
+// Pages Restaurateur
+import RestaurantDashboardPage from '@pages/restaurant/RestaurantDashboardPage';
 
 // Protection des routes
 import ProtectedRoute from '@components/ProtectedRoute';
@@ -50,6 +54,24 @@ function App() {
                   <Route path="orders" element={<AdminOrdersPage />} />
                 </Routes>
               </AdminLayout>
+            </ProtectedRoute>
+          }
+        />
+
+        {/* Routes Dashboard Restaurateur - Sans Header/Footer, avec RestaurantLayout */}
+        <Route
+          path="/dashboard/*"
+          element={
+            <ProtectedRoute allowedRoles={['restaurateur']}>
+              <RestaurantLayout>
+                <Routes>
+                  <Route index element={<RestaurantDashboardPage />} />
+                  <Route path="commandes" element={<div>Page Commandes à créer</div>} />
+                  <Route path="menu" element={<div>Page Menu à créer</div>} />
+                  <Route path="restaurant" element={<div>Page Restaurant à créer</div>} />
+                  <Route path="paiement" element={<div>Page Paiement à créer</div>} />
+                </Routes>
+              </RestaurantLayout>
             </ProtectedRoute>
           }
         />
