@@ -28,6 +28,10 @@ import AdminOrdersPage from '@pages/admin/AdminOrdersPage';
 
 // Pages Restaurateur
 import RestaurantDashboardPage from '@pages/restaurant/RestaurantDashboardPage';
+import RestaurantOrdersPage from '@pages/restaurant/RestaurantOrdersPage';
+import RestaurantMenuPage from '@pages/restaurant/RestaurantMenuPage';
+import RestaurantSettingsPage from '@pages/restaurant/RestaurantSettingsPage';
+import RestaurantPaymentPage from '@pages/restaurant/RestaurantPaymentPage';
 
 // Protection des routes
 import ProtectedRoute from '@components/ProtectedRoute';
@@ -66,10 +70,10 @@ function App() {
               <RestaurantLayout>
                 <Routes>
                   <Route index element={<RestaurantDashboardPage />} />
-                  <Route path="commandes" element={<div>Page Commandes à créer</div>} />
-                  <Route path="menu" element={<div>Page Menu à créer</div>} />
-                  <Route path="restaurant" element={<div>Page Restaurant à créer</div>} />
-                  <Route path="paiement" element={<div>Page Paiement à créer</div>} />
+                  <Route path="commandes" element={<RestaurantOrdersPage />} />
+                  <Route path="menu" element={<RestaurantMenuPage />} />
+                  <Route path="restaurant" element={<RestaurantSettingsPage />} />
+                  <Route path="paiement" element={<RestaurantPaymentPage />} />
                 </Routes>
               </RestaurantLayout>
             </ProtectedRoute>
