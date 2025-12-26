@@ -1,5 +1,6 @@
 import { useState } from 'react';
-import { Routes, Route } from 'react-router-dom';
+import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
+import { useSelector } from 'react-redux';
 import './styles/main.scss';
 
 // Layouts
@@ -36,6 +37,44 @@ import RestaurantPaymentPage from '@pages/restaurant/RestaurantPaymentPage';
 // Protection des routes
 import ProtectedRoute from '@components/ProtectedRoute';
 
+// Composant pour bloquer l'accès client aux admin/restaurateur
+function ClientRoute({ children }) {
+  const { user, isAuthenticated } = useSelector((state) => state.auth);
+  
+  // Si l'utilisateur est admin, rediriger vers /admin
+  if (isAuthenticated && user?.role === 'admin') {
+    return <Navigate to="/admin" replace />;
+  }
+  
+  // Si l'utilisateur est restaurateur, rediriger vers /dashboard
+  if (isAuthenticated && user?.role === 'restaurateur') {
+    return <Navigate to="/dashboard" replace />;
+  }
+  
+  return children;
+}
+
+// Composant pour rediriger après login selon le rôle
+function LoginRoute() {
+  const { user, isAuthenticated } = useSelector((state) => state.auth);
+  const location = useLocation();
+  
+  // Si déjà connecté, rediriger selon le rôle
+  if (isAuthenticated && user) {
+    if (user.role === 'admin') {
+      return <Navigate to="/admin" replace />;
+    }
+    if (user.role === 'restaurateur') {
+      return <Navigate to="/dashboard" replace />;
+    }
+    // Client : rediriger vers la page demandée ou l'accueil
+    const from = location.state?.from?.pathname || '/';
+    return <Navigate to={from} replace />;
+  }
+  
+  return <LoginPage />;
+}
+
 function App() {
   const [isCartOpen, setIsCartOpen] = useState(false);
 
@@ -56,6 +95,7 @@ function App() {
                   <Route path="users" element={<AdminUsersPage />} />
                   <Route path="restaurants" element={<AdminRestaurantsPage />} />
                   <Route path="orders" element={<AdminOrdersPage />} />
+                  <Route path="profil" element={<ProfilePage />} />
                 </Routes>
               </AdminLayout>
             </ProtectedRoute>
@@ -74,17 +114,18 @@ function App() {
                   <Route path="menu" element={<RestaurantMenuPage />} />
                   <Route path="restaurant" element={<RestaurantSettingsPage />} />
                   <Route path="paiement" element={<RestaurantPaymentPage />} />
+                  <Route path="profil" element={<ProfilePage />} />
                 </Routes>
               </RestaurantLayout>
             </ProtectedRoute>
           }
         />
 
-        {/* Routes Publiques - Avec Header/Footer */}
+        {/* Routes Publiques/Client - Avec Header/Footer */}
         <Route
           path="/*"
           element={
-            <>
+            <ClientRoute>
               <Header onCartClick={openCart} />
               
               <main className="app__main">
@@ -96,15 +137,15 @@ function App() {
                   <Route path="/commande/:id/confirmation" element={<OrderConfirmationPage />} />
                   <Route path="/suivi/:token" element={<OrderTrackingPage />} />
                   
-                  {/* Authentification */}
-                  <Route path="/login" element={<LoginPage />} />
+                  {/* Authentification avec redirection automatique */}
+                  <Route path="/login" element={<LoginRoute />} />
                   <Route path="/register" element={<RegisterPage />} />
                   
-                  {/* Pages utilisateur protégées */}
+                  {/* Pages utilisateur protégées - Client uniquement */}
                   <Route
                     path="/profil"
                     element={
-                      <ProtectedRoute allowedRoles={['client', 'restaurateur', 'admin']}>
+                      <ProtectedRoute allowedRoles={['client']}>
                         <ProfilePage />
                       </ProtectedRoute>
                     }
@@ -112,7 +153,7 @@ function App() {
                   <Route
                     path="/mes-commandes"
                     element={
-                      <ProtectedRoute allowedRoles={['client', 'admin']}>
+                      <ProtectedRoute allowedRoles={['client']}>
                         <MyOrdersPage />
                       </ProtectedRoute>
                     }
@@ -126,7 +167,7 @@ function App() {
               <Footer />
               
               <CartSidebar isOpen={isCartOpen} onClose={closeCart} />
-            </>
+            </ClientRoute>
           }
         />
       </Routes>

@@ -247,6 +247,14 @@
       }
     }
   }
+
+  .restaurant-header__burger{
+    display: none;
+    @media (max-width: 968px) {
+      display: block;
+    }
+  }
+
   
   .restaurant-content {
     padding: 2rem;
