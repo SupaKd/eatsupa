@@ -49,6 +49,9 @@ export const restaurantAPI = {
   updateImage: (id, formData) => axiosInstance.put(`/restaurants/${id}/image`, formData, {
     headers: { 'Content-Type': 'multipart/form-data' }
   }),
+
+  // Toggle fermeture exceptionnelle (ouvrir/fermer temporairement le restaurant)
+  toggleFermeture: (id) => axiosInstance.patch(`/restaurants/${id}/toggle-fermeture`),
 };
 
 // ========== CATÉGORIES ==========

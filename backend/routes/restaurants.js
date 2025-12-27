@@ -88,7 +88,11 @@ const updateValidation = [
   body('actif')
     .optional()
     .isBoolean()
-    .withMessage('Le champ actif doit être un booléen.')
+    .withMessage('Le champ actif doit être un booléen.'),
+  body('fermeture_exceptionnelle')
+    .optional()
+    .isBoolean()
+    .withMessage('Le champ fermeture_exceptionnelle doit être un booléen.')
 ];
 
 // ========== ROUTES PROTÉGÉES SPÉCIFIQUES (avant les routes avec :id) ==========
@@ -129,6 +133,21 @@ router.get(
 );
 
 // ========== ROUTES PROTÉGÉES - Propriétaire ou Admin ==========
+
+// Toggle fermeture exceptionnelle (ouvrir/fermer temporairement)
+router.patch(
+  '/:id/toggle-fermeture',
+  auth,
+  authorize('restaurateur', 'admin'),
+  isRestaurantOwner,
+  [
+    param('id')
+      .isInt({ min: 1 })
+      .withMessage('ID de restaurant invalide.')
+  ],
+  validate,
+  restaurantController.toggleFermetureExceptionnelle
+);
 
 // Mettre à jour un restaurant
 router.put(

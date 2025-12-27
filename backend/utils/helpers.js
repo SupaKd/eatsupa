@@ -121,11 +121,21 @@ const timeToMinutes = (time) => {
 
 /**
  * Vérifie si le restaurant est actuellement ouvert
+ * Prend en compte:
+ * - Les horaires d'ouverture configurés
+ * - La fermeture exceptionnelle (toggle manuel du restaurateur)
+ * 
  * @param {string|object|null} horairesJson - Les horaires d'ouverture (JSON string ou objet)
+ * @param {boolean} [fermetureExceptionnelle=false] - Si true, le restaurant est fermé manuellement
  * @param {Date} [date] - Date à vérifier (par défaut: maintenant)
  * @returns {boolean} true si ouvert, false sinon
  */
-const isRestaurantOpen = (horairesJson, date = new Date()) => {
+const isRestaurantOpen = (horairesJson, fermetureExceptionnelle = false, date = new Date()) => {
+  // Si fermeture exceptionnelle activée, le restaurant est fermé
+  if (fermetureExceptionnelle) {
+    return false;
+  }
+
   // Si pas d'horaires définis, on considère ouvert 24/7
   if (!horairesJson) {
     return true;
@@ -178,10 +188,16 @@ const isRestaurantOpen = (horairesJson, date = new Date()) => {
 /**
  * Retourne les prochaines heures d'ouverture
  * @param {string|object|null} horairesJson - Les horaires d'ouverture
+ * @param {boolean} [fermetureExceptionnelle=false] - Si true, retourne null (fermeture manuelle)
  * @param {Date} [fromDate] - Date de départ (par défaut: maintenant)
  * @returns {object|null} Informations sur la prochaine ouverture ou null
  */
-const getNextOpeningTime = (horairesJson, fromDate = new Date()) => {
+const getNextOpeningTime = (horairesJson, fermetureExceptionnelle = false, fromDate = new Date()) => {
+  // Si fermeture exceptionnelle, pas de prochaine ouverture automatique
+  if (fermetureExceptionnelle) {
+    return { fermetureManuelle: true };
+  }
+
   if (!horairesJson) {
     return null;
   }

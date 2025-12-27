@@ -1,29 +1,36 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { restaurantAPI, commandeAPI } from '@services/api';
 
 function RestaurantDashboardPage() {
   const [restaurant, setRestaurant] = useState(null);
   const [stats, setStats] = useState(null);
+  const [commandesEnAttente, setCommandesEnAttente] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [togglingFermeture, setTogglingFermeture] = useState(false);
+  const [togglingLivraison, setTogglingLivraison] = useState(false);
+  const [updatingCommande, setUpdatingCommande] = useState(null);
 
-  useEffect(() => {
-    fetchDashboardData();
-  }, []);
-
-  const fetchDashboardData = async () => {
+  const fetchDashboardData = useCallback(async () => {
     try {
-      setLoading(true);
       setError(null);
 
-      // Récupérer les données du restaurant avec stats
       const restaurantResponse = await restaurantAPI.getMyRestaurant();
       
       if (restaurantResponse.data.success) {
         const data = restaurantResponse.data.data;
         setRestaurant(data.restaurant);
         setStats(data.stats);
+      }
+
+      // Récupérer les commandes en attente
+      const commandesResponse = await commandeAPI.getAll();
+      if (commandesResponse.data.success) {
+        const enAttente = commandesResponse.data.data.filter(
+          c => ['en_attente', 'confirmee', 'en_preparation', 'prete'].includes(c.statut)
+        );
+        setCommandesEnAttente(enAttente);
       }
     } catch (err) {
       console.error('Erreur chargement dashboard:', err);
@@ -35,6 +42,64 @@ function RestaurantDashboardPage() {
     } finally {
       setLoading(false);
     }
+  }, []);
+
+  useEffect(() => {
+    fetchDashboardData();
+    // Polling toutes les 30 secondes pour les nouvelles commandes
+    const interval = setInterval(fetchDashboardData, 30000);
+    return () => clearInterval(interval);
+  }, [fetchDashboardData]);
+
+  // Toggle fermeture exceptionnelle (ouvrir/fermer le restaurant)
+  const handleToggleFermeture = async () => {
+    if (!restaurant || togglingFermeture) return;
+    
+    setTogglingFermeture(true);
+    try {
+      // Utiliser la nouvelle route dédiée ou update classique
+      await restaurantAPI.update(restaurant.id, {
+        fermeture_exceptionnelle: !restaurant.fermeture_exceptionnelle
+      });
+      await fetchDashboardData();
+    } catch (err) {
+      console.error('Erreur toggle fermeture:', err);
+      alert('Erreur lors de la mise à jour du statut');
+    } finally {
+      setTogglingFermeture(false);
+    }
+  };
+
+  // Toggle livraison
+  const handleToggleLivraison = async () => {
+    if (!restaurant || togglingLivraison) return;
+    
+    setTogglingLivraison(true);
+    try {
+      await restaurantAPI.update(restaurant.id, {
+        livraison_active: !restaurant.livraison_active
+      });
+      await fetchDashboardData();
+    } catch (err) {
+      console.error('Erreur toggle livraison:', err);
+      alert('Erreur lors de la mise à jour');
+    } finally {
+      setTogglingLivraison(false);
+    }
+  };
+
+  // Mettre à jour le statut d'une commande
+  const handleUpdateCommandeStatus = async (commandeId, newStatus) => {
+    setUpdatingCommande(commandeId);
+    try {
+      await commandeAPI.updateStatus(commandeId, newStatus);
+      await fetchDashboardData();
+    } catch (err) {
+      console.error('Erreur mise à jour commande:', err);
+      alert('Erreur lors de la mise à jour');
+    } finally {
+      setUpdatingCommande(null);
+    }
   };
 
   const formatPrice = (price) => {
@@ -44,26 +109,39 @@ function RestaurantDashboardPage() {
     }).format(price || 0);
   };
 
+  const formatTime = (dateString) => {
+    return new Date(dateString).toLocaleTimeString('fr-FR', {
+      hour: '2-digit',
+      minute: '2-digit',
+    });
+  };
+
+  const getStatusInfo = (status) => {
+    const statusMap = {
+      en_attente: { label: 'En attente', color: 'yellow', next: 'confirmee', nextLabel: 'Confirmer' },
+      confirmee: { label: 'Confirmée', color: 'blue', next: 'en_preparation', nextLabel: 'Préparer' },
+      en_preparation: { label: 'En préparation', color: 'orange', next: 'prete', nextLabel: 'Prête' },
+      prete: { label: 'Prête', color: 'green', next: 'recuperee', nextLabel: 'Récupérée' },
+    };
+    return statusMap[status] || { label: status, color: 'gray' };
+  };
+
   if (loading) {
     return (
-      <div className="dashboard-page__loading">
-        <div className="dashboard-page__loading-spinner"></div>
-        <p>Chargement du tableau de bord...</p>
+      <div className="dashboard-loading">
+        <div className="dashboard-loading__spinner"></div>
+        <p>Chargement...</p>
       </div>
     );
   }
 
   if (error === 'no_restaurant') {
     return (
-      <div className="dashboard-page__no-restaurant">
-        <div className="dashboard-page__no-restaurant-icon">🏪</div>
+      <div className="dashboard-empty-state">
+        <div className="dashboard-empty-state__icon">🏪</div>
         <h2>Créez votre restaurant</h2>
-        <p>Vous n'avez pas encore de restaurant. Commencez par créer votre établissement pour recevoir des commandes.</p>
-        <Link to="/dashboard/restaurant" className="dashboard-page__no-restaurant-btn">
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <line x1="12" y1="5" x2="12" y2="19"></line>
-            <line x1="5" y1="12" x2="19" y2="12"></line>
-          </svg>
+        <p>Commencez par créer votre établissement pour recevoir des commandes.</p>
+        <Link to="/dashboard/restaurant" className="dashboard-empty-state__btn">
           Créer mon restaurant
         </Link>
       </div>
@@ -72,325 +150,247 @@ function RestaurantDashboardPage() {
 
   if (error) {
     return (
-      <div className="dashboard-page__error">
-        <h2>Erreur</h2>
+      <div className="dashboard-error">
         <p>{error}</p>
         <button onClick={fetchDashboardData}>Réessayer</button>
       </div>
     );
   }
 
+  const commandesUrgentes = commandesEnAttente.filter(c => c.statut === 'en_attente');
+
   return (
     <div className="restaurant-dashboard">
-      {/* Header */}
-      <div className="restaurant-dashboard__header">
-        <div>
-          <h1 className="restaurant-dashboard__title">Tableau de bord</h1>
-          <p className="restaurant-dashboard__subtitle">
-            {restaurant?.nom}
-          </p>
+      {/* Statut du restaurant (basé sur les horaires + fermeture exceptionnelle) */}
+      <div className={`dashboard-status-banner ${restaurant?.est_ouvert ? 'dashboard-status-banner--open' : 'dashboard-status-banner--closed'}`}>
+        <div className="dashboard-status-banner__info">
+          <div className="dashboard-status-banner__indicator">
+            <span className={`dashboard-status-banner__dot ${restaurant?.est_ouvert ? 'dashboard-status-banner__dot--open' : ''}`}></span>
+            <span className="dashboard-status-banner__text">
+              {restaurant?.fermeture_exceptionnelle 
+                ? 'Fermé temporairement' 
+                : (restaurant?.est_ouvert ? 'Restaurant ouvert' : 'Restaurant fermé')}
+            </span>
+          </div>
+          {restaurant?.est_ouvert && restaurant?.heure_fermeture && (
+            <span className="dashboard-status-banner__hours">
+              Fermeture à {restaurant.heure_fermeture}
+            </span>
+          )}
+          {!restaurant?.est_ouvert && !restaurant?.fermeture_exceptionnelle && restaurant?.prochaine_ouverture && (
+            <span className="dashboard-status-banner__hours">
+              Prochaine ouverture : {restaurant.prochaine_ouverture.jourCapitalized} à {restaurant.prochaine_ouverture.heure}
+            </span>
+          )}
+          {restaurant?.fermeture_exceptionnelle && (
+            <span className="dashboard-status-banner__hours">
+              Cliquez sur "Ouvrir" pour reprendre les commandes
+            </span>
+          )}
         </div>
-        <div className="restaurant-dashboard__header-actions">
-          <Link to={`/restaurant/${restaurant?.id}`} className="restaurant-dashboard__view-btn" target="_blank">
-            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M18 13v6a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2V8a2 2 0 0 1 2-2h6"></path>
-              <polyline points="15 3 21 3 21 9"></polyline>
-              <line x1="10" y1="14" x2="21" y2="3"></line>
-            </svg>
-            Voir ma page
-          </Link>
-          <button onClick={fetchDashboardData} className="restaurant-dashboard__refresh">
-            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <polyline points="23 4 23 10 17 10"></polyline>
-              <polyline points="1 20 1 14 7 14"></polyline>
-              <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
-            </svg>
-            Actualiser
+        <button
+          className={`dashboard-status-banner__toggle ${restaurant?.fermeture_exceptionnelle ? 'dashboard-status-banner__toggle--open' : 'dashboard-status-banner__toggle--close'}`}
+          onClick={handleToggleFermeture}
+          disabled={togglingFermeture}
+        >
+          {togglingFermeture ? '...' : (restaurant?.fermeture_exceptionnelle ? 'Ouvrir' : 'Fermer')}
+        </button>
+      </div>
+
+      {/* Contrôles rapides */}
+      <div className="dashboard-quick-controls">
+        {/* Toggle Livraison */}
+        <div className="dashboard-quick-control">
+          <div className="dashboard-quick-control__info">
+            <span className="dashboard-quick-control__icon">🚗</span>
+            <div>
+              <span className="dashboard-quick-control__label">Livraison</span>
+              <span className={`dashboard-quick-control__status ${restaurant?.livraison_active ? 'dashboard-quick-control__status--on' : ''}`}>
+                {restaurant?.livraison_active ? 'Activée' : 'Désactivée'}
+              </span>
+            </div>
+          </div>
+          <button
+            className={`dashboard-quick-control__switch ${restaurant?.livraison_active ? 'dashboard-quick-control__switch--on' : ''}`}
+            onClick={handleToggleLivraison}
+            disabled={togglingLivraison}
+            aria-label="Toggle livraison"
+          >
+            <span className="dashboard-quick-control__switch-handle"></span>
           </button>
-        </div>
-      </div>
-
-      {/* Statut du restaurant */}
-      <div className={`restaurant-status ${restaurant?.est_ouvert ? 'restaurant-status--open' : 'restaurant-status--closed'}`}>
-        <div className="restaurant-status__icon">
-          {restaurant?.est_ouvert ? '🟢' : '🔴'}
-        </div>
-        <div className="restaurant-status__info">
-          <h3>
-            {restaurant?.est_ouvert ? 'Votre restaurant est ouvert' : 'Votre restaurant est fermé'}
-          </h3>
-          <p>
-            {restaurant?.est_ouvert 
-              ? `Fermeture prévue à ${restaurant.heure_fermeture}`
-              : restaurant?.prochaine_ouverture 
-                ? `Prochaine ouverture: ${restaurant.prochaine_ouverture.jourCapitalized} à ${restaurant.prochaine_ouverture.heure}`
-                : 'Configurez vos horaires d\'ouverture'
-            }
-          </p>
-        </div>
-        <Link to="/dashboard/restaurant" className="restaurant-status__action">
-          Gérer les horaires
-        </Link>
-      </div>
-
-      {/* Stats Cards */}
-      <div className="dashboard-stats-grid">
-        {/* Commandes en attente */}
-        <div className="dashboard-stat-card dashboard-stat-card--yellow">
-          <div className="dashboard-stat-card__icon">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="12" cy="12" r="10"></circle>
-              <polyline points="12 6 12 12 16 14"></polyline>
-            </svg>
-          </div>
-          <div className="dashboard-stat-card__content">
-            <p className="dashboard-stat-card__label">En attente</p>
-            <h3 className="dashboard-stat-card__value">{stats?.commandes_en_attente || 0}</h3>
-            <Link to="/dashboard/commandes?statut=en_attente" className="dashboard-stat-card__link">
-              Voir les commandes →
-            </Link>
-          </div>
-        </div>
-
-        {/* Commandes en préparation */}
-        <div className="dashboard-stat-card dashboard-stat-card--orange">
-          <div className="dashboard-stat-card__icon">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
-            </svg>
-          </div>
-          <div className="dashboard-stat-card__content">
-            <p className="dashboard-stat-card__label">En préparation</p>
-            <h3 className="dashboard-stat-card__value">{stats?.commandes_en_preparation || 0}</h3>
-            <Link to="/dashboard/commandes?statut=en_preparation" className="dashboard-stat-card__link">
-              Voir les commandes →
-            </Link>
-          </div>
-        </div>
-
-        {/* Total commandes */}
-        <div className="dashboard-stat-card dashboard-stat-card--blue">
-          <div className="dashboard-stat-card__icon">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
-              <line x1="3" y1="6" x2="21" y2="6"></line>
-              <path d="M16 10a4 4 0 0 1-8 0"></path>
-            </svg>
-          </div>
-          <div className="dashboard-stat-card__content">
-            <p className="dashboard-stat-card__label">Commandes totales</p>
-            <h3 className="dashboard-stat-card__value">{stats?.total_commandes || 0}</h3>
-            <Link to="/dashboard/commandes" className="dashboard-stat-card__link">
-              Historique →
-            </Link>
-          </div>
         </div>
 
         {/* CA du jour */}
-        <div className="dashboard-stat-card dashboard-stat-card--green">
-          <div className="dashboard-stat-card__icon">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <line x1="12" y1="1" x2="12" y2="23"></line>
-              <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
-            </svg>
+        <div className="dashboard-quick-control dashboard-quick-control--info">
+          <div className="dashboard-quick-control__info">
+            <span className="dashboard-quick-control__icon">💰</span>
+            <div>
+              <span className="dashboard-quick-control__label">CA du jour</span>
+              <span className="dashboard-quick-control__value">{formatPrice(stats?.ca_jour)}</span>
+            </div>
           </div>
-          <div className="dashboard-stat-card__content">
-            <p className="dashboard-stat-card__label">CA aujourd'hui</p>
-            <h3 className="dashboard-stat-card__value">{formatPrice(stats?.ca_jour)}</h3>
-            <p className="dashboard-stat-card__details">
-              Semaine: {formatPrice(stats?.ca_semaine)} • Mois: {formatPrice(stats?.ca_mois)}
-            </p>
+        </div>
+
+        {/* Commandes du jour */}
+        <div className="dashboard-quick-control dashboard-quick-control--info">
+          <div className="dashboard-quick-control__info">
+            <span className="dashboard-quick-control__icon">📦</span>
+            <div>
+              <span className="dashboard-quick-control__label">Commandes totales</span>
+              <span className="dashboard-quick-control__value">{stats?.total_commandes || 0}</span>
+            </div>
           </div>
         </div>
       </div>
 
-      {/* Section principale */}
-      <div className="restaurant-dashboard__content">
-        {/* Commandes récentes */}
-        <div className="dashboard-section">
-          <div className="dashboard-section__header">
-            <h2>
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
-                <line x1="3" y1="6" x2="21" y2="6"></line>
-                <path d="M16 10a4 4 0 0 1-8 0"></path>
-              </svg>
-              Commandes récentes
-            </h2>
-            <Link to="/dashboard/commandes" className="dashboard-section__link">
-              Tout voir →
-            </Link>
+      {/* Alerte commandes en attente */}
+      {commandesUrgentes.length > 0 && (
+        <div className="dashboard-alert dashboard-alert--warning">
+          <div className="dashboard-alert__icon">⚠️</div>
+          <div className="dashboard-alert__content">
+            <strong>{commandesUrgentes.length} commande{commandesUrgentes.length > 1 ? 's' : ''} en attente de confirmation</strong>
+            <span>Action requise</span>
           </div>
+          <Link to="/dashboard/commandes?statut=en_attente" className="dashboard-alert__action">
+            Voir tout
+          </Link>
+        </div>
+      )}
 
-          {!stats?.commandes_recentes || stats.commandes_recentes.length === 0 ? (
-            <div className="dashboard-empty">
-              <p>Aucune commande récente</p>
-            </div>
-          ) : (
-            <div className="dashboard-orders">
-              {stats.commandes_recentes.map((commande) => {
-                const statusInfo = getStatusInfo(commande.statut);
-                const paymentInfo = getPaymentInfo(commande.paiement_statut);
-                
-                return (
-                  <div key={commande.id} className="dashboard-order">
-                    <div className="dashboard-order__header">
-                      <code className="dashboard-order__number">{commande.numero_commande}</code>
-                      <span className={`dashboard-order__status dashboard-order__status--${statusInfo.color}`}>
-                        {statusInfo.icon} {statusInfo.label}
-                      </span>
+      {/* Liste des commandes actives */}
+      <div className="dashboard-orders-section">
+        <div className="dashboard-orders-section__header">
+          <h2>
+            Commandes en cours
+            {commandesEnAttente.length > 0 && (
+              <span className="dashboard-orders-section__badge">{commandesEnAttente.length}</span>
+            )}
+          </h2>
+          <Link to="/dashboard/commandes" className="dashboard-orders-section__link">
+            Toutes les commandes →
+          </Link>
+        </div>
+
+        {commandesEnAttente.length === 0 ? (
+          <div className="dashboard-orders-empty">
+            <span className="dashboard-orders-empty__icon">✨</span>
+            <p>Aucune commande en cours</p>
+          </div>
+        ) : (
+          <div className="dashboard-orders-list">
+            {commandesEnAttente.slice(0, 5).map((commande) => {
+              const statusInfo = getStatusInfo(commande.statut);
+              const isUpdating = updatingCommande === commande.id;
+
+              return (
+                <div key={commande.id} className="dashboard-order-card">
+                  <div className="dashboard-order-card__header">
+                    <div className="dashboard-order-card__id">
+                      <code>{commande.numero_commande}</code>
+                      <span className="dashboard-order-card__time">{formatTime(commande.date_commande)}</span>
                     </div>
-                    <div className="dashboard-order__details">
-                      <span className="dashboard-order__detail">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <rect x="3" y="4" width="18" height="18" rx="2" ry="2"></rect>
-                          <line x1="16" y1="2" x2="16" y2="6"></line>
-                          <line x1="8" y1="2" x2="8" y2="6"></line>
-                          <line x1="3" y1="10" x2="21" y2="10"></line>
-                        </svg>
-                        {new Date(commande.date_commande).toLocaleString('fr-FR', {
-                          day: 'numeric',
-                          month: 'short',
-                          hour: '2-digit',
-                          minute: '2-digit'
-                        })}
-                      </span>
-                      <span className="dashboard-order__detail">
-                        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                          <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
-                        </svg>
-                        {commande.telephone_client}
-                      </span>
-                    </div>
-                    <div className="dashboard-order__footer">
-                      <div className="dashboard-order__payment">
-                        <span className="dashboard-order__payment-badge dashboard-order__payment-badge--gray">
-                          💵 Sur place
-                        </span>
-                        <span className={`dashboard-order__payment-status dashboard-order__payment-status--${paymentInfo.color}`}>
-                          {paymentInfo.label}
-                        </span>
-                      </div>
-                      <span className="dashboard-order__amount">{formatPrice(commande.montant_total)}</span>
-                    </div>
+                    <span className={`dashboard-order-card__status dashboard-order-card__status--${statusInfo.color}`}>
+                      {statusInfo.label}
+                    </span>
                   </div>
-                );
-              })}
-            </div>
-          )}
+
+                  <div className="dashboard-order-card__items">
+                    {commande.items?.slice(0, 3).map((item, idx) => (
+                      <span key={idx} className="dashboard-order-card__item">
+                        {item.quantite}× {item.nom_plat}
+                      </span>
+                    ))}
+                    {commande.items?.length > 3 && (
+                      <span className="dashboard-order-card__more">+{commande.items.length - 3} autres</span>
+                    )}
+                  </div>
+
+                  {commande.notes && (
+                    <div className="dashboard-order-card__notes">
+                      📝 {commande.notes}
+                    </div>
+                  )}
+
+                  <div className="dashboard-order-card__footer">
+                    <div className="dashboard-order-card__client">
+                      <a href={`tel:${commande.telephone_client}`}>📞 {commande.telephone_client}</a>
+                      {commande.mode_retrait === 'livraison' && (
+                        <span className="dashboard-order-card__delivery-badge">🚗 Livraison</span>
+                      )}
+                    </div>
+                    <span className="dashboard-order-card__total">{formatPrice(commande.montant_total)}</span>
+                  </div>
+
+                  <div className="dashboard-order-card__actions">
+                    {statusInfo.next && (
+                      <button
+                        className="dashboard-order-card__btn dashboard-order-card__btn--primary"
+                        onClick={() => handleUpdateCommandeStatus(commande.id, statusInfo.next)}
+                        disabled={isUpdating}
+                      >
+                        {isUpdating ? '...' : statusInfo.nextLabel}
+                      </button>
+                    )}
+                    {commande.statut === 'en_attente' && (
+                      <button
+                        className="dashboard-order-card__btn dashboard-order-card__btn--danger"
+                        onClick={() => handleUpdateCommandeStatus(commande.id, 'annulee')}
+                        disabled={isUpdating}
+                      >
+                        Refuser
+                      </button>
+                    )}
+                  </div>
+                </div>
+              );
+            })}
+
+            {commandesEnAttente.length > 5 && (
+              <Link to="/dashboard/commandes" className="dashboard-orders-list__more">
+                Voir les {commandesEnAttente.length - 5} autres commandes
+              </Link>
+            )}
+          </div>
+        )}
+      </div>
+
+      {/* Statistiques rapides */}
+      <div className="dashboard-stats-row">
+        <div className="dashboard-stat-mini">
+          <span className="dashboard-stat-mini__label">CA Semaine</span>
+          <span className="dashboard-stat-mini__value">{formatPrice(stats?.ca_semaine)}</span>
         </div>
-
-        {/* Informations restaurant */}
-        <div className="dashboard-section">
-          <div className="dashboard-section__header">
-            <h2>
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="12" cy="12" r="10"></circle>
-                <line x1="12" y1="16" x2="12" y2="12"></line>
-                <line x1="12" y1="8" x2="12.01" y2="8"></line>
-              </svg>
-              Informations
-            </h2>
-            <Link to="/dashboard/restaurant" className="dashboard-section__link">
-              Gérer →
-            </Link>
-          </div>
-
-          <div className="dashboard-info-grid">
-            <div className="dashboard-info-item">
-              <div className="dashboard-info-item__label">Catégories</div>
-              <div className="dashboard-info-item__value">{stats?.nb_categories || 0}</div>
-            </div>
-            <div className="dashboard-info-item">
-              <div className="dashboard-info-item__label">Plats actifs</div>
-              <div className="dashboard-info-item__value">{stats?.nb_plats_actifs || 0}</div>
-            </div>
-            <div className="dashboard-info-item">
-              <div className="dashboard-info-item__label">Total plats</div>
-              <div className="dashboard-info-item__value">{stats?.nb_plats_total || 0}</div>
-            </div>
-            <div className="dashboard-info-item">
-              <div className="dashboard-info-item__label">CA total</div>
-              <div className="dashboard-info-item__value">{formatPrice(stats?.ca_total)}</div>
-            </div>
-          </div>
-
-          {/* Mode de paiement */}
-          <div className="dashboard-payment-info">
-            <h3>Mode de paiement accepté</h3>
-            <div className="dashboard-payment-modes">
-              <div className="dashboard-payment-mode dashboard-payment-mode--active">
-                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <polyline points="20 6 9 17 4 12"></polyline>
-                </svg>
-                💵 Paiement sur place
-              </div>
-              {/* TODO: Paiement en ligne - À développer ultérieurement */}
-            </div>
-          </div>
+        <div className="dashboard-stat-mini">
+          <span className="dashboard-stat-mini__label">CA Mois</span>
+          <span className="dashboard-stat-mini__value">{formatPrice(stats?.ca_mois)}</span>
+        </div>
+        <div className="dashboard-stat-mini">
+          <span className="dashboard-stat-mini__label">Plats actifs</span>
+          <span className="dashboard-stat-mini__value">{stats?.nb_plats_actifs || 0}</span>
         </div>
       </div>
 
-      {/* Actions rapides */}
-      <div className="dashboard-quick-actions">
-        <h2>Actions rapides</h2>
-        <div className="dashboard-quick-actions__grid">
-          <Link to="/dashboard/commandes" className="dashboard-quick-action">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
-              <line x1="3" y1="6" x2="21" y2="6"></line>
-              <path d="M16 10a4 4 0 0 1-8 0"></path>
-            </svg>
-            <span>Gérer les commandes</span>
-          </Link>
-          <Link to="/dashboard/menu" className="dashboard-quick-action">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M12 2v20M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
-            </svg>
-            <span>Modifier le menu</span>
-          </Link>
-          <Link to="/dashboard/restaurant" className="dashboard-quick-action">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="12" cy="12" r="3"></circle>
-              <path d="M19.4 15a1.65 1.65 0 0 0 .33 1.82l.06.06a2 2 0 0 1 0 2.83 2 2 0 0 1-2.83 0l-.06-.06a1.65 1.65 0 0 0-1.82-.33 1.65 1.65 0 0 0-1 1.51V21a2 2 0 0 1-2 2 2 2 0 0 1-2-2v-.09A1.65 1.65 0 0 0 9 19.4a1.65 1.65 0 0 0-1.82.33l-.06.06a2 2 0 0 1-2.83 0 2 2 0 0 1 0-2.83l.06-.06a1.65 1.65 0 0 0 .33-1.82 1.65 1.65 0 0 0-1.51-1H3a2 2 0 0 1-2-2 2 2 0 0 1 2-2h.09A1.65 1.65 0 0 0 4.6 9a1.65 1.65 0 0 0-.33-1.82l-.06-.06a2 2 0 0 1 0-2.83 2 2 0 0 1 2.83 0l.06.06a1.65 1.65 0 0 0 1.82.33H9a1.65 1.65 0 0 0 1-1.51V3a2 2 0 0 1 2-2 2 2 0 0 1 2 2v.09a1.65 1.65 0 0 0 1 1.51 1.65 1.65 0 0 0 1.82-.33l.06-.06a2 2 0 0 1 2.83 0 2 2 0 0 1 0 2.83l-.06.06a1.65 1.65 0 0 0-.33 1.82V9a1.65 1.65 0 0 0 1.51 1H21a2 2 0 0 1 2 2 2 2 0 0 1-2 2h-.09a1.65 1.65 0 0 0-1.51 1z"></path>
-            </svg>
-            <span>Paramètres du restaurant</span>
-          </Link>
-          <Link to={`/restaurant/${restaurant?.id}`} className="dashboard-quick-action" target="_blank">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M1 12s4-8 11-8 11 8 11 8-4 8-11 8-11-8-11-8z"></path>
-              <circle cx="12" cy="12" r="3"></circle>
-            </svg>
-            <span>Voir ma page publique</span>
-          </Link>
-        </div>
+      {/* Raccourcis */}
+      <div className="dashboard-shortcuts">
+        <Link to="/dashboard/commandes" className="dashboard-shortcut">
+          <span className="dashboard-shortcut__icon">📋</span>
+          <span className="dashboard-shortcut__label">Commandes</span>
+        </Link>
+        <Link to="/dashboard/menu" className="dashboard-shortcut">
+          <span className="dashboard-shortcut__icon">🍽️</span>
+          <span className="dashboard-shortcut__label">Menu</span>
+        </Link>
+        <Link to="/dashboard/restaurant" className="dashboard-shortcut">
+          <span className="dashboard-shortcut__icon">⚙️</span>
+          <span className="dashboard-shortcut__label">Paramètres</span>
+        </Link>
+        <Link to={`/restaurant/${restaurant?.id}`} className="dashboard-shortcut" target="_blank">
+          <span className="dashboard-shortcut__icon">👁️</span>
+          <span className="dashboard-shortcut__label">Ma page</span>
+        </Link>
       </div>
     </div>
   );
-}
-
-// Helper functions
-function getStatusInfo(status) {
-  const statusMap = {
-    en_attente: { label: 'En attente', color: 'yellow', icon: '⏳' },
-    confirmee: { label: 'Confirmée', color: 'blue', icon: '✓' },
-    en_preparation: { label: 'En préparation', color: 'orange', icon: '👨‍🍳' },
-    prete: { label: 'Prête', color: 'green', icon: '✅' },
-    livree: { label: 'Livrée', color: 'green', icon: '🚗' },
-    recuperee: { label: 'Récupérée', color: 'green', icon: '🎉' },
-    annulee: { label: 'Annulée', color: 'red', icon: '❌' },
-  };
-  return statusMap[status] || { label: status, color: 'gray', icon: '?' };
-}
-
-function getPaymentInfo(status) {
-  const statusMap = {
-    en_attente: { label: 'En attente', color: 'yellow' },
-    paye: { label: 'Payé', color: 'green' },
-    echoue: { label: 'Échoué', color: 'red' },
-    rembourse: { label: 'Remboursé', color: 'blue' },
-  };
-  return statusMap[status] || { label: status, color: 'gray' };
 }
 
 export default RestaurantDashboardPage;

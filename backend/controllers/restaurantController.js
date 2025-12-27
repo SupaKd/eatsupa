@@ -7,7 +7,8 @@ const getAllRestaurants = async (req, res) => {
     const { page = 1, limit = 10, ville, type_cuisine, search, actif, livraison } = req.query;
     const { limit: queryLimit, offset } = paginate(page, limit);
 
-    let whereClause = 'WHERE r.actif = 1';
+    // Par défaut: restaurants actifs ET non en fermeture exceptionnelle
+    let whereClause = 'WHERE r.actif = 1 AND r.fermeture_exceptionnelle = 0';
     const params = [];
 
     // Pour les admins, permettre de voir les inactifs aussi
@@ -48,6 +49,7 @@ const getAllRestaurants = async (req, res) => {
       `SELECT r.id, r.nom, r.description, r.adresse, r.ville, r.code_postal,
               r.telephone, r.email, r.type_cuisine, r.horaires_ouverture,
               r.image, r.delai_preparation, r.frais_livraison, r.actif,
+              r.fermeture_exceptionnelle,
               r.paiement_sur_place, r.paiement_en_ligne,
               r.livraison_active, r.a_emporter_active, r.zone_livraison_km,
               r.minimum_livraison, r.delai_livraison,
@@ -63,15 +65,17 @@ const getAllRestaurants = async (req, res) => {
 
     // Ajouter le statut d'ouverture pour chaque restaurant
     const restaurantsWithStatus = restaurants.map(r => {
-      const estOuvert = isRestaurantOpen(r.horaires_ouverture);
+      const fermetureExceptionnelle = Boolean(r.fermeture_exceptionnelle);
+      const estOuvert = isRestaurantOpen(r.horaires_ouverture, fermetureExceptionnelle);
       return {
         ...r,
+        fermeture_exceptionnelle: fermetureExceptionnelle,
         paiement_sur_place: Boolean(r.paiement_sur_place),
         paiement_en_ligne: Boolean(r.paiement_en_ligne),
         livraison_active: Boolean(r.livraison_active),
         a_emporter_active: Boolean(r.a_emporter_active),
         est_ouvert: estOuvert,
-        prochaine_ouverture: !estOuvert ? getNextOpeningTime(r.horaires_ouverture) : null,
+        prochaine_ouverture: !estOuvert ? getNextOpeningTime(r.horaires_ouverture, fermetureExceptionnelle) : null,
         heure_fermeture: estOuvert ? getClosingTime(r.horaires_ouverture) : null
       };
     });
@@ -110,6 +114,7 @@ const getRestaurantById = async (req, res) => {
     }
 
     const restaurant = restaurants[0];
+    const fermetureExceptionnelle = Boolean(restaurant.fermeture_exceptionnelle);
 
     // Récupérer les catégories avec les plats
     const [categories] = await pool.query(
@@ -141,7 +146,7 @@ const getRestaurantById = async (req, res) => {
     }
 
     // Statut d'ouverture
-    const estOuvert = isRestaurantOpen(restaurant.horaires_ouverture);
+    const estOuvert = isRestaurantOpen(restaurant.horaires_ouverture, fermetureExceptionnelle);
 
     // Modes de paiement disponibles
     const modesPaiement = [];
@@ -187,6 +192,7 @@ const getRestaurantById = async (req, res) => {
       success: true,
       data: {
         ...restaurant,
+        fermeture_exceptionnelle: fermetureExceptionnelle,
         paiement_sur_place: Boolean(restaurant.paiement_sur_place),
         paiement_en_ligne: Boolean(restaurant.paiement_en_ligne && restaurant.stripe_onboarding_complete),
         livraison_active: Boolean(restaurant.livraison_active),
@@ -195,7 +201,7 @@ const getRestaurantById = async (req, res) => {
         modes_retrait: modesRetrait,
         categories: categoriesWithPlats,
         est_ouvert: estOuvert,
-        prochaine_ouverture: !estOuvert ? getNextOpeningTime(restaurant.horaires_ouverture) : null,
+        prochaine_ouverture: !estOuvert ? getNextOpeningTime(restaurant.horaires_ouverture, fermetureExceptionnelle) : null,
         heure_fermeture: estOuvert ? getClosingTime(restaurant.horaires_ouverture) : null
       }
     });
@@ -238,8 +244,9 @@ const createRestaurant = async (req, res) => {
        (utilisateur_id, nom, description, adresse, ville, code_postal, 
         telephone, email, type_cuisine, delai_preparation, frais_livraison, 
         horaires_ouverture, paiement_sur_place, paiement_en_ligne,
-        livraison_active, a_emporter_active, zone_livraison_km, minimum_livraison, delai_livraison)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        livraison_active, a_emporter_active, zone_livraison_km, minimum_livraison, delai_livraison,
+        fermeture_exceptionnelle)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0)`,
       [
         req.user.id,
         nom,
@@ -273,6 +280,7 @@ const createRestaurant = async (req, res) => {
       message: 'Restaurant créé avec succès.',
       data: {
         ...newRestaurant[0],
+        fermeture_exceptionnelle: Boolean(newRestaurant[0].fermeture_exceptionnelle),
         paiement_sur_place: Boolean(newRestaurant[0].paiement_sur_place),
         paiement_en_ligne: Boolean(newRestaurant[0].paiement_en_ligne),
         livraison_active: Boolean(newRestaurant[0].livraison_active),
@@ -308,6 +316,7 @@ const updateRestaurant = async (req, res) => {
       'nom', 'description', 'adresse', 'ville', 'code_postal',
       'telephone', 'email', 'type_cuisine', 'delai_preparation',
       'frais_livraison', 'horaires_ouverture', 'actif',
+      'fermeture_exceptionnelle',
       'paiement_sur_place', 'paiement_en_ligne',
       'livraison_active', 'a_emporter_active', 'zone_livraison_km',
       'minimum_livraison', 'delai_livraison'
@@ -321,7 +330,7 @@ const updateRestaurant = async (req, res) => {
         updateFields.push(`${field} = ?`);
         if (field === 'horaires_ouverture' && typeof updates[field] === 'object') {
           values.push(JSON.stringify(updates[field]));
-        } else if (['actif', 'paiement_sur_place', 'paiement_en_ligne', 'livraison_active', 'a_emporter_active'].includes(field)) {
+        } else if (['actif', 'fermeture_exceptionnelle', 'paiement_sur_place', 'paiement_en_ligne', 'livraison_active', 'a_emporter_active'].includes(field)) {
           values.push(updates[field] ? 1 : 0);
         } else {
           values.push(updates[field]);
@@ -353,6 +362,7 @@ const updateRestaurant = async (req, res) => {
       message: 'Restaurant mis à jour avec succès.',
       data: {
         ...updatedRestaurant[0],
+        fermeture_exceptionnelle: Boolean(updatedRestaurant[0].fermeture_exceptionnelle),
         paiement_sur_place: Boolean(updatedRestaurant[0].paiement_sur_place),
         paiement_en_ligne: Boolean(updatedRestaurant[0].paiement_en_ligne),
         livraison_active: Boolean(updatedRestaurant[0].livraison_active),
@@ -461,6 +471,7 @@ const getMyRestaurant = async (req, res) => {
     }
 
     const restaurant = restaurants[0];
+    const fermetureExceptionnelle = Boolean(restaurant.fermeture_exceptionnelle);
 
     // Récupérer les statistiques
     const [stats] = await pool.query(
@@ -503,21 +514,22 @@ const getMyRestaurant = async (req, res) => {
       [restaurant.id]
     );
 
-    // Statut d'ouverture
-    const estOuvert = isRestaurantOpen(restaurant.horaires_ouverture);
+    // Statut d'ouverture (prend en compte fermeture exceptionnelle)
+    const estOuvert = isRestaurantOpen(restaurant.horaires_ouverture, fermetureExceptionnelle);
 
     res.json({
       success: true,
       data: {
         restaurant: {
           ...restaurant,
+          fermeture_exceptionnelle: fermetureExceptionnelle,
           paiement_sur_place: Boolean(restaurant.paiement_sur_place),
           paiement_en_ligne: Boolean(restaurant.paiement_en_ligne),
           livraison_active: Boolean(restaurant.livraison_active),
           a_emporter_active: Boolean(restaurant.a_emporter_active),
           stripe_configure: Boolean(restaurant.stripe_account_id && restaurant.stripe_onboarding_complete),
           est_ouvert: estOuvert,
-          prochaine_ouverture: !estOuvert ? getNextOpeningTime(restaurant.horaires_ouverture) : null,
+          prochaine_ouverture: !estOuvert ? getNextOpeningTime(restaurant.horaires_ouverture, fermetureExceptionnelle) : null,
           heure_fermeture: estOuvert ? getClosingTime(restaurant.horaires_ouverture) : null
         },
         stats: {
@@ -545,6 +557,44 @@ const getMyRestaurant = async (req, res) => {
   }
 };
 
+// Toggle fermeture exceptionnelle
+const toggleFermetureExceptionnelle = async (req, res) => {
+  try {
+    const { id } = req.params;
+
+    const [restaurants] = await pool.query(
+      'SELECT fermeture_exceptionnelle FROM restaurants WHERE id = ?',
+      [id]
+    );
+
+    if (restaurants.length === 0) {
+      return res.status(404).json({
+        success: false,
+        message: 'Restaurant non trouvé.'
+      });
+    }
+
+    const newStatus = restaurants[0].fermeture_exceptionnelle ? 0 : 1;
+
+    await pool.query(
+      'UPDATE restaurants SET fermeture_exceptionnelle = ? WHERE id = ?',
+      [newStatus, id]
+    );
+
+    res.json({
+      success: true,
+      message: newStatus ? 'Restaurant fermé temporairement.' : 'Restaurant réouvert.',
+      data: { fermeture_exceptionnelle: Boolean(newStatus) }
+    });
+  } catch (error) {
+    console.error('Erreur toggle fermeture exceptionnelle:', error);
+    res.status(500).json({
+      success: false,
+      message: 'Erreur lors de la modification du statut.'
+    });
+  }
+};
+
 module.exports = {
   getAllRestaurants,
   getRestaurantById,
@@ -552,5 +602,6 @@ module.exports = {
   updateRestaurant,
   deleteRestaurant,
   updateImage,
-  getMyRestaurant
+  getMyRestaurant,
+  toggleFermetureExceptionnelle
 };
