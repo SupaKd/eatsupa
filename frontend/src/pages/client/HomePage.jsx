@@ -108,7 +108,7 @@ function HomePage() {
                 <polyline points="12 5 19 12 12 19"></polyline>
               </svg>
             </a>
-            <Link to="/restaurant/inscription" className="hero__btn hero__btn--secondary">
+            <Link to="/register?role=restaurateur" className="hero__btn hero__btn--secondary">
               <span>Vous êtes restaurateur ?</span>
             </Link>
           </div>
@@ -197,7 +197,7 @@ function HomePage() {
               </div>
               <h3>Bientôt disponible</h3>
               <p>Les premiers restaurants arrivent très bientôt sur SupaFood !</p>
-              <Link to="/restaurant/inscription" className="restaurants__empty-btn">
+              <Link to="/register?role=restaurateur" className="restaurants__empty-btn">
                 Être le premier restaurant
               </Link>
             </div>
@@ -251,7 +251,7 @@ function HomePage() {
                 <span>Support local dédié</span>
               </div>
             </div>
-            <Link to="/restaurant/inscription" className="cta__btn">
+            <Link to="/register?role=restaurateur" className="cta__btn">
               <span>Inscrire mon restaurant</span>
               <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
                 <line x1="5" y1="12" x2="19" y2="12"></line>
