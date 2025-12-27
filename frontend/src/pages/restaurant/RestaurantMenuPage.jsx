@@ -30,7 +30,8 @@ function RestaurantMenuPage() {
         
         // Charger les catégories avec les plats
         if (data.restaurant?.id) {
-          const catResponse = await categoryAPI.getByRestaurant(data.restaurant.id);
+          // CORRECTION: Ajouter le paramètre include_plats=true
+          const catResponse = await categoryAPI.getByRestaurant(data.restaurant.id, { include_plats: true });
           if (catResponse.data.success) {
             setCategories(catResponse.data.data);
           }
@@ -60,14 +61,14 @@ function RestaurantMenuPage() {
   };
 
   const handleDeleteCategory = async (categoryId) => {
-    if (!confirm('Supprimer cette catégorie et tous ses plats ?')) return;
+    if (!confirm('Supprimer cette catégorie ?')) return;
     
     try {
       await categoryAPI.delete(restaurant.id, categoryId);
       await fetchData();
     } catch (err) {
       console.error('Erreur suppression catégorie:', err);
-      alert('Erreur lors de la suppression');
+      alert(err.response?.data?.message || 'Erreur lors de la suppression');
     }
   };
 
@@ -171,13 +172,16 @@ function RestaurantMenuPage() {
     );
   }
 
+  // Calculer le nombre total de plats
+  const totalPlats = categories.reduce((acc, cat) => acc + (cat.plats?.length || 0), 0);
+
   return (
     <div className="menu-page">
       {/* Header */}
       <div className="menu-page__header">
         <div>
           <h1>Gestion du menu</h1>
-          <p>{categories.length} catégorie{categories.length > 1 ? 's' : ''} • {categories.reduce((acc, cat) => acc + (cat.plats?.length || 0), 0)} plat{categories.reduce((acc, cat) => acc + (cat.plats?.length || 0), 0) > 1 ? 's' : ''}</p>
+          <p>{categories.length} catégorie{categories.length > 1 ? 's' : ''} • {totalPlats} plat{totalPlats > 1 ? 's' : ''}</p>
         </div>
         <button className="menu-page__add-btn" onClick={handleAddCategory}>
           <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">

@@ -55,8 +55,9 @@ export const restaurantAPI = {
 
 export const categoryAPI = {
   // Liste des catégories d'un restaurant
-  getByRestaurant: (restaurantId) => 
-    axiosInstance.get(`/restaurants/${restaurantId}/categories`),
+  // Params: { include_plats: true } pour inclure les plats dans chaque catégorie
+  getByRestaurant: (restaurantId, params = {}) => 
+    axiosInstance.get(`/restaurants/${restaurantId}/categories`, { params }),
   
   // Créer une catégorie
   create: (restaurantId, data) => 

@@ -4,6 +4,7 @@ const { pool } = require('../config/database');
 const getCategoriesByRestaurant = async (req, res) => {
   try {
     const { restaurantId } = req.params;
+    const { include_plats } = req.query;
 
     const [categories] = await pool.query(
       `SELECT c.*, COUNT(p.id) as nb_plats
@@ -14,6 +15,25 @@ const getCategoriesByRestaurant = async (req, res) => {
        ORDER BY c.ordre ASC`,
       [restaurantId]
     );
+
+    // Si on demande les plats inclus (pour la gestion du menu)
+    if (include_plats === 'true' || include_plats === '1') {
+      const [plats] = await pool.query(
+        `SELECT * FROM plats WHERE restaurant_id = ? ORDER BY categorie_id, ordre ASC`,
+        [restaurantId]
+      );
+
+      // Associer les plats à leurs catégories
+      const categoriesWithPlats = categories.map(cat => ({
+        ...cat,
+        plats: plats.filter(p => p.categorie_id === cat.id)
+      }));
+
+      return res.json({
+        success: true,
+        data: categoriesWithPlats
+      });
+    }
 
     res.json({
       success: true,
