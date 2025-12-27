@@ -461,3 +461,100 @@
       transform: rotate(360deg);
     }
   }
+
+  /* Styles additionnels pour la page de paiement - À ajouter à votre fichier SCSS */
+
+/* Payment Coming Soon */
+.payment-coming-soon {
+  background: linear-gradient(135deg, #f8f9fa 0%, #e9ecef 100%);
+  border: 2px dashed #dee2e6;
+  border-radius: 12px;
+  padding: 2rem;
+  text-align: center;
+}
+
+.payment-coming-soon__header {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 1rem;
+  margin-bottom: 1rem;
+}
+
+.payment-coming-soon__icon {
+  font-size: 3rem;
+}
+
+.payment-coming-soon__badge {
+  display: inline-flex;
+  align-items: center;
+  padding: 0.375rem 0.75rem;
+  background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+  color: white;
+  font-size: 0.75rem;
+  font-weight: 600;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  border-radius: 20px;
+}
+
+.payment-coming-soon h3 {
+  font-size: 1.25rem;
+  font-weight: 600;
+  color: #212529;
+  margin-bottom: 0.5rem;
+}
+
+.payment-coming-soon p {
+  color: #6c757d;
+  max-width: 500px;
+  margin: 0 auto 1.5rem;
+  line-height: 1.6;
+}
+
+.payment-coming-soon__features {
+  display: grid;
+  grid-template-columns: repeat(auto-fit, minmax(200px, 1fr));
+  gap: 1rem;
+  text-align: left;
+  max-width: 600px;
+  margin: 0 auto;
+}
+
+.payment-coming-soon__feature {
+  display: flex;
+  align-items: center;
+  gap: 0.75rem;
+  padding: 0.75rem;
+  background: white;
+  border-radius: 8px;
+  font-size: 0.875rem;
+  color: #495057;
+}
+
+.payment-coming-soon__feature svg {
+  flex-shrink: 0;
+  color: #667eea;
+}
+
+/* Payment Option Status */
+.payment-option__status {
+  display: inline-flex;
+  align-items: center;
+  gap: 0.375rem;
+  padding: 0.25rem 0.75rem;
+  border-radius: 20px;
+  font-size: 0.75rem;
+  font-weight: 600;
+}
+
+.payment-option__status--active {
+  background: #d4edda;
+  color: #155724;
+}
+
+/* Payment Summary Value Coming */
+.payment-summary__value--coming {
+  color: #667eea;
+  font-weight: 500;
+}

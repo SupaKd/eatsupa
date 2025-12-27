@@ -125,14 +125,14 @@ function CheckoutPage() {
         quantite: item.quantite,
       }));
 
-      // Créer la commande
+      // Créer la commande (toujours en mode sur_place pour l'instant)
       const response = await commandeAPI.create({
         restaurant_id: restaurant.id,
         items: commandeItems,
         telephone_client: formData.telephone,
         email_client: formData.email || undefined,
         notes: formData.notes || undefined,
-        mode_paiement: formData.mode_paiement,
+        mode_paiement: 'sur_place', // Forcé à sur_place pour l'instant
         mode_retrait: formData.mode_retrait,
         adresse_livraison: formData.mode_retrait === 'livraison' ? formData.adresse_livraison : undefined,
         code_postal_livraison: formData.mode_retrait === 'livraison' ? formData.code_postal_livraison : undefined,
@@ -142,15 +142,6 @@ function CheckoutPage() {
 
       if (response.data.success) {
         const commande = response.data.data;
-
-        // Si paiement en ligne, simuler le paiement
-        if (formData.mode_paiement === 'en_ligne' && commande.requires_payment) {
-          try {
-            await paiementAPI.simulatePayment(commande.id);
-          } catch (payErr) {
-            console.error('Erreur paiement:', payErr);
-          }
-        }
 
         // Vider le panier
         dispatch(clearCart());
@@ -424,13 +415,13 @@ function CheckoutPage() {
                 </h3>
 
                 <div className="checkout-form__payment-options">
-                  <label className={`checkout-form__payment-option ${formData.mode_paiement === 'sur_place' ? 'checkout-form__payment-option--selected' : ''}`}>
+                  <label className="checkout-form__payment-option checkout-form__payment-option--selected">
                     <input
                       type="radio"
                       name="mode_paiement"
                       value="sur_place"
-                      checked={formData.mode_paiement === 'sur_place'}
-                      onChange={handleChange}
+                      checked={true}
+                      readOnly
                     />
                     <div className="checkout-form__payment-content">
                       <span className="checkout-form__payment-icon">💵</span>
@@ -447,22 +438,7 @@ function CheckoutPage() {
                     </div>
                   </label>
 
-                  <label className={`checkout-form__payment-option ${formData.mode_paiement === 'en_ligne' ? 'checkout-form__payment-option--selected' : ''}`}>
-                    <input
-                      type="radio"
-                      name="mode_paiement"
-                      value="en_ligne"
-                      checked={formData.mode_paiement === 'en_ligne'}
-                      onChange={handleChange}
-                    />
-                    <div className="checkout-form__payment-content">
-                      <span className="checkout-form__payment-icon">💳</span>
-                      <div>
-                        <span className="checkout-form__payment-label">Paiement en ligne</span>
-                        <span className="checkout-form__payment-desc">Carte bancaire sécurisée</span>
-                      </div>
-                    </div>
-                  </label>
+                  {/* TODO: Paiement en ligne - À développer ultérieurement */}
                 </div>
               </div>
 

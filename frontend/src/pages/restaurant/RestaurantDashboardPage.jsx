@@ -264,8 +264,8 @@ function RestaurantDashboardPage() {
                     </div>
                     <div className="dashboard-order__footer">
                       <div className="dashboard-order__payment">
-                        <span className={`dashboard-order__payment-badge dashboard-order__payment-badge--${commande.mode_paiement === 'en_ligne' ? 'purple' : 'gray'}`}>
-                          {commande.mode_paiement === 'en_ligne' ? '💳' : '💵'} {commande.mode_paiement === 'en_ligne' ? 'En ligne' : 'Sur place'}
+                        <span className="dashboard-order__payment-badge dashboard-order__payment-badge--gray">
+                          💵 Sur place
                         </span>
                         <span className={`dashboard-order__payment-status dashboard-order__payment-status--${paymentInfo.color}`}>
                           {paymentInfo.label}
@@ -315,38 +315,18 @@ function RestaurantDashboardPage() {
             </div>
           </div>
 
-          {/* Modes de paiement */}
+          {/* Mode de paiement */}
           <div className="dashboard-payment-info">
-            <h3>Modes de paiement acceptés</h3>
+            <h3>Mode de paiement accepté</h3>
             <div className="dashboard-payment-modes">
-              {restaurant?.paiement_sur_place && (
-                <div className="dashboard-payment-mode dashboard-payment-mode--active">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <polyline points="20 6 9 17 4 12"></polyline>
-                  </svg>
-                  💵 Paiement sur place
-                </div>
-              )}
-              {restaurant?.paiement_en_ligne && restaurant?.stripe_configure ? (
-                <div className="dashboard-payment-mode dashboard-payment-mode--active">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <polyline points="20 6 9 17 4 12"></polyline>
-                  </svg>
-                  💳 Paiement en ligne
-                </div>
-              ) : (
-                <div className="dashboard-payment-mode dashboard-payment-mode--inactive">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <line x1="18" y1="6" x2="6" y2="18"></line>
-                    <line x1="6" y1="6" x2="18" y2="18"></line>
-                  </svg>
-                  💳 Paiement en ligne (non configuré)
-                </div>
-              )}
+              <div className="dashboard-payment-mode dashboard-payment-mode--active">
+                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="20 6 9 17 4 12"></polyline>
+                </svg>
+                💵 Paiement sur place
+              </div>
+              {/* TODO: Paiement en ligne - À développer ultérieurement */}
             </div>
-            <Link to="/dashboard/paiement" className="dashboard-payment-info__link">
-              Configurer les paiements →
-            </Link>
           </div>
         </div>
       </div>
