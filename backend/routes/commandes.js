@@ -44,8 +44,50 @@ const commandeValidation = [
   body('mode_paiement')
     .optional()
     .isIn(['sur_place', 'en_ligne'])
-    .withMessage('Mode de paiement invalide. Valeurs acceptées: sur_place, en_ligne')
+    .withMessage('Mode de paiement invalide. Valeurs acceptées: sur_place, en_ligne'),
+  body('mode_retrait')
+    .optional()
+    .isIn(['a_emporter', 'livraison'])
+    .withMessage('Mode de retrait invalide. Valeurs acceptées: a_emporter, livraison'),
+  body('adresse_livraison')
+    .optional()
+    .trim()
+    .isLength({ max: 255 })
+    .withMessage('L\'adresse ne peut pas dépasser 255 caractères.'),
+  body('code_postal_livraison')
+    .optional()
+    .matches(/^[0-9]{5}$/)
+    .withMessage('Code postal invalide (5 chiffres attendus).'),
+  body('ville_livraison')
+    .optional()
+    .trim()
+    .isLength({ max: 100 })
+    .withMessage('La ville ne peut pas dépasser 100 caractères.'),
+  body('instructions_livraison')
+    .optional()
+    .trim()
+    .isLength({ max: 500 })
+    .withMessage('Les instructions ne peuvent pas dépasser 500 caractères.')
 ];
+
+// Validation conditionnelle pour la livraison
+const validateLivraison = (req, res, next) => {
+  if (req.body.mode_retrait === 'livraison') {
+    if (!req.body.adresse_livraison) {
+      return res.status(400).json({
+        success: false,
+        message: 'L\'adresse de livraison est requise pour la livraison.'
+      });
+    }
+    if (!req.body.ville_livraison) {
+      return res.status(400).json({
+        success: false,
+        message: 'La ville de livraison est requise pour la livraison.'
+      });
+    }
+  }
+  next();
+};
 
 // Validation pour la mise à jour du statut
 const statutValidation = [
@@ -64,6 +106,7 @@ router.post(
   optionalAuth,
   commandeValidation,
   validate,
+  validateLivraison,
   commandeController.createCommande
 );
 

@@ -23,6 +23,16 @@ function RestaurantSettingsPage() {
     delai_preparation: 30,
   });
 
+  // Paramètres de livraison
+  const [livraisonData, setLivraisonData] = useState({
+    livraison_active: false,
+    a_emporter_active: true,
+    frais_livraison: 2.50,
+    zone_livraison_km: 5,
+    minimum_livraison: 15,
+    delai_livraison: 45,
+  });
+
   // Horaires
   const [horaires, setHoraires] = useState({
     lundi: { ouvert: false, horaires: [{ debut: '11:30', fin: '14:30' }, { debut: '18:30', fin: '22:00' }] },
@@ -61,6 +71,15 @@ function RestaurantSettingsPage() {
           delai_preparation: resto.delai_preparation || 30,
         });
 
+        setLivraisonData({
+          livraison_active: resto.livraison_active || false,
+          a_emporter_active: resto.a_emporter_active !== false,
+          frais_livraison: parseFloat(resto.frais_livraison) || 2.50,
+          zone_livraison_km: parseFloat(resto.zone_livraison_km) || 5,
+          minimum_livraison: parseFloat(resto.minimum_livraison) || 15,
+          delai_livraison: resto.delai_livraison || 45,
+        });
+
         if (resto.horaires_ouverture) {
           const h = typeof resto.horaires_ouverture === 'string' 
             ? JSON.parse(resto.horaires_ouverture) 
@@ -83,6 +102,15 @@ function RestaurantSettingsPage() {
   const handleChange = (e) => {
     const { name, value } = e.target;
     setFormData(prev => ({ ...prev, [name]: value }));
+    setSuccess(null);
+  };
+
+  const handleLivraisonChange = (e) => {
+    const { name, value, type, checked } = e.target;
+    setLivraisonData(prev => ({ 
+      ...prev, 
+      [name]: type === 'checkbox' ? checked : value 
+    }));
     setSuccess(null);
   };
 
@@ -124,6 +152,37 @@ function RestaurantSettingsPage() {
     }
   };
 
+  const handleSubmitLivraison = async (e) => {
+    e.preventDefault();
+    setError(null);
+    setSuccess(null);
+
+    if (!livraisonData.livraison_active && !livraisonData.a_emporter_active) {
+      setError('Vous devez activer au moins un mode de retrait (à emporter ou livraison)');
+      return;
+    }
+
+    setSaving(true);
+
+    try {
+      await restaurantAPI.update(restaurant.id, {
+        livraison_active: livraisonData.livraison_active,
+        a_emporter_active: livraisonData.a_emporter_active,
+        frais_livraison: parseFloat(livraisonData.frais_livraison) || 0,
+        zone_livraison_km: parseFloat(livraisonData.zone_livraison_km) || 5,
+        minimum_livraison: parseFloat(livraisonData.minimum_livraison) || 0,
+        delai_livraison: parseInt(livraisonData.delai_livraison) || 45,
+      });
+      setSuccess('Paramètres de livraison enregistrés avec succès');
+      await fetchRestaurant();
+    } catch (err) {
+      console.error('Erreur sauvegarde livraison:', err);
+      setError(err.response?.data?.message || 'Erreur lors de la sauvegarde');
+    } finally {
+      setSaving(false);
+    }
+  };
+
   const handleSubmitHoraires = async (e) => {
     e.preventDefault();
     setError(null);
@@ -142,6 +201,13 @@ function RestaurantSettingsPage() {
     } finally {
       setSaving(false);
     }
+  };
+
+  const formatPrice = (price) => {
+    return new Intl.NumberFormat('fr-FR', {
+      style: 'currency',
+      currency: 'EUR',
+    }).format(price);
   };
 
   const typesCuisine = [
@@ -182,16 +248,30 @@ function RestaurantSettingsPage() {
           Informations générales
         </button>
         {restaurant && (
-          <button
-            className={`settings-page__tab ${activeTab === 'horaires' ? 'settings-page__tab--active' : ''}`}
-            onClick={() => setActiveTab('horaires')}
-          >
-            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="12" cy="12" r="10"></circle>
-              <polyline points="12 6 12 12 16 14"></polyline>
-            </svg>
-            Horaires d'ouverture
-          </button>
+          <>
+            <button
+              className={`settings-page__tab ${activeTab === 'livraison' ? 'settings-page__tab--active' : ''}`}
+              onClick={() => setActiveTab('livraison')}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <rect x="1" y="3" width="15" height="13"></rect>
+                <polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon>
+                <circle cx="5.5" cy="18.5" r="2.5"></circle>
+                <circle cx="18.5" cy="18.5" r="2.5"></circle>
+              </svg>
+              Livraison
+            </button>
+            <button
+              className={`settings-page__tab ${activeTab === 'horaires' ? 'settings-page__tab--active' : ''}`}
+              onClick={() => setActiveTab('horaires')}
+            >
+              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <polyline points="12 6 12 12 16 14"></polyline>
+              </svg>
+              Horaires
+            </button>
+          </>
         )}
       </div>
 
@@ -228,153 +308,202 @@ function RestaurantSettingsPage() {
               <div className="settings-form__row">
                 <div className="settings-form__field">
                   <label>Nom du restaurant *</label>
-                  <input
-                    type="text"
-                    name="nom"
-                    value={formData.nom}
-                    onChange={handleChange}
-                    placeholder="Le nom de votre établissement"
-                    required
-                  />
+                  <input type="text" name="nom" value={formData.nom} onChange={handleChange} placeholder="Le nom de votre établissement" required />
                 </div>
                 <div className="settings-form__field">
                   <label>Type de cuisine</label>
-                  <select
-                    name="type_cuisine"
-                    value={formData.type_cuisine}
-                    onChange={handleChange}
-                  >
+                  <select name="type_cuisine" value={formData.type_cuisine} onChange={handleChange}>
                     <option value="">Sélectionner...</option>
-                    {typesCuisine.map(type => (
-                      <option key={type} value={type}>{type}</option>
-                    ))}
+                    {typesCuisine.map(type => (<option key={type} value={type}>{type}</option>))}
                   </select>
                 </div>
               </div>
 
               <div className="settings-form__field">
                 <label>Description</label>
-                <textarea
-                  name="description"
-                  value={formData.description}
-                  onChange={handleChange}
-                  placeholder="Décrivez votre restaurant en quelques mots..."
-                  rows={3}
-                />
+                <textarea name="description" value={formData.description} onChange={handleChange} placeholder="Décrivez votre restaurant..." rows={3} />
               </div>
 
               <div className="settings-form__field">
                 <label>URL de l'image de couverture</label>
-                <input
-                  type="url"
-                  name="image"
-                  value={formData.image}
-                  onChange={handleChange}
-                  placeholder="https://exemple.com/image.jpg"
-                />
-                {formData.image && (
-                  <div className="settings-form__image-preview">
-                    <img src={formData.image} alt="Aperçu" onError={(e) => e.target.style.display = 'none'} />
-                  </div>
-                )}
+                <input type="url" name="image" value={formData.image} onChange={handleChange} placeholder="https://exemple.com/image.jpg" />
               </div>
             </div>
 
             <div className="settings-form__section">
               <h2>Adresse</h2>
-              
               <div className="settings-form__field">
                 <label>Adresse *</label>
-                <input
-                  type="text"
-                  name="adresse"
-                  value={formData.adresse}
-                  onChange={handleChange}
-                  placeholder="Numéro et nom de rue"
-                  required
-                />
+                <input type="text" name="adresse" value={formData.adresse} onChange={handleChange} placeholder="Numéro et nom de rue" required />
               </div>
-
               <div className="settings-form__row">
                 <div className="settings-form__field settings-form__field--small">
                   <label>Code postal *</label>
-                  <input
-                    type="text"
-                    name="code_postal"
-                    value={formData.code_postal}
-                    onChange={handleChange}
-                    placeholder="75001"
-                    required
-                  />
+                  <input type="text" name="code_postal" value={formData.code_postal} onChange={handleChange} placeholder="75001" required />
                 </div>
                 <div className="settings-form__field">
                   <label>Ville *</label>
-                  <input
-                    type="text"
-                    name="ville"
-                    value={formData.ville}
-                    onChange={handleChange}
-                    placeholder="Paris"
-                    required
-                  />
+                  <input type="text" name="ville" value={formData.ville} onChange={handleChange} placeholder="Paris" required />
                 </div>
               </div>
             </div>
 
             <div className="settings-form__section">
               <h2>Contact</h2>
-              
               <div className="settings-form__row">
                 <div className="settings-form__field">
                   <label>Téléphone</label>
-                  <input
-                    type="tel"
-                    name="telephone"
-                    value={formData.telephone}
-                    onChange={handleChange}
-                    placeholder="01 23 45 67 89"
-                  />
+                  <input type="tel" name="telephone" value={formData.telephone} onChange={handleChange} placeholder="01 23 45 67 89" />
                 </div>
                 <div className="settings-form__field">
                   <label>Email</label>
-                  <input
-                    type="email"
-                    name="email"
-                    value={formData.email}
-                    onChange={handleChange}
-                    placeholder="contact@restaurant.fr"
-                  />
+                  <input type="email" name="email" value={formData.email} onChange={handleChange} placeholder="contact@restaurant.fr" />
                 </div>
               </div>
             </div>
 
             <div className="settings-form__section">
-              <h2>Paramètres de commande</h2>
-              
+              <h2>Préparation</h2>
               <div className="settings-form__field settings-form__field--small">
-                <label>Délai de préparation moyen (minutes)</label>
-                <input
-                  type="number"
-                  name="delai_preparation"
-                  value={formData.delai_preparation}
-                  onChange={handleChange}
-                  min="5"
-                  max="120"
-                />
+                <label>Délai de préparation (minutes)</label>
+                <input type="number" name="delai_preparation" value={formData.delai_preparation} onChange={handleChange} min="5" max="120" />
                 <span className="settings-form__hint">Temps estimé pour préparer une commande</span>
               </div>
             </div>
 
             <div className="settings-form__actions">
               <button type="submit" className="settings-form__submit" disabled={saving}>
-                {saving ? (
-                  <>
-                    <span className="settings-form__spinner"></span>
-                    Enregistrement...
-                  </>
-                ) : (
-                  restaurant ? 'Enregistrer les modifications' : 'Créer mon restaurant'
-                )}
+                {saving ? 'Enregistrement...' : (restaurant ? 'Enregistrer' : 'Créer mon restaurant')}
+              </button>
+            </div>
+          </form>
+        )}
+
+        {/* Tab Livraison */}
+        {activeTab === 'livraison' && restaurant && (
+          <form onSubmit={handleSubmitLivraison} className="settings-form">
+            <div className="settings-form__section">
+              <h2>Modes de retrait</h2>
+              <p className="settings-form__section-desc">Choisissez comment vos clients peuvent récupérer leurs commandes</p>
+
+              <div className="settings-form__toggle-group">
+                <label className={`settings-form__toggle-card ${livraisonData.a_emporter_active ? 'settings-form__toggle-card--active' : ''}`}>
+                  <input type="checkbox" name="a_emporter_active" checked={livraisonData.a_emporter_active} onChange={handleLivraisonChange} />
+                  <div className="settings-form__toggle-card-content">
+                    <span className="settings-form__toggle-card-icon">🏃</span>
+                    <div className="settings-form__toggle-card-text">
+                      <strong>À emporter</strong>
+                      <span>Les clients récupèrent leur commande au restaurant</span>
+                    </div>
+                    <div className={`settings-form__toggle-card-check ${livraisonData.a_emporter_active ? 'active' : ''}`}>
+                      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                        <polyline points="20 6 9 17 4 12"></polyline>
+                      </svg>
+                    </div>
+                  </div>
+                </label>
+
+                <label className={`settings-form__toggle-card ${livraisonData.livraison_active ? 'settings-form__toggle-card--active' : ''}`}>
+                  <input type="checkbox" name="livraison_active" checked={livraisonData.livraison_active} onChange={handleLivraisonChange} />
+                  <div className="settings-form__toggle-card-content">
+                    <span className="settings-form__toggle-card-icon">🚗</span>
+                    <div className="settings-form__toggle-card-text">
+                      <strong>Livraison</strong>
+                      <span>Vous livrez les commandes à l'adresse du client</span>
+                    </div>
+                    <div className={`settings-form__toggle-card-check ${livraisonData.livraison_active ? 'active' : ''}`}>
+                      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
+                        <polyline points="20 6 9 17 4 12"></polyline>
+                      </svg>
+                    </div>
+                  </div>
+                </label>
+              </div>
+            </div>
+
+            {livraisonData.livraison_active && (
+              <div className="settings-form__section">
+                <h2>Paramètres de livraison</h2>
+
+                <div className="settings-form__row">
+                  <div className="settings-form__field">
+                    <label>Frais de livraison (€)</label>
+                    <input
+                      type="number"
+                      name="frais_livraison"
+                      value={livraisonData.frais_livraison}
+                      onChange={handleLivraisonChange}
+                      min="0"
+                      max="20"
+                      step="0.50"
+                    />
+                    <span className="settings-form__hint">Frais facturés au client pour la livraison</span>
+                  </div>
+                  <div className="settings-form__field">
+                    <label>Zone de livraison (km)</label>
+                    <input
+                      type="number"
+                      name="zone_livraison_km"
+                      value={livraisonData.zone_livraison_km}
+                      onChange={handleLivraisonChange}
+                      min="1"
+                      max="50"
+                      step="0.5"
+                    />
+                    <span className="settings-form__hint">Rayon maximum de livraison autour du restaurant</span>
+                  </div>
+                </div>
+
+                <div className="settings-form__row">
+                  <div className="settings-form__field">
+                    <label>Commande minimum (€)</label>
+                    <input
+                      type="number"
+                      name="minimum_livraison"
+                      value={livraisonData.minimum_livraison}
+                      onChange={handleLivraisonChange}
+                      min="0"
+                      max="100"
+                      step="1"
+                    />
+                    <span className="settings-form__hint">Montant minimum pour pouvoir commander en livraison (0 = pas de minimum)</span>
+                  </div>
+                  <div className="settings-form__field">
+                    <label>Délai de livraison (minutes)</label>
+                    <input
+                      type="number"
+                      name="delai_livraison"
+                      value={livraisonData.delai_livraison}
+                      onChange={handleLivraisonChange}
+                      min="15"
+                      max="120"
+                    />
+                    <span className="settings-form__hint">Temps estimé entre la commande et la livraison</span>
+                  </div>
+                </div>
+
+                <div className="settings-form__info-box">
+                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                    <circle cx="12" cy="12" r="10"></circle>
+                    <line x1="12" y1="16" x2="12" y2="12"></line>
+                    <line x1="12" y1="8" x2="12.01" y2="8"></line>
+                  </svg>
+                  <div>
+                    <strong>Résumé de votre configuration</strong>
+                    <p>
+                      Livraison dans un rayon de <strong>{livraisonData.zone_livraison_km} km</strong> • 
+                      Frais de <strong>{formatPrice(livraisonData.frais_livraison)}</strong> • 
+                      Minimum de commande: <strong>{formatPrice(livraisonData.minimum_livraison)}</strong> • 
+                      Délai estimé: <strong>{livraisonData.delai_livraison} min</strong>
+                    </p>
+                  </div>
+                </div>
+              </div>
+            )}
+
+            <div className="settings-form__actions">
+              <button type="submit" className="settings-form__submit" disabled={saving}>
+                {saving ? 'Enregistrement...' : 'Enregistrer les paramètres de livraison'}
               </button>
             </div>
           </form>
@@ -385,42 +514,26 @@ function RestaurantSettingsPage() {
           <form onSubmit={handleSubmitHoraires} className="settings-form">
             <div className="settings-form__section">
               <h2>Horaires d'ouverture</h2>
-              <p className="settings-form__section-desc">
-                Configurez les horaires pendant lesquels votre restaurant accepte les commandes
-              </p>
+              <p className="settings-form__section-desc">Configurez les horaires pendant lesquels votre restaurant accepte les commandes</p>
 
               <div className="horaires-grid">
                 {jours.map((jour) => (
                   <div key={jour} className="horaire-row">
                     <div className="horaire-row__day">
                       <label className="horaire-row__toggle">
-                        <input
-                          type="checkbox"
-                          checked={horaires[jour]?.ouvert || false}
-                          onChange={(e) => handleHoraireChange(jour, 'ouvert', e.target.checked)}
-                        />
+                        <input type="checkbox" checked={horaires[jour]?.ouvert || false} onChange={(e) => handleHoraireChange(jour, 'ouvert', e.target.checked)} />
                         <span className="horaire-row__toggle-slider"></span>
                       </label>
-                      <span className="horaire-row__day-name">
-                        {jour.charAt(0).toUpperCase() + jour.slice(1)}
-                      </span>
+                      <span className="horaire-row__day-name">{jour.charAt(0).toUpperCase() + jour.slice(1)}</span>
                     </div>
 
                     {horaires[jour]?.ouvert ? (
                       <div className="horaire-row__slots">
                         {horaires[jour]?.horaires?.map((slot, index) => (
                           <div key={index} className="horaire-slot">
-                            <input
-                              type="time"
-                              value={slot.debut}
-                              onChange={(e) => handleHoraireChange(jour, 'debut', e.target.value, index)}
-                            />
+                            <input type="time" value={slot.debut} onChange={(e) => handleHoraireChange(jour, 'debut', e.target.value, index)} />
                             <span>à</span>
-                            <input
-                              type="time"
-                              value={slot.fin}
-                              onChange={(e) => handleHoraireChange(jour, 'fin', e.target.value, index)}
-                            />
+                            <input type="time" value={slot.fin} onChange={(e) => handleHoraireChange(jour, 'fin', e.target.value, index)} />
                           </div>
                         ))}
                       </div>
@@ -434,14 +547,7 @@ function RestaurantSettingsPage() {
 
             <div className="settings-form__actions">
               <button type="submit" className="settings-form__submit" disabled={saving}>
-                {saving ? (
-                  <>
-                    <span className="settings-form__spinner"></span>
-                    Enregistrement...
-                  </>
-                ) : (
-                  'Enregistrer les horaires'
-                )}
+                {saving ? 'Enregistrement...' : 'Enregistrer les horaires'}
               </button>
             </div>
           </form>

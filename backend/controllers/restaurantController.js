@@ -4,7 +4,7 @@ const { paginate, paginatedResponse, isRestaurantOpen, getNextOpeningTime, getCl
 // Récupérer tous les restaurants (public)
 const getAllRestaurants = async (req, res) => {
   try {
-    const { page = 1, limit = 10, ville, type_cuisine, search, actif } = req.query;
+    const { page = 1, limit = 10, ville, type_cuisine, search, actif, livraison } = req.query;
     const { limit: queryLimit, offset } = paginate(page, limit);
 
     let whereClause = 'WHERE r.actif = 1';
@@ -31,6 +31,11 @@ const getAllRestaurants = async (req, res) => {
       params.push(`%${search}%`, `%${search}%`, `%${search}%`);
     }
 
+    // Filtrer par restaurants qui font la livraison
+    if (livraison === 'true') {
+      whereClause += ' AND r.livraison_active = 1';
+    }
+
     // Compter le total
     const [countResult] = await pool.query(
       `SELECT COUNT(*) as total FROM restaurants r ${whereClause}`,
@@ -38,12 +43,14 @@ const getAllRestaurants = async (req, res) => {
     );
     const total = countResult[0].total;
 
-    // Récupérer les restaurants avec les infos de paiement
+    // Récupérer les restaurants avec les infos de paiement et livraison
     const [restaurants] = await pool.query(
       `SELECT r.id, r.nom, r.description, r.adresse, r.ville, r.code_postal,
               r.telephone, r.email, r.type_cuisine, r.horaires_ouverture,
               r.image, r.delai_preparation, r.frais_livraison, r.actif,
               r.paiement_sur_place, r.paiement_en_ligne,
+              r.livraison_active, r.a_emporter_active, r.zone_livraison_km,
+              r.minimum_livraison, r.delai_livraison,
               r.created_at, r.updated_at,
               u.nom as proprietaire_nom, u.prenom as proprietaire_prenom
        FROM restaurants r
@@ -61,6 +68,8 @@ const getAllRestaurants = async (req, res) => {
         ...r,
         paiement_sur_place: Boolean(r.paiement_sur_place),
         paiement_en_ligne: Boolean(r.paiement_en_ligne),
+        livraison_active: Boolean(r.livraison_active),
+        a_emporter_active: Boolean(r.a_emporter_active),
         est_ouvert: estOuvert,
         prochaine_ouverture: !estOuvert ? getNextOpeningTime(r.horaires_ouverture) : null,
         heure_fermeture: estOuvert ? getClosingTime(r.horaires_ouverture) : null
@@ -151,13 +160,39 @@ const getRestaurantById = async (req, res) => {
       });
     }
 
+    // Modes de retrait disponibles
+    const modesRetrait = [];
+    if (restaurant.a_emporter_active) {
+      modesRetrait.push({
+        id: 'a_emporter',
+        label: 'À emporter',
+        description: 'Récupérez votre commande au restaurant',
+        delai: restaurant.delai_preparation || 30,
+        frais: 0
+      });
+    }
+    if (restaurant.livraison_active) {
+      modesRetrait.push({
+        id: 'livraison',
+        label: 'Livraison',
+        description: `Livraison dans un rayon de ${restaurant.zone_livraison_km || 5} km`,
+        delai: restaurant.delai_livraison || 45,
+        frais: parseFloat(restaurant.frais_livraison) || 0,
+        minimum: parseFloat(restaurant.minimum_livraison) || 0,
+        zone_km: parseFloat(restaurant.zone_livraison_km) || 5
+      });
+    }
+
     res.json({
       success: true,
       data: {
         ...restaurant,
         paiement_sur_place: Boolean(restaurant.paiement_sur_place),
         paiement_en_ligne: Boolean(restaurant.paiement_en_ligne && restaurant.stripe_onboarding_complete),
+        livraison_active: Boolean(restaurant.livraison_active),
+        a_emporter_active: Boolean(restaurant.a_emporter_active),
         modes_paiement: modesPaiement,
+        modes_retrait: modesRetrait,
         categories: categoriesWithPlats,
         est_ouvert: estOuvert,
         prochaine_ouverture: !estOuvert ? getNextOpeningTime(restaurant.horaires_ouverture) : null,
@@ -180,7 +215,9 @@ const createRestaurant = async (req, res) => {
       nom, description, adresse, ville, code_postal,
       telephone, email, type_cuisine, delai_preparation,
       frais_livraison, horaires_ouverture,
-      paiement_sur_place = true, paiement_en_ligne = false
+      paiement_sur_place = true, paiement_en_ligne = false,
+      livraison_active = false, a_emporter_active = true,
+      zone_livraison_km = 5, minimum_livraison = 15, delai_livraison = 45
     } = req.body;
 
     // Vérifier si l'utilisateur a déjà un restaurant
@@ -200,8 +237,9 @@ const createRestaurant = async (req, res) => {
       `INSERT INTO restaurants 
        (utilisateur_id, nom, description, adresse, ville, code_postal, 
         telephone, email, type_cuisine, delai_preparation, frais_livraison, 
-        horaires_ouverture, paiement_sur_place, paiement_en_ligne)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
+        horaires_ouverture, paiement_sur_place, paiement_en_ligne,
+        livraison_active, a_emporter_active, zone_livraison_km, minimum_livraison, delai_livraison)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         req.user.id,
         nom,
@@ -216,7 +254,12 @@ const createRestaurant = async (req, res) => {
         frais_livraison || 0,
         horaires_ouverture ? JSON.stringify(horaires_ouverture) : null,
         paiement_sur_place ? 1 : 0,
-        paiement_en_ligne ? 1 : 0
+        paiement_en_ligne ? 1 : 0,
+        livraison_active ? 1 : 0,
+        a_emporter_active ? 1 : 0,
+        zone_livraison_km,
+        minimum_livraison,
+        delai_livraison
       ]
     );
 
@@ -231,7 +274,9 @@ const createRestaurant = async (req, res) => {
       data: {
         ...newRestaurant[0],
         paiement_sur_place: Boolean(newRestaurant[0].paiement_sur_place),
-        paiement_en_ligne: Boolean(newRestaurant[0].paiement_en_ligne)
+        paiement_en_ligne: Boolean(newRestaurant[0].paiement_en_ligne),
+        livraison_active: Boolean(newRestaurant[0].livraison_active),
+        a_emporter_active: Boolean(newRestaurant[0].a_emporter_active)
       }
     });
   } catch (error) {
@@ -263,7 +308,9 @@ const updateRestaurant = async (req, res) => {
       'nom', 'description', 'adresse', 'ville', 'code_postal',
       'telephone', 'email', 'type_cuisine', 'delai_preparation',
       'frais_livraison', 'horaires_ouverture', 'actif',
-      'paiement_sur_place', 'paiement_en_ligne'
+      'paiement_sur_place', 'paiement_en_ligne',
+      'livraison_active', 'a_emporter_active', 'zone_livraison_km',
+      'minimum_livraison', 'delai_livraison'
     ];
 
     const updateFields = [];
@@ -274,7 +321,7 @@ const updateRestaurant = async (req, res) => {
         updateFields.push(`${field} = ?`);
         if (field === 'horaires_ouverture' && typeof updates[field] === 'object') {
           values.push(JSON.stringify(updates[field]));
-        } else if (['actif', 'paiement_sur_place', 'paiement_en_ligne'].includes(field)) {
+        } else if (['actif', 'paiement_sur_place', 'paiement_en_ligne', 'livraison_active', 'a_emporter_active'].includes(field)) {
           values.push(updates[field] ? 1 : 0);
         } else {
           values.push(updates[field]);
@@ -307,7 +354,9 @@ const updateRestaurant = async (req, res) => {
       data: {
         ...updatedRestaurant[0],
         paiement_sur_place: Boolean(updatedRestaurant[0].paiement_sur_place),
-        paiement_en_ligne: Boolean(updatedRestaurant[0].paiement_en_ligne)
+        paiement_en_ligne: Boolean(updatedRestaurant[0].paiement_en_ligne),
+        livraison_active: Boolean(updatedRestaurant[0].livraison_active),
+        a_emporter_active: Boolean(updatedRestaurant[0].a_emporter_active)
       }
     });
   } catch (error) {
@@ -427,7 +476,9 @@ const getMyRestaurant = async (req, res) => {
         SUM(montant_total) as ca_total,
         SUM(CASE WHEN paiement_statut = 'paye' THEN montant_total ELSE 0 END) as total_paye,
         SUM(CASE WHEN paiement_statut = 'en_attente' AND mode_paiement = 'sur_place' THEN montant_total ELSE 0 END) as en_attente_sur_place,
-        SUM(CASE WHEN paiement_statut = 'en_attente' AND mode_paiement = 'en_ligne' THEN montant_total ELSE 0 END) as en_attente_en_ligne
+        SUM(CASE WHEN paiement_statut = 'en_attente' AND mode_paiement = 'en_ligne' THEN montant_total ELSE 0 END) as en_attente_en_ligne,
+        SUM(CASE WHEN mode_retrait = 'livraison' THEN 1 ELSE 0 END) as commandes_livraison,
+        SUM(CASE WHEN mode_retrait = 'a_emporter' THEN 1 ELSE 0 END) as commandes_a_emporter
        FROM commandes WHERE restaurant_id = ?`,
       [restaurant.id]
     );
@@ -443,7 +494,8 @@ const getMyRestaurant = async (req, res) => {
 
     // Commandes récentes
     const [commandesRecentes] = await pool.query(
-      `SELECT id, numero_commande, montant_total, statut, mode_paiement, paiement_statut, date_commande, telephone_client
+      `SELECT id, numero_commande, montant_total, statut, mode_paiement, paiement_statut, 
+              mode_retrait, adresse_livraison, ville_livraison, date_commande, telephone_client
        FROM commandes 
        WHERE restaurant_id = ?
        ORDER BY date_commande DESC
@@ -461,6 +513,8 @@ const getMyRestaurant = async (req, res) => {
           ...restaurant,
           paiement_sur_place: Boolean(restaurant.paiement_sur_place),
           paiement_en_ligne: Boolean(restaurant.paiement_en_ligne),
+          livraison_active: Boolean(restaurant.livraison_active),
+          a_emporter_active: Boolean(restaurant.a_emporter_active),
           stripe_configure: Boolean(restaurant.stripe_account_id && restaurant.stripe_onboarding_complete),
           est_ouvert: estOuvert,
           prochaine_ouverture: !estOuvert ? getNextOpeningTime(restaurant.horaires_ouverture) : null,
@@ -475,6 +529,8 @@ const getMyRestaurant = async (req, res) => {
           total_paye: parseFloat(stats[0].total_paye) || 0,
           en_attente_sur_place: parseFloat(stats[0].en_attente_sur_place) || 0,
           en_attente_en_ligne: parseFloat(stats[0].en_attente_en_ligne) || 0,
+          commandes_livraison: parseInt(stats[0].commandes_livraison) || 0,
+          commandes_a_emporter: parseInt(stats[0].commandes_a_emporter) || 0,
           ...counts[0]
         },
         commandes_recentes: commandesRecentes

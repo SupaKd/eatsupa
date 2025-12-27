@@ -1,0 +1,335 @@
+/* ========================================
+   STYLES ADDITIONNELS POUR LA LIVRAISON
+   À ajouter à votre fichier SCSS principal
+   ======================================== */
+
+/* === Toggle Cards pour les modes de retrait (Settings) === */
+.settings-form__toggle-group {
+    display: flex;
+    flex-direction: column;
+    gap: 1rem;
+  }
+  
+  .settings-form__toggle-card {
+    display: block;
+    cursor: pointer;
+  }
+  
+  .settings-form__toggle-card input {
+    display: none;
+  }
+  
+  .settings-form__toggle-card-content {
+    display: flex;
+    align-items: center;
+    gap: 1rem;
+    padding: 1.25rem;
+    border: 2px solid #e5e7eb;
+    border-radius: 12px;
+    background: #fff;
+    transition: all 0.2s ease;
+  }
+  
+  .settings-form__toggle-card:hover .settings-form__toggle-card-content {
+    border-color: #d1d5db;
+    background: #f9fafb;
+  }
+  
+  .settings-form__toggle-card--active .settings-form__toggle-card-content {
+    border-color: #10b981;
+    background: #ecfdf5;
+  }
+  
+  .settings-form__toggle-card-icon {
+    font-size: 2rem;
+  }
+  
+  .settings-form__toggle-card-text {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.25rem;
+  }
+  
+  .settings-form__toggle-card-text strong {
+    font-size: 1rem;
+    color: #111827;
+  }
+  
+  .settings-form__toggle-card-text span {
+    font-size: 0.875rem;
+    color: #6b7280;
+  }
+  
+  .settings-form__toggle-card-check {
+    width: 28px;
+    height: 28px;
+    border-radius: 50%;
+    border: 2px solid #e5e7eb;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    transition: all 0.2s ease;
+  }
+  
+  .settings-form__toggle-card-check.active {
+    background: #10b981;
+    border-color: #10b981;
+    color: #fff;
+  }
+  
+  .settings-form__toggle-card-check svg {
+    opacity: 0;
+    transform: scale(0.5);
+    transition: all 0.2s ease;
+  }
+  
+  .settings-form__toggle-card-check.active svg {
+    opacity: 1;
+    transform: scale(1);
+  }
+  
+  /* === Info Box === */
+  .settings-form__info-box {
+    display: flex;
+    gap: 1rem;
+    padding: 1rem;
+    background: #eff6ff;
+    border: 1px solid #bfdbfe;
+    border-radius: 8px;
+    margin-top: 1.5rem;
+  }
+  
+  .settings-form__info-box svg {
+    color: #3b82f6;
+    flex-shrink: 0;
+    margin-top: 2px;
+  }
+  
+  .settings-form__info-box strong {
+    display: block;
+    font-size: 0.875rem;
+    color: #1e40af;
+    margin-bottom: 0.25rem;
+  }
+  
+  .settings-form__info-box p {
+    font-size: 0.875rem;
+    color: #3b82f6;
+    margin: 0;
+  }
+  
+  /* === Checkout - Options de retrait === */
+  .checkout-form__retrait-options {
+    display: flex;
+    flex-direction: column;
+    gap: 0.75rem;
+  }
+  
+  .checkout-form__retrait-option {
+    display: block;
+    cursor: pointer;
+  }
+  
+  .checkout-form__retrait-option input {
+    display: none;
+  }
+  
+  .checkout-form__retrait-content {
+    display: flex;
+    align-items: flex-start;
+    gap: 1rem;
+    padding: 1rem 1.25rem;
+    border: 2px solid #e5e7eb;
+    border-radius: 12px;
+    background: #fff;
+    transition: all 0.2s ease;
+  }
+  
+  .checkout-form__retrait-option:hover .checkout-form__retrait-content {
+    border-color: #d1d5db;
+  }
+  
+  .checkout-form__retrait-option--selected .checkout-form__retrait-content {
+    border-color: #f97316;
+    background: #fff7ed;
+  }
+  
+  .checkout-form__retrait-icon {
+    font-size: 1.75rem;
+    flex-shrink: 0;
+  }
+  
+  .checkout-form__retrait-text {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+    gap: 0.125rem;
+  }
+  
+  .checkout-form__retrait-label {
+    font-weight: 600;
+    font-size: 1rem;
+    color: #111827;
+  }
+  
+  .checkout-form__retrait-desc {
+    font-size: 0.875rem;
+    color: #6b7280;
+  }
+  
+  .checkout-form__retrait-time {
+    font-size: 0.8rem;
+    color: #059669;
+    margin-top: 0.25rem;
+  }
+  
+  .checkout-form__retrait-minimum {
+    font-size: 0.75rem;
+    color: #9ca3af;
+    margin-top: 0.25rem;
+  }
+  
+  .checkout-form__retrait-price {
+    font-weight: 600;
+    font-size: 0.9rem;
+    color: #f97316;
+    flex-shrink: 0;
+  }
+  
+  /* === Warning Box === */
+  .checkout-form__warning {
+    display: flex;
+    align-items: center;
+    gap: 0.75rem;
+    padding: 0.875rem 1rem;
+    background: #fef3c7;
+    border: 1px solid #fcd34d;
+    border-radius: 8px;
+    margin-top: 1rem;
+  }
+  
+  .checkout-form__warning svg {
+    color: #d97706;
+    flex-shrink: 0;
+  }
+  
+  .checkout-form__warning span {
+    font-size: 0.875rem;
+    color: #92400e;
+  }
+  
+  .checkout-form__warning strong {
+    color: #78350f;
+  }
+  
+  /* === Checkout Form Row === */
+  .checkout-form__row {
+    display: grid;
+    grid-template-columns: 120px 1fr;
+    gap: 1rem;
+  }
+  
+  .checkout-form__group--small {
+    max-width: 120px;
+  }
+  
+  /* === Checkout Summary - Subtotals === */
+  .checkout-summary__subtotals {
+    padding: 0.75rem 0;
+    border-top: 1px dashed #e5e7eb;
+    margin-top: 0.75rem;
+  }
+  
+  .checkout-summary__subtotal {
+    display: flex;
+    justify-content: space-between;
+    font-size: 0.9rem;
+    color: #6b7280;
+    padding: 0.25rem 0;
+  }
+  
+  /* === Checkout Summary - Mode Badge === */
+  .checkout-summary__mode {
+    margin-top: 1rem;
+    text-align: center;
+  }
+  
+  .checkout-summary__mode-badge {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.5rem;
+    padding: 0.5rem 1rem;
+    border-radius: 20px;
+    font-size: 0.875rem;
+    font-weight: 500;
+  }
+  
+  .checkout-summary__mode-badge--pickup {
+    background: #dbeafe;
+    color: #1e40af;
+  }
+  
+  .checkout-summary__mode-badge--delivery {
+    background: #fef3c7;
+    color: #92400e;
+  }
+  
+  /* === Dashboard - Mode retrait indicator === */
+  .dashboard-order__retrait {
+    display: inline-flex;
+    align-items: center;
+    gap: 0.25rem;
+    font-size: 0.75rem;
+    padding: 0.25rem 0.5rem;
+    border-radius: 4px;
+    background: #f3f4f6;
+    color: #4b5563;
+  }
+  
+  .dashboard-order__retrait--livraison {
+    background: #fef3c7;
+    color: #92400e;
+  }
+  
+  .dashboard-order__retrait--a_emporter {
+    background: #dbeafe;
+    color: #1e40af;
+  }
+  
+  /* === Dashboard Stats - Livraison === */
+  .dashboard-stat-card--purple {
+    border-left-color: #8b5cf6;
+  }
+  
+  .dashboard-stat-card--purple .dashboard-stat-card__icon {
+    background: #f5f3ff;
+    color: #8b5cf6;
+  }
+  
+  /* === Responsive === */
+  @media (max-width: 640px) {
+    .checkout-form__row {
+      grid-template-columns: 1fr;
+    }
+    
+    .checkout-form__group--small {
+      max-width: none;
+    }
+    
+    .checkout-form__retrait-content {
+      flex-wrap: wrap;
+    }
+    
+    .checkout-form__retrait-price {
+      width: 100%;
+      text-align: right;
+      margin-top: 0.5rem;
+      padding-top: 0.5rem;
+      border-top: 1px dashed #e5e7eb;
+    }
+    
+    .settings-form__toggle-card-content {
+      flex-wrap: wrap;
+    }
+  }
