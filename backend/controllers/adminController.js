@@ -4,7 +4,6 @@ const { paginate, paginatedResponse } = require('../utils/helpers');
 
 // ========== GESTION DES UTILISATEURS ==========
 
-// Récupérer tous les utilisateurs
 const getAllUsers = async (req, res) => {
   try {
     const { page = 1, limit = 10, role, search } = req.query;
@@ -50,7 +49,6 @@ const getAllUsers = async (req, res) => {
   }
 };
 
-// Récupérer un utilisateur par ID
 const getUserById = async (req, res) => {
   try {
     const { id } = req.params;
@@ -100,7 +98,6 @@ const getUserById = async (req, res) => {
   }
 };
 
-// Créer un utilisateur
 const createUser = async (req, res) => {
   try {
     const { email, password, nom, prenom, telephone, role = 'client' } = req.body;
@@ -146,7 +143,6 @@ const createUser = async (req, res) => {
   }
 };
 
-// Mettre à jour un utilisateur
 const updateUser = async (req, res) => {
   try {
     const { id } = req.params;
@@ -201,7 +197,6 @@ const updateUser = async (req, res) => {
   }
 };
 
-// Supprimer un utilisateur
 const deleteUser = async (req, res) => {
   try {
     const { id } = req.params;
@@ -359,61 +354,114 @@ const getAllCommandesAdmin = async (req, res) => {
   }
 };
 
-// ========== STATISTIQUES GLOBALES ==========
+// ========== STATISTIQUES GLOBALES (NOUVEAU DASHBOARD) ==========
+
+const SUBSCRIPTION_PRICE = 50; // Prix de l'abonnement mensuel en euros
 
 const getDashboardStats = async (req, res) => {
   try {
-    const [userStats] = await pool.query(`
-      SELECT 
-        COUNT(*) as total_utilisateurs,
-        SUM(CASE WHEN role = 'client' THEN 1 ELSE 0 END) as total_clients,
-        SUM(CASE WHEN role = 'restaurateur' THEN 1 ELSE 0 END) as total_restaurateurs,
-        SUM(CASE WHEN role = 'admin' THEN 1 ELSE 0 END) as total_admins,
-        SUM(CASE WHEN DATE(created_at) = CURDATE() THEN 1 ELSE 0 END) as nouveaux_aujourd_hui
-      FROM utilisateurs
-    `);
-
+    // === RESTAURANTS ===
     const [restaurantStats] = await pool.query(`
       SELECT 
         COUNT(*) as total_restaurants,
         SUM(CASE WHEN actif = 1 THEN 1 ELSE 0 END) as restaurants_actifs,
-        SUM(CASE WHEN DATE(created_at) = CURDATE() THEN 1 ELSE 0 END) as nouveaux_aujourd_hui
+        SUM(CASE WHEN actif = 0 THEN 1 ELSE 0 END) as restaurants_inactifs
       FROM restaurants
     `);
 
-    const [commandeStats] = await pool.query(`
+    // === LISTE DES RESTAURANTS ACTIFS ===
+    const [restaurantsActifs] = await pool.query(`
       SELECT 
-        COUNT(*) as total_commandes,
-        COALESCE(SUM(montant_total), 0) as ca_total,
-        COALESCE(AVG(montant_total), 0) as panier_moyen,
-        SUM(CASE WHEN DATE(date_commande) = CURDATE() THEN 1 ELSE 0 END) as commandes_aujourd_hui,
-        COALESCE(SUM(CASE WHEN DATE(date_commande) = CURDATE() THEN montant_total ELSE 0 END), 0) as ca_aujourd_hui,
-        COALESCE(SUM(CASE WHEN date_commande >= DATE_SUB(CURDATE(), INTERVAL 7 DAY) THEN montant_total ELSE 0 END), 0) as ca_semaine,
-        COALESCE(SUM(CASE WHEN date_commande >= DATE_SUB(CURDATE(), INTERVAL 30 DAY) THEN montant_total ELSE 0 END), 0) as ca_mois
-      FROM commandes
+        r.id, 
+        r.nom, 
+        r.ville, 
+        r.type_cuisine,
+        r.created_at,
+        u.nom as proprietaire_nom, 
+        u.prenom as proprietaire_prenom,
+        u.email as proprietaire_email
+      FROM restaurants r
+      LEFT JOIN utilisateurs u ON r.utilisateur_id = u.id
+      WHERE r.actif = 1
+      ORDER BY r.created_at DESC
+      LIMIT 10
     `);
 
-    const [parStatut] = await pool.query(`
-      SELECT statut, COUNT(*) as count FROM commandes GROUP BY statut
-    `);
+    // Récupérer les stats de commandes pour chaque restaurant actif
+    for (let resto of restaurantsActifs) {
+      const [commandeStats] = await pool.query(
+        `SELECT COUNT(*) as total_commandes, COALESCE(SUM(montant_total), 0) as ca_restaurant 
+         FROM commandes WHERE restaurant_id = ?`,
+        [resto.id]
+      );
+      resto.total_commandes = parseInt(commandeStats[0].total_commandes) || 0;
+      resto.ca_restaurant = parseFloat(commandeStats[0].ca_restaurant) || 0;
+    }
 
+    // === TOP 5 RESTAURANTS (par CA) ===
     const [topRestaurants] = await pool.query(`
-      SELECT r.id, r.nom, r.ville, COUNT(c.id) as nb_commandes, COALESCE(SUM(c.montant_total), 0) as ca
+      SELECT 
+        r.id, 
+        r.nom, 
+        r.ville, 
+        r.type_cuisine,
+        COUNT(c.id) as nb_commandes, 
+        COALESCE(SUM(c.montant_total), 0) as ca
       FROM restaurants r
       LEFT JOIN commandes c ON r.id = c.restaurant_id
-      GROUP BY r.id
+      WHERE r.actif = 1
+      GROUP BY r.id, r.nom, r.ville, r.type_cuisine
       ORDER BY ca DESC
       LIMIT 5
+    `);
+
+    // === REVENUS ABONNEMENTS ===
+    const nbAbonnementsActifs = parseInt(restaurantStats[0].restaurants_actifs) || 0;
+    const revenuMensuelAbonnements = nbAbonnementsActifs * SUBSCRIPTION_PRICE;
+    const revenuAnnuelAbonnements = revenuMensuelAbonnements * 12;
+
+    // === STATISTIQUES GÉNÉRALES (secondaires) ===
+    const [generalStats] = await pool.query(`
+      SELECT 
+        (SELECT COUNT(*) FROM utilisateurs WHERE role = 'restaurateur') as total_restaurateurs,
+        (SELECT COUNT(*) FROM utilisateurs WHERE role = 'client') as total_clients,
+        (SELECT COUNT(*) FROM commandes) as total_commandes,
+        (SELECT COALESCE(SUM(montant_total), 0) FROM commandes) as volume_commandes
     `);
 
     res.json({
       success: true,
       data: {
-        utilisateurs: userStats[0],
-        restaurants: restaurantStats[0],
-        commandes: commandeStats[0],
-        commandes_par_statut: parStatut,
-        top_restaurants: topRestaurants
+        // Aperçu restaurants
+        restaurants: {
+          total: parseInt(restaurantStats[0].total_restaurants) || 0,
+          actifs: parseInt(restaurantStats[0].restaurants_actifs) || 0,
+          inactifs: parseInt(restaurantStats[0].restaurants_inactifs) || 0,
+          liste_actifs: restaurantsActifs
+        },
+        // Top 5 restaurants
+        top_restaurants: topRestaurants.map(r => ({
+          id: r.id,
+          nom: r.nom,
+          ville: r.ville,
+          type_cuisine: r.type_cuisine,
+          nb_commandes: parseInt(r.nb_commandes) || 0,
+          ca: parseFloat(r.ca) || 0
+        })),
+        // Revenus de l'application (abonnements)
+        revenus: {
+          prix_abonnement: SUBSCRIPTION_PRICE,
+          nb_abonnements_actifs: nbAbonnementsActifs,
+          revenu_mensuel: revenuMensuelAbonnements,
+          revenu_annuel_estime: revenuAnnuelAbonnements
+        },
+        // Stats générales (secondaires)
+        general: {
+          total_restaurateurs: parseInt(generalStats[0].total_restaurateurs) || 0,
+          total_clients: parseInt(generalStats[0].total_clients) || 0,
+          total_commandes: parseInt(generalStats[0].total_commandes) || 0,
+          volume_commandes: parseFloat(generalStats[0].volume_commandes) || 0
+        }
       }
     });
   } catch (error) {
