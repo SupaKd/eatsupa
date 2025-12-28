@@ -105,7 +105,7 @@ function HomePage() {
                 <polyline points="12 5 19 12 12 19"></polyline>
               </svg>
             </a>
-            <Link to="/register?role=restaurateur" className="hero__btn hero__btn--secondary">
+            <Link to="/devenir-restaurateur" className="hero__btn hero__btn--secondary">
               <span>Vous êtes restaurateur ?</span>
             </Link>
           </div>

@@ -20,6 +20,7 @@ import LoginPage from '@pages/client/LoginPage';
 import RegisterPage from '@pages/client/RegisterPage';
 import MyOrdersPage from '@pages/client/MyOrdersPage';
 import ProfilePage from '@pages/ProfilePage';
+import Restaurateur from './pages/client/Restaurateur';
 
 // Pages Admin
 import AdminDashboardPage from '@pages/admin/AdminDashboardPage';
@@ -136,6 +137,7 @@ function App() {
                   <Route path="/commander" element={<CheckoutPage />} />
                   <Route path="/commande/:id/confirmation" element={<OrderConfirmationPage />} />
                   <Route path="/suivi/:token" element={<OrderTrackingPage />} />
+                  <Route path="/devenir-restaurateur" element={<Restaurateur />} />
                   
                   {/* Authentification avec redirection automatique */}
                   <Route path="/login" element={<LoginRoute />} />
