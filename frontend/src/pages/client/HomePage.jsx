@@ -34,9 +34,9 @@ function HomePage() {
   }, []);
 
   const stats = [
-    { value: '0%', label: 'Commission', icon: '💰' },
-    { value: '100%', label: 'Local', icon: '📍' },
-    { value: '∞', label: 'Passion', icon: '❤️' },
+    { value: '0%', label: 'Commission' },
+    { value: '100%', label: 'Local'},
+    { value: '∞', label: 'Passion'},
   ];
 
   const values = [
@@ -47,7 +47,7 @@ function HomePage() {
         </svg>
       ),
       title: 'Zéro Commission',
-      description: 'Contrairement aux géants de la livraison, nous ne prenons aucune commission. Chaque euro va directement aux restaurateurs.',
+      description: 'Contrairement aux géants de la livraison, nous ne prenons aucune commission sur vos ventes. Un simple abonnement mensuel, c\'est tout.',
     },
     {
       icon: (
@@ -125,10 +125,6 @@ function HomePage() {
           </div>
         </div>
 
-        <div className="hero__scroll">
-          <span>Scroll</span>
-          <div className="hero__scroll-line"></div>
-        </div>
       </section>
 
       {/* Manifesto Section */}
@@ -228,8 +224,8 @@ function HomePage() {
               Vous êtes restaurateur à Oyonnax ?
             </h2>
             <p className="cta__text">
-              Rejoignez SupaFood gratuitement et gardez 100% de vos revenus.
-              Inscription en 5 minutes, mise en ligne sous 24h.
+              Rejoignez SupaFood et gardez 100% de vos revenus.
+              Un abonnement simple et transparent, sans commission sur vos ventes.
             </p>
             <div className="cta__features">
               <div className="cta__feature">
@@ -237,6 +233,12 @@ function HomePage() {
                   <polyline points="20 6 9 17 4 12"></polyline>
                 </svg>
                 <span>0% de commission</span>
+              </div>
+              <div className="cta__feature">
+                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                  <polyline points="20 6 9 17 4 12"></polyline>
+                </svg>
+                <span>Abonnement fixe</span>
               </div>
               <div className="cta__feature">
                 <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -251,6 +253,16 @@ function HomePage() {
                 <span>Support local dédié</span>
               </div>
             </div>
+            
+            {/* Pricing hint */}
+            <div className="cta__pricing">
+              <span className="cta__pricing-label">À partir de</span> 
+              
+              <span className="cta__pricing-value">29€<small>/mois</small></span>
+            
+              <span className="cta__pricing-note">1er mois offert • Sans engagement</span>
+            </div>
+
             <Link to="/register?role=restaurateur" className="cta__btn">
               <span>Inscrire mon restaurant</span>
               <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
@@ -266,7 +278,7 @@ function HomePage() {
             </div>
             <div className="cta__card cta__card--2">
               <span className="cta__card-emoji">💸</span>
-              <span className="cta__card-text">Paiements directs</span>
+              <span className="cta__card-text">0% commission</span>
             </div>
             <div className="cta__card cta__card--3">
               <span className="cta__card-emoji">📱</span>

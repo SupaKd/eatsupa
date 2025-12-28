@@ -1,6 +1,76 @@
 /* =========================
-   RESET / BASE SCSS
+   SUPAFOOD - BASE STYLES
+   Modern Design System
    ========================= */
+
+// Fonts - Using Fontshare premium fonts
+@import url('https://api.fontshare.com/v2/css?f[]=clash-display@400,500,600,700&f[]=satoshi@400,500,700&display=swap');
+
+// ============================================
+// CSS VARIABLES
+// ============================================
+:root {
+  // Colors
+  --color-primary: #FF5722;
+  --color-primary-dark: #E64A19;
+  --color-primary-light: #FFF7ED;
+  --color-accent: #FFB300;
+  --color-dark: #0D0D0D;
+  --color-light: #FAFAFA;
+  --color-gray: #6B7280;
+  --color-gray-light: #F3F4F6;
+  --color-gray-medium: #9CA3AF;
+  --color-white: #FFFFFF;
+  
+  // Status colors
+  --color-success: #16A34A;
+  --color-success-light: #DCFCE7;
+  --color-warning: #F59E0B;
+  --color-warning-light: #FEF3C7;
+  --color-error: #DC2626;
+  --color-error-light: #FEE2E2;
+  --color-info: #3B82F6;
+  --color-info-light: #DBEAFE;
+  
+  // Typography
+  --font-display: 'Clash Display', sans-serif;
+  --font-body: 'Satoshi', sans-serif;
+  
+  // Spacing
+  --spacing-xs: 0.25rem;
+  --spacing-sm: 0.5rem;
+  --spacing-md: 1rem;
+  --spacing-lg: 1.5rem;
+  --spacing-xl: 2rem;
+  --spacing-2xl: 3rem;
+  --spacing-3xl: 4rem;
+  
+  // Border radius
+  --radius-sm: 0.375rem;
+  --radius-md: 0.5rem;
+  --radius-lg: 0.75rem;
+  --radius-xl: 1rem;
+  --radius-2xl: 1.5rem;
+  --radius-full: 9999px;
+  
+  // Shadows
+  --shadow-sm: 0 1px 3px rgba(0, 0, 0, 0.1);
+  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.1);
+  --shadow-lg: 0 10px 40px rgba(0, 0, 0, 0.1);
+  --shadow-xl: 0 20px 60px rgba(0, 0, 0, 0.15);
+  --shadow-primary: 0 8px 30px rgba(255, 87, 34, 0.3);
+  
+  // Transitions
+  --ease-out-expo: cubic-bezier(0.16, 1, 0.3, 1);
+  --ease-out-back: cubic-bezier(0.34, 1.56, 0.64, 1);
+  --transition-fast: 0.2s var(--ease-out-expo);
+  --transition-normal: 0.3s var(--ease-out-expo);
+  --transition-slow: 0.4s var(--ease-out-expo);
+}
+
+// ============================================
+// RESET / BASE
+// ============================================
 
 /* Box sizing */
 *,
@@ -19,13 +89,14 @@ html {
 
 body {
   min-height: 100vh;
-  font-family: system-ui, -apple-system, BlinkMacSystemFont, "Segoe UI",
-    Roboto, Oxygen, Ubuntu, Cantarell, "Open Sans", "Helvetica Neue", sans-serif;
-  line-height: 1.5;
+  font-family: var(--font-body);
+  font-size: 1rem;
+  line-height: 1.6;
   text-rendering: optimizeSpeed;
   -webkit-font-smoothing: antialiased;
-  background-color: #fff;
-  color: #000;
+  -moz-osx-font-smoothing: grayscale;
+  background-color: var(--color-light);
+  color: var(--color-dark);
 }
 
 /* Media defaults */
@@ -57,6 +128,7 @@ button {
 a {
   text-decoration: none;
   color: inherit;
+  transition: color var(--transition-fast);
 }
 
 /* Lists */
@@ -72,7 +144,9 @@ h3,
 h4,
 h5,
 h6 {
-  font-weight: inherit;
+  font-family: var(--font-display);
+  font-weight: 700;
+  line-height: 1.2;
 }
 
 /* Tables */
@@ -83,8 +157,34 @@ table {
 
 /* Accessibility */
 :focus-visible {
-  outline: 2px solid currentColor;
+  outline: 2px solid var(--color-primary);
   outline-offset: 2px;
+}
+
+/* Selection */
+::selection {
+  background-color: var(--color-primary);
+  color: var(--color-white);
+}
+
+/* Scrollbar styling */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  background: var(--color-gray-light);
+  border-radius: var(--radius-full);
+}
+
+::-webkit-scrollbar-thumb {
+  background: var(--color-gray-medium);
+  border-radius: var(--radius-full);
+  
+  &:hover {
+    background: var(--color-gray);
+  }
 }
 
 /* Reduce motion */
@@ -96,5 +196,192 @@ table {
     animation-iteration-count: 1 !important;
     transition-duration: 0.01ms !important;
     scroll-behavior: auto !important;
+  }
+}
+
+// ============================================
+// GLOBAL ANIMATIONS
+// ============================================
+@keyframes fade-in {
+  from { opacity: 0; }
+  to { opacity: 1; }
+}
+
+@keyframes fade-in-up {
+  from {
+    opacity: 0;
+    transform: translateY(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes fade-in-down {
+  from {
+    opacity: 0;
+    transform: translateY(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes scale-in {
+  from {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+  to {
+    opacity: 1;
+    transform: scale(1);
+  }
+}
+
+@keyframes slide-in-right {
+  from {
+    opacity: 0;
+    transform: translateX(20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes slide-in-left {
+  from {
+    opacity: 0;
+    transform: translateX(-20px);
+  }
+  to {
+    opacity: 1;
+    transform: translateX(0);
+  }
+}
+
+@keyframes spin {
+  to { transform: rotate(360deg); }
+}
+
+@keyframes pulse {
+  0%, 100% {
+    opacity: 1;
+    transform: scale(1);
+  }
+  50% {
+    opacity: 0.5;
+    transform: scale(1.05);
+  }
+}
+
+@keyframes float {
+  0%, 100% {
+    transform: translateY(0);
+  }
+  50% {
+    transform: translateY(-10px);
+  }
+}
+
+@keyframes shimmer {
+  0% {
+    background-position: -200% 0;
+  }
+  100% {
+    background-position: 200% 0;
+  }
+}
+
+// ============================================
+// UTILITY CLASSES
+// ============================================
+.container {
+  max-width: 1280px;
+  margin: 0 auto;
+  padding: 0 var(--spacing-md);
+}
+
+.sr-only {
+  position: absolute;
+  width: 1px;
+  height: 1px;
+  padding: 0;
+  margin: -1px;
+  overflow: hidden;
+  clip: rect(0, 0, 0, 0);
+  white-space: nowrap;
+  border: 0;
+}
+
+// ============================================
+// APP STRUCTURE
+// ============================================
+.app {
+  min-height: 100vh;
+  display: flex;
+  flex-direction: column;
+  
+  &__main {
+    flex: 1;
+    display: flex;
+    flex-direction: column;
+  }
+}
+
+// ============================================
+// NOT FOUND PAGE
+// ============================================
+.not-found-page {
+  min-height: 100vh;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  background: linear-gradient(165deg, #FFF8F5 0%, #FFF0E8 50%, #FFE4D6 100%);
+  padding: var(--spacing-xl);
+  
+  &__content {
+    text-align: center;
+    animation: fade-in-up 0.6s var(--ease-out-expo) both;
+    
+    h1 {
+      font-family: var(--font-display);
+      font-size: clamp(6rem, 20vw, 12rem);
+      font-weight: 800;
+      background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark));
+      -webkit-background-clip: text;
+      -webkit-text-fill-color: transparent;
+      background-clip: text;
+      line-height: 1;
+      margin-bottom: var(--spacing-md);
+    }
+    
+    p {
+      font-size: 1.25rem;
+      color: var(--color-gray);
+      margin-bottom: var(--spacing-xl);
+    }
+  }
+  
+  &__btn {
+    display: inline-flex;
+    align-items: center;
+    gap: var(--spacing-sm);
+    padding: var(--spacing-md) var(--spacing-xl);
+    background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark));
+    color: var(--color-white);
+    font-family: var(--font-body);
+    font-size: 1rem;
+    font-weight: 600;
+    border-radius: var(--radius-full);
+    transition: all var(--transition-normal);
+    box-shadow: var(--shadow-primary);
+    
+    &:hover {
+      transform: translateY(-3px);
+      box-shadow: 0 12px 40px rgba(255, 87, 34, 0.4);
+    }
   }
 }
