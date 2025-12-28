@@ -10,8 +10,7 @@ function Footer() {
           {/* Logo & Description */}
           <div className="footer__brand">
             <Link to="/" className="footer__logo">
-              <span className="footer__logo-icon">🍽️</span>
-              <span className="footer__logo-text">SupaFood</span>
+              <span className="footer__logo-text">Yumioo</span>
             </Link>
             <p className="footer__description">
               Découvrez les meilleurs restaurants près de chez vous et commandez facilement vos plats préférés.

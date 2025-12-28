@@ -93,7 +93,7 @@ function HomePage() {
           </h1>
 
           <p className="hero__subtitle">
-            SupaFood connecte directement les Oyonnaxiens à leurs restaurants préférés.
+          Yumioo connecte directement les Oyonnaxiens à leurs restaurants préférés.
             <strong> Sans commission, sans compromis.</strong>
           </p>
 
@@ -142,7 +142,7 @@ function HomePage() {
               au profit des grandes plateformes. Nous avons décidé de changer ça.
             </p>
             <p className="manifesto__text manifesto__text--highlight">
-              SupaFood est une initiative locale, créée pour et par les Oyonnaxiens.
+              Yumioo est une initiative locale, créée pour et par les Oyonnaxiens.
               Notre objectif : redonner aux restaurateurs ce qui leur appartient.
             </p>
           </div>
@@ -189,7 +189,7 @@ function HomePage() {
                 <span>🍽️</span>
               </div>
               <h3>Bientôt disponible</h3>
-              <p>Les premiers restaurants arrivent très bientôt sur SupaFood !</p>
+              <p>Les premiers restaurants arrivent très bientôt sur Yumioo !</p>
               <Link to="/register?role=restaurateur" className="restaurants__empty-btn">
                 Être le premier restaurant
               </Link>
@@ -221,7 +221,7 @@ function HomePage() {
               Vous êtes restaurateur à Oyonnax ?
             </h2>
             <p className="cta__text">
-              Rejoignez SupaFood et gardez 100% de vos revenus.
+              Rejoignez Yumioo et gardez 100% de vos revenus.
               Un abonnement simple et transparent, sans commission sur vos ventes.
             </p>
             <div className="cta__features">
@@ -295,7 +295,7 @@ function HomePage() {
             <span>•</span>
             <span>100% LOCAL</span>
             <span>•</span>
-            <span>SUPAFOOD</span>
+            <span>Yumioo</span>
             <span>•</span>
             <span>OYONNAX</span>
             <span>•</span>
@@ -303,7 +303,7 @@ function HomePage() {
             <span>•</span>
             <span>100% LOCAL</span>
             <span>•</span>
-            <span>SUPAFOOD</span>
+            <span>Yumioo</span>
             <span>•</span>
           </div>
         </div>
