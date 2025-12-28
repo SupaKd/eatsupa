@@ -84,10 +84,7 @@ function HomePage() {
         </div>
 
         <div className="hero__container">
-          <div className="hero__badge">
-            <span className="hero__badge-dot"></span>
-            100% Oyonnax • 0% Commission
-          </div>
+          
 
           <h1 className="hero__title">
             <span className="hero__title-line">Soutenez vos</span>
