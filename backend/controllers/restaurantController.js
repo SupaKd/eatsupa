@@ -245,8 +245,8 @@ const createRestaurant = async (req, res) => {
         telephone, email, type_cuisine, delai_preparation, frais_livraison, 
         horaires_ouverture, paiement_sur_place, paiement_en_ligne,
         livraison_active, a_emporter_active, zone_livraison_km, minimum_livraison, delai_livraison,
-        fermeture_exceptionnelle)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0)`,
+        fermeture_exceptionnelle, actif)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 0)`,
       [
         req.user.id,
         nom,
