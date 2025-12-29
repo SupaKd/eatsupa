@@ -16,12 +16,6 @@ function RegisterPage() {
     prenom: '',
     telephone: '',
     role: 'client',
-    // Champs spécifiques restaurateur
-    nomRestaurant: '',
-    adresse: '',
-    ville: '',
-    codePostal: '',
-    siret: '',
   });
 
   const handleRoleChange = (role) => {
@@ -42,28 +36,14 @@ function RegisterPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
-    // Préparer les données selon le rôle
-    const dataToSend = {
-      email: formData.email,
-      password: formData.password,
-      nom: formData.nom,
-      prenom: formData.prenom,
-      telephone: formData.telephone,
-      role: formData.role,
-    };
-
-    // Ajouter les champs spécifiques si restaurateur
-    if (formData.role === 'restaurateur') {
-      dataToSend.nomRestaurant = formData.nomRestaurant;
-      dataToSend.adresse = formData.adresse;
-      dataToSend.ville = formData.ville;
-      dataToSend.codePostal = formData.codePostal;
-      dataToSend.siret = formData.siret;
-    }
-    
     try {
-      await dispatch(register(dataToSend)).unwrap();
-      navigate('/');
+      await dispatch(register(formData)).unwrap();
+      // Rediriger vers le dashboard approprié selon le rôle
+      if (formData.role === 'restaurateur') {
+        navigate('/dashboard');
+      } else {
+        navigate('/');
+      }
     } catch (err) {
       console.error('Erreur d\'inscription:', err);
     }
@@ -93,6 +73,18 @@ function RegisterPage() {
             </button>
           </div>
 
+          {/* Message d'information pour les restaurateurs */}
+          {activeRole === 'restaurateur' && (
+            <div className="info-banner">
+              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                <circle cx="12" cy="12" r="10"></circle>
+                <line x1="12" y1="16" x2="12" y2="12"></line>
+                <line x1="12" y1="8" x2="12.01" y2="8"></line>
+              </svg>
+              <span>Vous pourrez configurer votre restaurant après l'inscription</span>
+            </div>
+          )}
+
           {error && (
             <div className="error-message">
               {error}
@@ -100,7 +92,7 @@ function RegisterPage() {
           )}
 
           <form onSubmit={handleSubmit} className="auth-form">
-            {/* Champs communs */}
+            {/* Champs communs - Information personnelle uniquement */}
             <div className="form-row">
               <div className="form-group">
                 <label htmlFor="nom">Nom</label>
@@ -167,69 +159,8 @@ function RegisterPage() {
                 required
                 minLength={6}
               />
+              <span className="form-hint">Minimum 6 caractères</span>
             </div>
-
-            {/* Champs spécifiques au restaurateur */}
-            {activeRole === 'restaurateur' && (
-              <>
-                <div className="form-group">
-                  <label htmlFor="nomRestaurant">Nom du restaurant</label>
-                  <input
-                    type="text"
-                    id="nomRestaurant"
-                    name="nomRestaurant"
-                    value={formData.nomRestaurant}
-                    onChange={handleChange}
-                    placeholder="Le Petit Bistrot"
-                    required
-                  />
-                </div>
-
-                <div className="form-group">
-                  <label htmlFor="adresse">Adresse</label>
-                  <input
-                    type="text"
-                    id="adresse"
-                    name="adresse"
-                    value={formData.adresse}
-                    onChange={handleChange}
-                    placeholder="12 rue de la Paix"
-                    required
-                  />
-                </div>
-
-                <div className="form-row">
-                  <div className="form-group">
-                    <label htmlFor="codePostal">Code postal</label>
-                    <input
-                      type="text"
-                      id="codePostal"
-                      name="codePostal"
-                      value={formData.codePostal}
-                      onChange={handleChange}
-                      placeholder="01100"
-                      required
-                      pattern="[0-9]{5}"
-                    />
-                  </div>
-
-                  <div className="form-group">
-                    <label htmlFor="ville">Ville</label>
-                    <input
-                      type="text"
-                      id="ville"
-                      name="ville"
-                      value={formData.ville}
-                      onChange={handleChange}
-                      placeholder="Oyonnax"
-                      required
-                    />
-                  </div>
-                </div>
-
-               
-              </>
-            )}
 
             <button type="submit" className="btn btn-primary" disabled={loading}>
               {loading ? 'Inscription...' : 'S\'inscrire'}
