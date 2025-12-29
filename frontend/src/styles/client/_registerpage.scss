@@ -298,3 +298,74 @@
     }
   }
 }
+
+/* Onglets de sélection du rôle */
+.role-tabs {
+  display: flex;
+  gap: 0;
+  margin-bottom: 2rem;
+  border-radius: 8px;
+  overflow: hidden;
+  border: 1px solid #e0e0e0;
+}
+
+.role-tab {
+  flex: 1;
+  padding: 1rem;
+  background-color: #f5f5f5;
+  border: none;
+  cursor: pointer;
+  font-size: 1rem;
+  font-weight: 500;
+  color: #666;
+  transition: all 0.3s ease;
+  position: relative;
+}
+
+.role-tab:first-child {
+  border-right: 1px solid #e0e0e0;
+}
+
+.role-tab:hover {
+  background-color: #e8e8e8;
+}
+
+.role-tab.active {
+  background-color: #ff5722;
+  color: white;
+  font-weight: 600;
+}
+
+.role-tab.active:hover {
+  background-color: #e64a19;
+}
+
+/* Amélioration des groupes de formulaire */
+.form-row {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 1rem;
+}
+
+.form-hint {
+  display: block;
+  margin-top: 0.25rem;
+  font-size: 0.875rem;
+  color: #666;
+}
+
+/* Animation d'apparition des champs */
+.auth-form .form-group {
+  animation: fadeIn 0.3s ease-in;
+}
+
+@keyframes fadeIn {
+  from {
+    opacity: 0;
+    transform: translateY(-10px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}

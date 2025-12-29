@@ -20,18 +20,13 @@ function HomePage() {
         // ville: 'Oyonnax', // Réactiver si nécessaire
       });
 
-      console.log('API Response:', response);
-      console.log('Response data:', response.data);
-
       if (response.data.success) {
         // CORRECTION: Les restaurants sont dans response.data.data (Array)
         const restaurantData = response.data.data;
-        console.log('Restaurants récupérés:', restaurantData);
         
         // Vérifier que c'est bien un tableau
         if (Array.isArray(restaurantData)) {
           setRestaurants(restaurantData);
-          console.log('✅ Restaurants définis:', restaurantData.length);
         } else {
           console.error('❌ Format inattendu:', typeof restaurantData, restaurantData);
           setRestaurants([]);

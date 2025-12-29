@@ -8,6 +8,7 @@ function RegisterPage() {
   const navigate = useNavigate();
   const { loading, error } = useSelector((state) => state.auth);
 
+  const [activeRole, setActiveRole] = useState('client');
   const [formData, setFormData] = useState({
     email: '',
     password: '',
@@ -15,7 +16,21 @@ function RegisterPage() {
     prenom: '',
     telephone: '',
     role: 'client',
+    // Champs spécifiques restaurateur
+    nomRestaurant: '',
+    adresse: '',
+    ville: '',
+    codePostal: '',
+    siret: '',
   });
+
+  const handleRoleChange = (role) => {
+    setActiveRole(role);
+    setFormData({
+      ...formData,
+      role: role,
+    });
+  };
 
   const handleChange = (e) => {
     setFormData({
@@ -27,8 +42,27 @@ function RegisterPage() {
   const handleSubmit = async (e) => {
     e.preventDefault();
     
+    // Préparer les données selon le rôle
+    const dataToSend = {
+      email: formData.email,
+      password: formData.password,
+      nom: formData.nom,
+      prenom: formData.prenom,
+      telephone: formData.telephone,
+      role: formData.role,
+    };
+
+    // Ajouter les champs spécifiques si restaurateur
+    if (formData.role === 'restaurateur') {
+      dataToSend.nomRestaurant = formData.nomRestaurant;
+      dataToSend.adresse = formData.adresse;
+      dataToSend.ville = formData.ville;
+      dataToSend.codePostal = formData.codePostal;
+      dataToSend.siret = formData.siret;
+    }
+    
     try {
-      await dispatch(register(formData)).unwrap();
+      await dispatch(register(dataToSend)).unwrap();
       navigate('/');
     } catch (err) {
       console.error('Erreur d\'inscription:', err);
@@ -41,6 +75,24 @@ function RegisterPage() {
         <div className="auth-card">
           <h1>Inscription</h1>
           
+          {/* Onglets de sélection du rôle */}
+          <div className="role-tabs">
+            <button
+              type="button"
+              className={`role-tab ${activeRole === 'client' ? 'active' : ''}`}
+              onClick={() => handleRoleChange('client')}
+            >
+              Client
+            </button>
+            <button
+              type="button"
+              className={`role-tab ${activeRole === 'restaurateur' ? 'active' : ''}`}
+              onClick={() => handleRoleChange('restaurateur')}
+            >
+              Restaurateur
+            </button>
+          </div>
+
           {error && (
             <div className="error-message">
               {error}
@@ -48,6 +100,7 @@ function RegisterPage() {
           )}
 
           <form onSubmit={handleSubmit} className="auth-form">
+            {/* Champs communs */}
             <div className="form-row">
               <div className="form-group">
                 <label htmlFor="nom">Nom</label>
@@ -98,6 +151,7 @@ function RegisterPage() {
                 value={formData.telephone}
                 onChange={handleChange}
                 placeholder="06 12 34 56 78"
+                required
               />
             </div>
 
@@ -115,18 +169,67 @@ function RegisterPage() {
               />
             </div>
 
-            <div className="form-group">
-              <label htmlFor="role">Type de compte</label>
-              <select
-                id="role"
-                name="role"
-                value={formData.role}
-                onChange={handleChange}
-              >
-                <option value="client">Client</option>
-                <option value="restaurateur">Restaurateur</option>
-              </select>
-            </div>
+            {/* Champs spécifiques au restaurateur */}
+            {activeRole === 'restaurateur' && (
+              <>
+                <div className="form-group">
+                  <label htmlFor="nomRestaurant">Nom du restaurant</label>
+                  <input
+                    type="text"
+                    id="nomRestaurant"
+                    name="nomRestaurant"
+                    value={formData.nomRestaurant}
+                    onChange={handleChange}
+                    placeholder="Le Petit Bistrot"
+                    required
+                  />
+                </div>
+
+                <div className="form-group">
+                  <label htmlFor="adresse">Adresse</label>
+                  <input
+                    type="text"
+                    id="adresse"
+                    name="adresse"
+                    value={formData.adresse}
+                    onChange={handleChange}
+                    placeholder="12 rue de la Paix"
+                    required
+                  />
+                </div>
+
+                <div className="form-row">
+                  <div className="form-group">
+                    <label htmlFor="codePostal">Code postal</label>
+                    <input
+                      type="text"
+                      id="codePostal"
+                      name="codePostal"
+                      value={formData.codePostal}
+                      onChange={handleChange}
+                      placeholder="01100"
+                      required
+                      pattern="[0-9]{5}"
+                    />
+                  </div>
+
+                  <div className="form-group">
+                    <label htmlFor="ville">Ville</label>
+                    <input
+                      type="text"
+                      id="ville"
+                      name="ville"
+                      value={formData.ville}
+                      onChange={handleChange}
+                      placeholder="Oyonnax"
+                      required
+                    />
+                  </div>
+                </div>
+
+               
+              </>
+            )}
 
             <button type="submit" className="btn btn-primary" disabled={loading}>
               {loading ? 'Inscription...' : 'S\'inscrire'}
