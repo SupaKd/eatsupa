@@ -32,7 +32,7 @@ function Footer() {
           <div className="footer__links">
             <h4 className="footer__title">Restaurateurs</h4>
             <ul className="footer__list">
-              <li><Link to="/register?role=restaurateur">Devenir partenaire</Link></li>
+              <li><Link to="/devenir-restaurateur">Devenir partenaire</Link></li>
               <li><Link to="/login">Espace restaurateur</Link></li>
             </ul>
           </div>
@@ -42,8 +42,8 @@ function Footer() {
             <h4 className="footer__title">Contact</h4>
             <ul className="footer__list">
               <li>
-                <a href="mailto:contact@localfood.fr">
-                  contact@localfood.fr
+                <a href="mailto:contact@yumioo.fr">
+                  contact@yumioo.fr
                 </a>
               </li>
               <li>
@@ -57,7 +57,7 @@ function Footer() {
 
         <div className="footer__bottom">
           <p className="footer__copyright">
-            © {currentYear} LocalFood. Tous droits réservés.
+            © {currentYear} Yumioo. Tous droits réservés.
           </p>
           <div className="footer__legal">
             <Link to="/mentions-legales">Mentions légales</Link>

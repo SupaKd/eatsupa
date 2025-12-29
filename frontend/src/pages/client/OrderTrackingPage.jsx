@@ -17,7 +17,8 @@ function OrderTrackingPage() {
 
   const fetchCommande = async () => {
     try {
-      const response = await commandeAPI.getByToken(token);
+      // CORRECTION: Utiliser trackByToken au lieu de getByToken
+      const response = await commandeAPI.trackByToken(token);
       if (response.data.success) {
         setCommande(response.data.data);
         setError(null);

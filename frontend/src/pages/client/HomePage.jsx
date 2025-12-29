@@ -8,22 +8,47 @@ function HomePage() {
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
 
-  // Charger les restaurants d'Oyonnax
+  // Charger les restaurants
   const fetchRestaurants = async () => {
     try {
       setLoading(true);
+      setError(null);
+      
       const response = await restaurantAPI.getAll({
         page: 1,
         limit: 12,
-        ville: 'Oyonnax',
+        // ville: 'Oyonnax', // Réactiver si nécessaire
       });
 
+      console.log('API Response:', response);
+      console.log('Response data:', response.data);
+
       if (response.data.success) {
-        setRestaurants(response.data.data);
+        // CORRECTION: Les restaurants sont dans response.data.data (Array)
+        const restaurantData = response.data.data;
+        console.log('Restaurants récupérés:', restaurantData);
+        
+        // Vérifier que c'est bien un tableau
+        if (Array.isArray(restaurantData)) {
+          setRestaurants(restaurantData);
+          console.log('✅ Restaurants définis:', restaurantData.length);
+        } else {
+          console.error('❌ Format inattendu:', typeof restaurantData, restaurantData);
+          setRestaurants([]);
+        }
+      } else {
+        setError(response.data.message || 'Erreur lors du chargement');
       }
     } catch (err) {
-      console.error('Erreur chargement restaurants:', err);
-      setError('Impossible de charger les restaurants');
+      console.error('Erreur complète:', err);
+      
+      if (err.response) {
+        setError(`Erreur serveur: ${err.response.status} - ${err.response.data?.message || 'Erreur inconnue'}`);
+      } else if (err.request) {
+        setError('Impossible de contacter le serveur. Vérifiez votre connexion.');
+      } else {
+        setError(err.message || 'Impossible de charger les restaurants');
+      }
     } finally {
       setLoading(false);
     }
@@ -84,8 +109,6 @@ function HomePage() {
         </div>
 
         <div className="hero__container">
-          
-
           <h1 className="hero__title">
             <span className="hero__title-line">Soutenez vos</span>
             <span className="hero__title-line hero__title-line--accent">restaurants locaux</span>
@@ -93,7 +116,7 @@ function HomePage() {
           </h1>
 
           <p className="hero__subtitle">
-          Yumioo connecte directement les Oyonnaxiens à leurs restaurants préférés.
+            Yumioo connecte directement les Oyonnaxiens à leurs restaurants préférés.
             <strong> Sans commission, sans compromis.</strong>
           </p>
 
@@ -114,17 +137,15 @@ function HomePage() {
           <div className="hero__stats">
             {stats.map((stat, index) => (
               <div key={index} className="hero__stat">
-                <span className="hero__stat-icon">{stat.icon}</span>
                 <span className="hero__stat-value">{stat.value}</span>
                 <span className="hero__stat-label">{stat.label}</span>
               </div>
             ))}
           </div>
         </div>
-
       </section>
 
-      {/* Manifesto Section */}
+      {/* Manifesto Section 
       <section className="manifesto">
         <div className="manifesto__container">
           <div className="manifesto__header">
@@ -158,67 +179,79 @@ function HomePage() {
           </div>
         </div>
       </section>
+                */}
 
       {/* Restaurants Section */}
+
       <section className="restaurants" id="restaurants">
         <div className="restaurants__container">
           <div className="restaurants__header">
             <span className="restaurants__label">Découvrir</span>
             <h2 className="restaurants__title">
-              Les restaurants d'
-              <span className="restaurants__title-city">Oyonnax</span>
+              Les restaurants
+              {/* d'<span className="restaurants__title-city">Oyonnax</span> */}
             </h2>
             <p className="restaurants__subtitle">
               Tous ces établissements ont fait le choix d'une plateforme éthique et locale
             </p>
           </div>
-
+          
           {loading ? (
             <div className="restaurants__loading">
-              <div className="restaurants__loading-spinner"></div>
-              <p>Chargement des pépites locales...</p>
+            <div className="restaurants__loading-spinner"></div>
+            <p>Chargement des pépites locales...</p>
             </div>
           ) : error ? (
             <div className="restaurants__error">
-              <p>{error}</p>
-              <button onClick={() => fetchRestaurants()}>Réessayer</button>
+            <div className="restaurants__error-icon">⚠️</div>
+            <h3>Erreur de chargement</h3>
+            <p>{error}</p>
+            <button onClick={() => fetchRestaurants()} className="restaurants__error-btn">
+            Réessayer
+            </button>
             </div>
           ) : restaurants.length === 0 ? (
             <div className="restaurants__empty">
-              <div className="restaurants__empty-visual">
-                <span>🍽️</span>
-              </div>
-              <h3>Bientôt disponible</h3>
-              <p>Les premiers restaurants arrivent très bientôt sur Yumioo !</p>
-              <Link to="/register?role=restaurateur" className="restaurants__empty-btn">
-                Être le premier restaurant
-              </Link>
+            <div className="restaurants__empty-visual">
+            <span>🍽️</span>
+            </div>
+            <h3>Bientôt disponible</h3>
+            <p>Les premiers restaurants arrivent très bientôt sur Yumioo !</p>
+            <Link to="/register?role=restaurateur" className="restaurants__empty-btn">
+            Être le premier restaurant
+            </Link>
             </div>
           ) : (
             <>
-              <div className="restaurants__grid">
-                {restaurants.map((restaurant, index) => (
-                  <div
-                    key={restaurant.id}
-                    className="restaurants__card-wrapper"
-                    style={{ '--delay': `${index * 0.1}s` }}
-                  >
+            <div className="restaurants__grid">
+            {restaurants.map((restaurant, index) => (
+              <div
+              key={restaurant.id}
+              className="restaurants__card-wrapper"
+              style={{ '--delay': `${index * 0.1}s` }}
+              >
                     <RestaurantCard restaurant={restaurant} />
                   </div>
                 ))}
+                </div>
+                
+                <div className="restaurants__footer">
+                <p className="restaurants__count">
+                {restaurants.length} restaurant{restaurants.length > 1 ? 's' : ''} disponible{restaurants.length > 1 ? 's' : ''}
+                </p>
+                </div>
+                </>
+              )}
               </div>
-            </>
-          )}
-        </div>
-      </section>
-
-      {/* CTA Section */}
+              </section>
+              
+      {/* CTA Section 
       <section className="cta">
         <div className="cta__container">
           <div className="cta__content">
             <span className="cta__label">Rejoignez le mouvement</span>
             <h2 className="cta__title">
-              Vous êtes restaurateur à Oyonnax ?
+              Vous êtes restaurateur ?
             </h2>
             <p className="cta__text">
               Rejoignez Yumioo et gardez 100% de vos revenus.
@@ -251,12 +284,9 @@ function HomePage() {
               </div>
             </div>
             
-            {/* Pricing hint */}
             <div className="cta__pricing">
-              <span className="cta__pricing-label">À partir de</span> 
-              
+              <span className="cta__pricing-label">À partir de</span>
               <span className="cta__pricing-value">29€<small>/mois</small></span>
-            
               <span className="cta__pricing-note">1er mois offert • Sans engagement</span>
             </div>
 
@@ -283,7 +313,8 @@ function HomePage() {
             </div>
           </div>
         </div>
-      </section>
+        </section>
+        */}
 
       {/* Footer Banner */}
       <section className="banner">
