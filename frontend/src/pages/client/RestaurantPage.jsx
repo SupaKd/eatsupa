@@ -124,6 +124,34 @@ function RestaurantPage() {
 
       {/* Infos restaurant */}
       <div className="restaurant-info">
+        {/* Bandeau restaurant fermé */}
+{!restaurant.est_ouvert && (
+  <div className="restaurant-closed-banner">
+    <div className="restaurant-closed-banner__container">
+      <div className="restaurant-closed-banner__icon">🔒</div>
+      <div className="restaurant-closed-banner__content">
+        <h3>Restaurant actuellement fermé</h3>
+        <p>
+          {restaurant.prochaine_ouverture ? (
+            <>
+              Prochaine ouverture : {' '}
+              <strong>
+                {restaurant.prochaine_ouverture.estAujourdHui 
+                  ? `Aujourd'hui à ${restaurant.prochaine_ouverture.heure}`
+                  : restaurant.prochaine_ouverture.estDemain
+                  ? `Demain à ${restaurant.prochaine_ouverture.heure}`
+                  : `${restaurant.prochaine_ouverture.jourCapitalized} à ${restaurant.prochaine_ouverture.heure}`
+                }
+              </strong>
+            </>
+          ) : (
+            'Horaires non disponibles'
+          )}
+        </p>
+      </div>
+    </div>
+  </div>
+)}
         <div className="restaurant-info__container">
           <div className="restaurant-info__main">
             <div className="restaurant-info__header">
@@ -256,6 +284,7 @@ function RestaurantPage() {
                         plat={plat}
                         restaurantId={restaurant.id}
                         restaurantName={restaurant.nom}
+                        restaurantOuvert={restaurant.est_ouvert}
                       />
                     ))}
                   </div>

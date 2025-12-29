@@ -39,6 +39,19 @@ function CheckoutPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
+  // Vérifier si le restaurant est ouvert
+useEffect(() => {
+  if (restaurantDetails && !restaurantDetails.est_ouvert) {
+    setError('Ce restaurant est actuellement fermé. Vous ne pouvez pas passer commande.');
+  }
+}, [restaurantDetails]);
+
+// Dans le handleSubmit, avant la création de commande :
+if (restaurantDetails && !restaurantDetails.est_ouvert) {
+  setError('Ce restaurant est actuellement fermé. Vous ne pouvez pas passer commande.');
+  return;
+}
+
   // Charger les détails du restaurant pour avoir les modes de retrait disponibles
   useEffect(() => {
     if (restaurant?.id) {

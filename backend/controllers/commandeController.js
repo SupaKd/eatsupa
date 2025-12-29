@@ -295,6 +295,21 @@ const createCommande = async (req, res) => {
       });
     }
 
+    // Vérifier que le restaurant est ouvert
+const { isRestaurantOpen } = require('../utils/helpers');
+const estOuvert = isRestaurantOpen(
+  restaurant.horaires_ouverture, 
+  Boolean(restaurant.fermeture_exceptionnelle)
+);
+
+if (!estOuvert) {
+  return res.status(400).json({
+    success: false,
+    message: 'Ce restaurant est actuellement fermé. Veuillez vérifier les horaires d\'ouverture.',
+    code: 'RESTAURANT_CLOSED'
+  });
+}
+
     // Vérifier le mode de retrait
     if (mode_retrait === 'a_emporter' && !restaurant.a_emporter_active) {
       return res.status(400).json({

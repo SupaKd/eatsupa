@@ -1,0 +1,71 @@
+// Bandeau restaurant fermé
+.restaurant-closed-banner {
+    background: linear-gradient(135deg, #dc2626 0%, #991b1b 100%);
+    color: white;
+    padding: 1.5rem 0;
+    margin-bottom: 2rem;
+    box-shadow: 0 4px 6px rgba(0, 0, 0, 0.1);
+  
+    &__container {
+      max-width: 1200px;
+      margin: 0 auto;
+      padding: 0 1rem;
+      display: flex;
+      align-items: center;
+      gap: 1rem;
+    }
+  
+    &__icon {
+      font-size: 2rem;
+      flex-shrink: 0;
+    }
+  
+    &__content {
+      h3 {
+        margin: 0 0 0.25rem;
+        font-size: 1.125rem;
+        font-weight: 600;
+      }
+  
+      p {
+        margin: 0;
+        font-size: 0.875rem;
+        opacity: 0.95;
+  
+        strong {
+          font-weight: 600;
+          text-decoration: underline;
+        }
+      }
+    }
+  }
+  
+  // Carte de plat indisponible (restaurant fermé)
+  .plat-card {
+    &--unavailable {
+      opacity: 0.6;
+      pointer-events: none;
+      position: relative;
+  
+      &::after {
+        content: '';
+        position: absolute;
+        inset: 0;
+        background: rgba(255, 255, 255, 0.5);
+        backdrop-filter: blur(2px);
+      }
+    }
+  
+    &__add-btn {
+      &:disabled {
+        opacity: 0.5;
+        cursor: not-allowed;
+        background: #9ca3af;
+  
+        &:hover {
+          background: #9ca3af;
+          transform: none;
+        }
+      }
+    }
+  }
