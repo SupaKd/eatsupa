@@ -8,6 +8,7 @@ const platRoutes = require('./plats');
 const commandeRoutes = require('./commandes');
 const adminRoutes = require('./admin');
 const paiementRoutes = require('./paiement');
+const uploadRoutes = require('./upload');
 
 // Routes de base
 router.get('/', (req, res) => {
@@ -22,7 +23,8 @@ router.get('/', (req, res) => {
       plats: '/api/restaurants/:restaurantId/plats',
       commandes: '/api/commandes',
       paiement: '/api/paiement',
-      admin: '/api/admin'
+      admin: '/api/admin',
+      upload: '/api/upload'
     }
   });
 });
@@ -35,5 +37,6 @@ router.use('/restaurants/:restaurantId/plats', platRoutes);
 router.use('/commandes', commandeRoutes);
 router.use('/paiement', paiementRoutes);
 router.use('/admin', adminRoutes);
+router.use('/upload', uploadRoutes);
 
 module.exports = router;

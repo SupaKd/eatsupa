@@ -10,7 +10,9 @@ import {
   UserRound,
   Car
 } from 'lucide-react';
-import { restaurantAPI } from '@services/api';
+import { restaurantAPI } from '../../services/api';
+import uploadService from '../../services/uploadService';
+import ImageUpload from '../../components/ImageUpload';
 
 function RestaurantSettingsPage() {
   const [restaurant, setRestaurant] = useState(null);
@@ -116,6 +118,21 @@ function RestaurantSettingsPage() {
     setSuccess(null);
   };
 
+  const handleImageChange = (imageUrl) => {
+    setFormData(prev => ({ ...prev, image: imageUrl }));
+    setSuccess(null);
+  };
+
+  const handleImageUpload = async (file) => {
+    try {
+      const imageUrl = await uploadService.uploadImage(file);
+      return imageUrl;
+    } catch (err) {
+      console.error('Erreur upload image:', err);
+      throw new Error("Impossible d'uploader l'image. Veuillez réessayer.");
+    }
+  };
+
   const handleLivraisonChange = (e) => {
     const { name, value, type, checked } = e.target;
     setLivraisonData(prev => ({ 
@@ -147,16 +164,22 @@ function RestaurantSettingsPage() {
     setSuccess(null);
     setSaving(true);
 
+    console.log('Données à sauvegarder:', formData);
+    console.log('Image URL:', formData.image);
+
     try {
       if (restaurant) {
-        await restaurantAPI.update(restaurant.id, formData);
+        const response = await restaurantAPI.update(restaurant.id, formData);
+        console.log('Réponse update:', response);
       } else {
-        await restaurantAPI.create(formData);
+        const response = await restaurantAPI.create(formData);
+        console.log('Réponse create:', response);
       }
       setSuccess('Informations enregistrées avec succès');
       await fetchRestaurant();
     } catch (err) {
       console.error('Erreur sauvegarde:', err);
+      console.error('Détails:', err.response?.data);
       setError(err.response?.data?.message || 'Erreur lors de la sauvegarde');
     } finally {
       setSaving(false);
@@ -318,8 +341,17 @@ function RestaurantSettingsPage() {
               </div>
 
               <div className="settings-form__field">
-                <label>URL de l'image de couverture</label>
-                <input type="url" name="image" value={formData.image} onChange={handleChange} placeholder="https://exemple.com/image.jpg" />
+                <label>Photo de couverture</label>
+                <ImageUpload
+                  value={formData.image}
+                  onChange={handleImageChange}
+                  onUpload={handleImageUpload}
+                  placeholder="Glissez-déposez une photo ou cliquez pour sélectionner"
+                  maxSize={5}
+                />
+                <span className="settings-form__hint">
+                  Cette image sera affichée sur la page de votre restaurant
+                </span>
               </div>
             </div>
 
