@@ -2,12 +2,13 @@ import { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate, Link } from 'react-router-dom';
 import { register } from '@store/slices/authSlice';
+import { useToast } from '@/contexts/ToastContext';
 import { Info } from 'lucide-react';
-
 
 function RegisterPage() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const toast = useToast();
   const { loading, error } = useSelector((state) => state.auth);
 
   const [activeRole, setActiveRole] = useState('client');
@@ -39,7 +40,11 @@ function RegisterPage() {
     e.preventDefault();
     
     try {
-      await dispatch(register(formData)).unwrap();
+      const result = await dispatch(register(formData)).unwrap();
+      toast.success('Votre compte a été créé avec succès !', {
+        title: 'Bienvenue sur Yumioo',
+      });
+      
       // Rediriger vers le dashboard approprié selon le rôle
       if (formData.role === 'restaurateur') {
         navigate('/dashboard');
@@ -47,7 +52,7 @@ function RegisterPage() {
         navigate('/');
       }
     } catch (err) {
-      console.error('Erreur d\'inscription:', err);
+      toast.error(err || 'Erreur lors de l\'inscription');
     }
   };
 

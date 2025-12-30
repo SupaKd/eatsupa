@@ -2,10 +2,12 @@ import { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate, Link } from 'react-router-dom';
 import { login } from '@store/slices/authSlice';
+import { useToast } from '@/contexts/ToastContext';
 
 function LoginPage() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const toast = useToast();
   const { loading, error } = useSelector((state) => state.auth);
 
   const [formData, setFormData] = useState({
@@ -24,10 +26,13 @@ function LoginPage() {
     e.preventDefault();
     
     try {
-      await dispatch(login(formData)).unwrap();
+      const result = await dispatch(login(formData)).unwrap();
+      toast.success(`Bienvenue ${result.user.prenom} !`, {
+        title: 'Connexion réussie',
+      });
       navigate('/');
     } catch (err) {
-      console.error('Erreur de connexion:', err);
+      toast.error(err || 'Email ou mot de passe incorrect');
     }
   };
 

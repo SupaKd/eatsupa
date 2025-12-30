@@ -12,6 +12,7 @@ import {
   clearCart,
 } from '@store/slices/cartSlice';
 import { commandeAPI, paiementAPI, restaurantAPI } from '@services/api';
+import { useToast } from '@/contexts/ToastContext';
 import { 
   ArrowLeft, 
   AlertCircle, 
@@ -33,6 +34,7 @@ import {
 function CheckoutPage() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const toast = useToast();
   const { user, isAuthenticated } = useSelector((state) => state.auth);
   const items = useSelector(selectCartItems);
   const restaurant = useSelector(selectCartRestaurant);
@@ -56,12 +58,11 @@ function CheckoutPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // Vérifier si le restaurant est ouvert - CORRIGÉ: maintenant dans useEffect
+  // Vérifier si le restaurant est ouvert
   useEffect(() => {
     if (restaurantDetails && !restaurantDetails.est_ouvert) {
       setError('Ce restaurant est actuellement fermé. Vous ne pouvez pas passer commande.');
     } else if (restaurantDetails && restaurantDetails.est_ouvert && error === 'Ce restaurant est actuellement fermé. Vous ne pouvez pas passer commande.') {
-      // Effacer l'erreur si le restaurant est maintenant ouvert
       setError(null);
     }
   }, [restaurantDetails]);
@@ -87,6 +88,7 @@ function CheckoutPage() {
       }
     } catch (err) {
       console.error('Erreur chargement restaurant:', err);
+      toast.error('Impossible de charger les informations du restaurant');
     } finally {
       setLoadingRestaurant(false);
     }
@@ -118,33 +120,38 @@ function CheckoutPage() {
     setError(null);
   };
 
+  const handleRemoveItem = (item) => {
+    dispatch(removeFromCart(item.id));
+    toast.info(`${item.nom} retiré du panier`);
+  };
+
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError(null);
 
-    // CORRIGÉ: Validation du restaurant ouvert dans handleSubmit
+    // Validation du restaurant ouvert
     if (restaurantDetails && !restaurantDetails.est_ouvert) {
-      setError('Ce restaurant est actuellement fermé. Vous ne pouvez pas passer commande.');
+      toast.error('Ce restaurant est actuellement fermé');
       return;
     }
 
     if (!formData.telephone) {
-      setError('Le numéro de téléphone est requis');
+      toast.error('Le numéro de téléphone est requis');
       return;
     }
 
     // Validation pour la livraison
     if (formData.mode_retrait === 'livraison') {
       if (!formData.adresse_livraison) {
-        setError('L\'adresse de livraison est requise');
+        toast.error('L\'adresse de livraison est requise');
         return;
       }
       if (!formData.ville_livraison) {
-        setError('La ville de livraison est requise');
+        toast.error('La ville de livraison est requise');
         return;
       }
       if (estSousMinimum) {
-        setError(`Le montant minimum pour la livraison est de ${formatPrice(minimumLivraison)}`);
+        toast.warning(`Ajoutez encore ${formatPrice(minimumLivraison - cartTotal)} pour la livraison`);
         return;
       }
     }
@@ -158,14 +165,14 @@ function CheckoutPage() {
         quantite: item.quantite,
       }));
 
-      // Créer la commande (toujours en mode sur_place pour l'instant)
+      // Créer la commande
       const response = await commandeAPI.create({
         restaurant_id: restaurant.id,
         items: commandeItems,
         telephone_client: formData.telephone,
         email_client: formData.email || undefined,
         notes: formData.notes || undefined,
-        mode_paiement: 'sur_place', // Forcé à sur_place pour l'instant
+        mode_paiement: 'sur_place',
         mode_retrait: formData.mode_retrait,
         adresse_livraison: formData.mode_retrait === 'livraison' ? formData.adresse_livraison : undefined,
         code_postal_livraison: formData.mode_retrait === 'livraison' ? formData.code_postal_livraison : undefined,
@@ -179,6 +186,11 @@ function CheckoutPage() {
         // Vider le panier
         dispatch(clearCart());
 
+        // Toast de succès
+        toast.success('Votre commande a été envoyée au restaurant !', {
+          title: 'Commande confirmée',
+        });
+
         // Rediriger vers la page de confirmation
         navigate(`/commande/${commande.id}/confirmation`, {
           state: {
@@ -189,7 +201,9 @@ function CheckoutPage() {
       }
     } catch (err) {
       console.error('Erreur création commande:', err);
-      setError(err.response?.data?.message || 'Erreur lors de la création de la commande');
+      const errorMessage = err.response?.data?.message || 'Erreur lors de la création de la commande';
+      setError(errorMessage);
+      toast.error(errorMessage);
     } finally {
       setLoading(false);
     }
@@ -483,8 +497,6 @@ function CheckoutPage() {
                       </div>
                     </div>
                   </label>
-
-                  {/* TODO: Paiement en ligne - À développer ultérieurement */}
                 </div>
               </div>
 

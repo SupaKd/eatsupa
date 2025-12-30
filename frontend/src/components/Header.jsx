@@ -3,6 +3,7 @@ import { Link, useNavigate } from "react-router-dom";
 import { useSelector, useDispatch } from "react-redux";
 import { logout } from "@store/slices/authSlice";
 import { selectCartItemsCount } from "@store/slices/cartSlice";
+import { useToast } from "@/contexts/ToastContext";
 import {
   User,
   ShoppingCart,
@@ -17,6 +18,7 @@ import {
 function Header({ onCartClick }) {
   const dispatch = useDispatch();
   const navigate = useNavigate();
+  const toast = useToast();
   const { user, isAuthenticated } = useSelector((state) => state.auth);
   const cartItemsCount = useSelector(selectCartItemsCount);
   const [menuOpen, setMenuOpen] = useState(false);
@@ -24,6 +26,7 @@ function Header({ onCartClick }) {
 
   const handleLogout = () => {
     dispatch(logout());
+    toast.info('À bientôt !', { title: 'Déconnexion' });
     navigate("/");
     setUserMenuOpen(false);
   };
