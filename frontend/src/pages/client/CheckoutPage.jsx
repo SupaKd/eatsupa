@@ -12,6 +12,23 @@ import {
   clearCart,
 } from '@store/slices/cartSlice';
 import { commandeAPI, paiementAPI, restaurantAPI } from '@services/api';
+import { 
+  ArrowLeft, 
+  AlertCircle, 
+  Truck, 
+  MapPin, 
+  User, 
+  CreditCard, 
+  MessageSquare,
+  ShoppingBag,
+  Minus,
+  Plus,
+  AlertTriangle,
+  Clock,
+  XCircle,
+  Package,
+  Wallet
+} from 'lucide-react';
 
 function CheckoutPage() {
   const dispatch = useDispatch();
@@ -182,7 +199,9 @@ function CheckoutPage() {
   if (isEmpty) {
     return (
       <div className="checkout-page__empty">
-        <div className="checkout-page__empty-icon">🛒</div>
+        <div className="checkout-page__empty-icon">
+          <ShoppingBag size={64} strokeWidth={1.5} />
+        </div>
         <h2>Votre panier est vide</h2>
         <p>Ajoutez des plats pour passer commande</p>
         <Link to="/" className="checkout-page__empty-btn">
@@ -206,10 +225,7 @@ function CheckoutPage() {
         {/* Header */}
         <div className="checkout-page__header">
           <Link to={`/restaurant/${restaurant.id}`} className="checkout-page__back">
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <line x1="19" y1="12" x2="5" y2="12"></line>
-              <polyline points="12 19 5 12 12 5"></polyline>
-            </svg>
+            <ArrowLeft size={20} />
             Retour au menu
           </Link>
           <h1 className="checkout-page__title">Finaliser la commande</h1>
@@ -218,11 +234,7 @@ function CheckoutPage() {
         {/* Alerte restaurant fermé */}
         {isRestaurantClosed && (
           <div className="checkout-page__closed-alert">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <circle cx="12" cy="12" r="10"></circle>
-              <line x1="12" y1="8" x2="12" y2="12"></line>
-              <line x1="12" y1="16" x2="12.01" y2="16"></line>
-            </svg>
+            <AlertCircle size={24} />
             <div>
               <strong>Restaurant fermé</strong>
               <p>
@@ -246,11 +258,7 @@ function CheckoutPage() {
             <form onSubmit={handleSubmit} className="checkout-form">
               {error && (
                 <div className="checkout-form__error">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <circle cx="12" cy="12" r="10"></circle>
-                    <line x1="12" y1="8" x2="12" y2="12"></line>
-                    <line x1="12" y1="16" x2="12.01" y2="16"></line>
-                  </svg>
+                  <AlertCircle size={20} />
                   {error}
                 </div>
               )}
@@ -259,12 +267,7 @@ function CheckoutPage() {
               {!loadingRestaurant && (livraisonDisponible || aEmporterDisponible) && (
                 <div className="checkout-form__section">
                   <h3 className="checkout-form__section-title">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <rect x="1" y="3" width="15" height="13"></rect>
-                      <polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon>
-                      <circle cx="5.5" cy="18.5" r="2.5"></circle>
-                      <circle cx="18.5" cy="18.5" r="2.5"></circle>
-                    </svg>
+                    <Truck size={20} />
                     Mode de retrait
                   </h3>
 
@@ -281,14 +284,16 @@ function CheckoutPage() {
                           onChange={() => handleModeRetraitChange('a_emporter')}
                         />
                         <div className="checkout-form__retrait-content">
-                          <span className="checkout-form__retrait-icon">🏃</span>
+                          <span className="checkout-form__retrait-icon">
+                            <Package size={24} />
+                          </span>
                           <div className="checkout-form__retrait-text">
                             <span className="checkout-form__retrait-label">À emporter</span>
                             <span className="checkout-form__retrait-desc">
                               Récupérez votre commande au restaurant
                             </span>
                             <span className="checkout-form__retrait-time">
-                              ⏱️ Prêt en ~{restaurantDetails?.delai_preparation || 30} min
+                              <Clock size={14} /> Prêt en ~{restaurantDetails?.delai_preparation || 30} min
                             </span>
                           </div>
                           <span className="checkout-form__retrait-price">Gratuit</span>
@@ -308,14 +313,16 @@ function CheckoutPage() {
                           onChange={() => handleModeRetraitChange('livraison')}
                         />
                         <div className="checkout-form__retrait-content">
-                          <span className="checkout-form__retrait-icon">🚗</span>
+                          <span className="checkout-form__retrait-icon">
+                            <Truck size={24} />
+                          </span>
                           <div className="checkout-form__retrait-text">
                             <span className="checkout-form__retrait-label">Livraison</span>
                             <span className="checkout-form__retrait-desc">
                               Livré à votre adresse
                             </span>
                             <span className="checkout-form__retrait-time">
-                              ⏱️ Livré en ~{restaurantDetails?.delai_livraison || 45} min
+                              <Clock size={14} /> Livré en ~{restaurantDetails?.delai_livraison || 45} min
                             </span>
                             {minimumLivraison > 0 && (
                               <span className="checkout-form__retrait-minimum">
@@ -334,11 +341,7 @@ function CheckoutPage() {
                   {/* Alerte si sous le minimum */}
                   {estSousMinimum && (
                     <div className="checkout-form__warning">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <path d="M10.29 3.86L1.82 18a2 2 0 0 0 1.71 3h16.94a2 2 0 0 0 1.71-3L13.71 3.86a2 2 0 0 0-3.42 0z"></path>
-                        <line x1="12" y1="9" x2="12" y2="13"></line>
-                        <line x1="12" y1="17" x2="12.01" y2="17"></line>
-                      </svg>
+                      <AlertTriangle size={20} />
                       <span>
                         Ajoutez encore <strong>{formatPrice(minimumLivraison - cartTotal)}</strong> pour pouvoir commander en livraison
                       </span>
@@ -351,10 +354,7 @@ function CheckoutPage() {
               {formData.mode_retrait === 'livraison' && (
                 <div className="checkout-form__section">
                   <h3 className="checkout-form__section-title">
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
-                      <circle cx="12" cy="10" r="3"></circle>
-                    </svg>
+                    <MapPin size={20} />
                     Adresse de livraison
                   </h3>
 
@@ -418,10 +418,7 @@ function CheckoutPage() {
               {/* Coordonnées */}
               <div className="checkout-form__section">
                 <h3 className="checkout-form__section-title">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M20 21v-2a4 4 0 0 0-4-4H8a4 4 0 0 0-4 4v2"></path>
-                    <circle cx="12" cy="7" r="4"></circle>
-                  </svg>
+                  <User size={20} />
                   Vos coordonnées
                 </h3>
 
@@ -457,10 +454,7 @@ function CheckoutPage() {
               {/* Mode de paiement */}
               <div className="checkout-form__section">
                 <h3 className="checkout-form__section-title">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
-                    <line x1="1" y1="10" x2="23" y2="10"></line>
-                  </svg>
+                  <CreditCard size={20} />
                   Mode de paiement
                 </h3>
 
@@ -474,7 +468,9 @@ function CheckoutPage() {
                       readOnly
                     />
                     <div className="checkout-form__payment-content">
-                      <span className="checkout-form__payment-icon">💵</span>
+                      <span className="checkout-form__payment-icon">
+                        <Wallet size={24} />
+                      </span>
                       <div>
                         <span className="checkout-form__payment-label">
                           {formData.mode_retrait === 'livraison' ? 'Paiement à la livraison' : 'Paiement sur place'}
@@ -495,9 +491,7 @@ function CheckoutPage() {
               {/* Notes */}
               <div className="checkout-form__section">
                 <h3 className="checkout-form__section-title">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M21 15a2 2 0 0 1-2 2H7l-4 4V5a2 2 0 0 1 2-2h14a2 2 0 0 1 2 2z"></path>
-                  </svg>
+                  <MessageSquare size={20} />
                   Instructions spéciales
                 </h3>
 
@@ -526,10 +520,7 @@ function CheckoutPage() {
                   </>
                 ) : isRestaurantClosed ? (
                   <>
-                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <circle cx="12" cy="12" r="10"></circle>
-                      <line x1="4.93" y1="4.93" x2="19.07" y2="19.07"></line>
-                    </svg>
+                    <XCircle size={20} />
                     Restaurant fermé
                   </>
                 ) : (
@@ -563,14 +554,14 @@ function CheckoutPage() {
                           onClick={() => dispatch(decrementQuantity(item.id))}
                           disabled={isRestaurantClosed}
                         >
-                          -
+                          <Minus size={16} />
                         </button>
                         <span>{item.quantite}</span>
                         <button 
                           onClick={() => dispatch(incrementQuantity(item.id))}
                           disabled={isRestaurantClosed}
                         >
-                          +
+                          <Plus size={16} />
                         </button>
                       </div>
                       <span className="checkout-summary__item-price">
@@ -603,11 +594,11 @@ function CheckoutPage() {
               <div className="checkout-summary__mode">
                 {formData.mode_retrait === 'livraison' ? (
                   <span className="checkout-summary__mode-badge checkout-summary__mode-badge--delivery">
-                    🚗 Livraison
+                    <Truck size={16} /> Livraison
                   </span>
                 ) : (
                   <span className="checkout-summary__mode-badge checkout-summary__mode-badge--pickup">
-                    🏃 À emporter
+                    <Package size={16} /> À emporter
                   </span>
                 )}
               </div>

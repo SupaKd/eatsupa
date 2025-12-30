@@ -1,6 +1,23 @@
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { commandeAPI } from '@services/api';
+import {
+  ArrowLeft,
+  RefreshCw,
+  Check,
+  Home,
+  Phone,
+  ShoppingBag,
+  Clock,
+  CheckCircle,
+  AlertCircle,
+  XCircle,
+  ChefHat,
+  Search,
+  PartyPopper,
+  Wallet,
+  CreditCard
+} from 'lucide-react';
 
 function OrderTrackingPage() {
   const { token } = useParams();
@@ -50,47 +67,47 @@ function OrderTrackingPage() {
       en_attente: { 
         label: 'En attente de confirmation', 
         color: 'yellow', 
-        icon: '⏳',
+        icon: <Clock size={32} />,
         step: 1,
         message: 'Votre commande a été reçue et attend la confirmation du restaurant.'
       },
       confirmee: { 
         label: 'Confirmée', 
         color: 'blue', 
-        icon: '✓',
+        icon: <CheckCircle size={32} />,
         step: 2,
         message: 'Le restaurant a confirmé votre commande. La préparation va bientôt commencer.'
       },
       en_preparation: { 
         label: 'En préparation', 
         color: 'orange', 
-        icon: '👨‍🍳',
+        icon: <ChefHat size={32} />,
         step: 3,
         message: 'Votre commande est en cours de préparation par le chef.'
       },
       prete: { 
         label: 'Prête !', 
         color: 'green', 
-        icon: '✅',
+        icon: <CheckCircle size={32} />,
         step: 4,
         message: 'Votre commande est prête ! Vous pouvez venir la récupérer.'
       },
       recuperee: { 
         label: 'Récupérée', 
         color: 'green', 
-        icon: '🎉',
+        icon: <PartyPopper size={32} />,
         step: 5,
         message: 'Merci pour votre commande. Bon appétit !'
       },
       annulee: { 
         label: 'Annulée', 
         color: 'red', 
-        icon: '❌',
+        icon: <XCircle size={32} />,
         step: 0,
         message: 'Cette commande a été annulée.'
       },
     };
-    return statusMap[status] || { label: status, color: 'gray', icon: '?', step: 0, message: '' };
+    return statusMap[status] || { label: status, color: 'gray', icon: <AlertCircle size={32} />, step: 0, message: '' };
   };
 
   const steps = [
@@ -112,7 +129,9 @@ function OrderTrackingPage() {
   if (error || !commande) {
     return (
       <div className="tracking-page__error">
-        <div className="tracking-page__error-icon">🔍</div>
+        <div className="tracking-page__error-icon">
+          <Search size={64} strokeWidth={1.5} />
+        </div>
         <h2>Commande non trouvée</h2>
         <p>{error || 'Le lien de suivi est invalide ou a expiré.'}</p>
         <Link to="/" className="tracking-page__error-btn">
@@ -131,10 +150,7 @@ function OrderTrackingPage() {
         {/* Header */}
         <div className="tracking-page__header">
           <Link to="/" className="tracking-page__back">
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <line x1="19" y1="12" x2="5" y2="12"></line>
-              <polyline points="12 19 5 12 12 5"></polyline>
-            </svg>
+            <ArrowLeft size={20} />
             Retour
           </Link>
           <h1>Suivi de commande</h1>
@@ -151,11 +167,7 @@ function OrderTrackingPage() {
           {isActive && (
             <div className="tracking-status__refresh">
               <button onClick={fetchCommande} title="Actualiser">
-                <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <polyline points="23 4 23 10 17 10"></polyline>
-                  <polyline points="1 20 1 14 7 14"></polyline>
-                  <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
-                </svg>
+                <RefreshCw size={20} />
               </button>
             </div>
           )}
@@ -174,9 +186,7 @@ function OrderTrackingPage() {
                 >
                   <div className="tracking-timeline__dot">
                     {isCompleted && (
-                      <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                        <polyline points="20 6 9 17 4 12"></polyline>
-                      </svg>
+                      <Check size={14} strokeWidth={3} />
                     )}
                   </div>
                   {index < steps.length - 1 && (
@@ -192,10 +202,7 @@ function OrderTrackingPage() {
         {/* Infos restaurant */}
         <div className="tracking-card">
           <h3>
-            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
-              <polyline points="9 22 9 12 15 12 15 22"></polyline>
-            </svg>
+            <Home size={18} />
             Restaurant
           </h3>
           <p className="tracking-card__restaurant-name">{commande.restaurant_nom}</p>
@@ -204,9 +211,7 @@ function OrderTrackingPage() {
           )}
           {commande.restaurant_telephone && (
             <a href={`tel:${commande.restaurant_telephone}`} className="tracking-card__phone">
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
-              </svg>
+              <Phone size={16} />
               Appeler le restaurant
             </a>
           )}
@@ -215,11 +220,7 @@ function OrderTrackingPage() {
         {/* Détails commande */}
         <div className="tracking-card">
           <h3>
-            <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M6 2L3 6v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2V6l-3-4z"></path>
-              <line x1="3" y1="6" x2="21" y2="6"></line>
-              <path d="M16 10a4 4 0 0 1-8 0"></path>
-            </svg>
+            <ShoppingBag size={18} />
             Votre commande
           </h3>
           
@@ -244,9 +245,13 @@ function OrderTrackingPage() {
 
           <div className="tracking-card__payment">
             {commande.mode_paiement === 'sur_place' ? (
-              <span>💵 Paiement sur place</span>
+              <span>
+                <Wallet size={16} /> Paiement sur place
+              </span>
             ) : (
-              <span>💳 Paiement en ligne {commande.paiement_statut === 'paye' && '(Payé ✓)'}</span>
+              <span>
+                <CreditCard size={16} /> Paiement en ligne {commande.paiement_statut === 'paye' && '(Payé ✓)'}
+              </span>
             )}
           </div>
         </div>
@@ -254,7 +259,9 @@ function OrderTrackingPage() {
         {/* Message si prête */}
         {commande.statut === 'prete' && (
           <div className="tracking-page__ready-alert">
-            <span className="tracking-page__ready-alert-icon">🎉</span>
+            <span className="tracking-page__ready-alert-icon">
+              <PartyPopper size={28} />
+            </span>
             <div>
               <strong>Votre commande vous attend !</strong>
               <p>Présentez ce numéro de commande au restaurant : <code>{commande.numero_commande}</code></p>
