@@ -200,47 +200,6 @@ function HomePage() {
         </div>
       </section>
 
-      {/* CTA */}
-      <section className="cta">
-        <div className="cta__container">
-          <div className="cta__content">
-            <span className="cta__label">Rejoignez le mouvement</span>
-            <h2 className="cta__title">Vous êtes restaurateur ?</h2>
-
-            <p className="cta__text">
-              Rejoignez Yumioo et gardez 100% de vos revenus.
-            </p>
-
-            <div className="cta__features">
-              <div className="cta__feature">
-                <Check size={20} />
-                <span>0% de commission</span>
-              </div>
-              <div className="cta__feature">
-                <Check size={20} />
-                <span>Abonnement fixe</span>
-              </div>
-              <div className="cta__feature">
-                <Check size={20} />
-                <span>Dashboard complet</span>
-              </div>
-              <div className="cta__feature">
-                <Check size={20} />
-                <span>Support local dédié</span>
-              </div>
-            </div>
-
-            <Link
-              to="/register?role=restaurateur"
-              className="cta__btn"
-            >
-              <span>Inscrire mon restaurant</span>
-              <ArrowRight size={20} />
-            </Link>
-          </div>
-        </div>
-      </section>
-
       {/* BANNER */}
       <section className="banner">
         <div className="banner__marquee">

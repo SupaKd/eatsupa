@@ -1,4 +1,15 @@
 import { useState, useEffect } from 'react';
+import { 
+  Home, 
+  Truck, 
+  Clock, 
+  AlertCircle, 
+  CheckCircle, 
+  Check, 
+  Info,
+  UserRound,
+  Car
+} from 'lucide-react';
 import { restaurantAPI } from '@services/api';
 
 function RestaurantSettingsPage() {
@@ -241,10 +252,7 @@ function RestaurantSettingsPage() {
           className={`settings-page__tab ${activeTab === 'general' ? 'settings-page__tab--active' : ''}`}
           onClick={() => setActiveTab('general')}
         >
-          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M3 9l9-7 9 7v11a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2z"></path>
-            <polyline points="9 22 9 12 15 12 15 22"></polyline>
-          </svg>
+          <Home size={18} />
           Informations générales
         </button>
         {restaurant && (
@@ -253,22 +261,14 @@ function RestaurantSettingsPage() {
               className={`settings-page__tab ${activeTab === 'livraison' ? 'settings-page__tab--active' : ''}`}
               onClick={() => setActiveTab('livraison')}
             >
-              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <rect x="1" y="3" width="15" height="13"></rect>
-                <polygon points="16 8 20 8 23 11 23 16 16 16 16 8"></polygon>
-                <circle cx="5.5" cy="18.5" r="2.5"></circle>
-                <circle cx="18.5" cy="18.5" r="2.5"></circle>
-              </svg>
+              <Truck size={18} />
               Livraison
             </button>
             <button
               className={`settings-page__tab ${activeTab === 'horaires' ? 'settings-page__tab--active' : ''}`}
               onClick={() => setActiveTab('horaires')}
             >
-              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="12" cy="12" r="10"></circle>
-                <polyline points="12 6 12 12 16 14"></polyline>
-              </svg>
+              <Clock size={18} />
               Horaires
             </button>
           </>
@@ -278,21 +278,14 @@ function RestaurantSettingsPage() {
       {/* Messages */}
       {error && error !== 'no_restaurant' && (
         <div className="settings-page__message settings-page__message--error">
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <circle cx="12" cy="12" r="10"></circle>
-            <line x1="12" y1="8" x2="12" y2="12"></line>
-            <line x1="12" y1="16" x2="12.01" y2="16"></line>
-          </svg>
+          <AlertCircle size={20} />
           {error}
         </div>
       )}
 
       {success && (
         <div className="settings-page__message settings-page__message--success">
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14"></path>
-            <polyline points="22 4 12 14.01 9 11.01"></polyline>
-          </svg>
+          <CheckCircle size={20} />
           {success}
         </div>
       )}
@@ -390,15 +383,15 @@ function RestaurantSettingsPage() {
                 <label className={`settings-form__toggle-card ${livraisonData.a_emporter_active ? 'settings-form__toggle-card--active' : ''}`}>
                   <input type="checkbox" name="a_emporter_active" checked={livraisonData.a_emporter_active} onChange={handleLivraisonChange} />
                   <div className="settings-form__toggle-card-content">
-                    <span className="settings-form__toggle-card-icon">🏃</span>
+                    <span className="settings-form__toggle-card-icon">
+                      <UserRound size={24} />
+                    </span>
                     <div className="settings-form__toggle-card-text">
                       <strong>À emporter</strong>
                       <span>Les clients récupèrent leur commande au restaurant</span>
                     </div>
                     <div className={`settings-form__toggle-card-check ${livraisonData.a_emporter_active ? 'active' : ''}`}>
-                      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                        <polyline points="20 6 9 17 4 12"></polyline>
-                      </svg>
+                      <Check size={20} strokeWidth={3} />
                     </div>
                   </div>
                 </label>
@@ -406,15 +399,15 @@ function RestaurantSettingsPage() {
                 <label className={`settings-form__toggle-card ${livraisonData.livraison_active ? 'settings-form__toggle-card--active' : ''}`}>
                   <input type="checkbox" name="livraison_active" checked={livraisonData.livraison_active} onChange={handleLivraisonChange} />
                   <div className="settings-form__toggle-card-content">
-                    <span className="settings-form__toggle-card-icon">🚗</span>
+                    <span className="settings-form__toggle-card-icon">
+                      <Car size={24} />
+                    </span>
                     <div className="settings-form__toggle-card-text">
                       <strong>Livraison</strong>
                       <span>Vous livrez les commandes à l'adresse du client</span>
                     </div>
                     <div className={`settings-form__toggle-card-check ${livraisonData.livraison_active ? 'active' : ''}`}>
-                      <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="3" strokeLinecap="round" strokeLinejoin="round">
-                        <polyline points="20 6 9 17 4 12"></polyline>
-                      </svg>
+                      <Check size={20} strokeWidth={3} />
                     </div>
                   </div>
                 </label>
@@ -483,11 +476,7 @@ function RestaurantSettingsPage() {
                 </div>
 
                 <div className="settings-form__info-box">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <circle cx="12" cy="12" r="10"></circle>
-                    <line x1="12" y1="16" x2="12" y2="12"></line>
-                    <line x1="12" y1="8" x2="12.01" y2="8"></line>
-                  </svg>
+                  <Info size={20} />
                   <div>
                     <strong>Résumé de votre configuration</strong>
                     <p>

@@ -122,6 +122,9 @@
     color: #495057;
     cursor: pointer;
     transition: all 0.2s ease;
+    display: inline-flex;
+    gap: 0.5rem;
+    align-items: center;
   
     &:hover {
       border-color: #667eea;

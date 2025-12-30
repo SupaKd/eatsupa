@@ -1,5 +1,22 @@
 import { useState, useEffect, useCallback } from 'react';
 import { useSearchParams } from 'react-router-dom';
+import { 
+  RefreshCw, 
+  Flame, 
+  Clock, 
+  ChefHat, 
+  CheckCircle, 
+  Package, 
+  Phone, 
+  CreditCard, 
+  Banknote, 
+  X, 
+  Mail,
+  CheckCircle2,
+  XCircle,
+  Sparkles,
+  AlertCircle
+} from 'lucide-react';
 import { commandeAPI } from '@services/api';
 
 function RestaurantOrdersPage() {
@@ -77,14 +94,14 @@ function RestaurantOrdersPage() {
 
   const getStatusInfo = (status) => {
     const statusMap = {
-      en_attente: { label: 'En attente', color: 'yellow', icon: '⏳', next: 'confirmee' },
-      confirmee: { label: 'Confirmée', color: 'blue', icon: '✓', next: 'en_preparation' },
-      en_preparation: { label: 'En préparation', color: 'orange', icon: '👨‍🍳', next: 'prete' },
-      prete: { label: 'Prête', color: 'green', icon: '✅', next: 'recuperee' },
-      recuperee: { label: 'Récupérée', color: 'green', icon: '🎉', next: null },
-      annulee: { label: 'Annulée', color: 'red', icon: '❌', next: null },
+      en_attente: { label: 'En attente', color: 'yellow', icon: Clock, next: 'confirmee' },
+      confirmee: { label: 'Confirmée', color: 'blue', icon: CheckCircle2, next: 'en_preparation' },
+      en_preparation: { label: 'En préparation', color: 'orange', icon: ChefHat, next: 'prete' },
+      prete: { label: 'Prête', color: 'green', icon: CheckCircle, next: 'recuperee' },
+      recuperee: { label: 'Récupérée', color: 'green', icon: Sparkles, next: null },
+      annulee: { label: 'Annulée', color: 'red', icon: XCircle, next: null },
     };
-    return statusMap[status] || { label: status, color: 'gray', icon: '?', next: null };
+    return statusMap[status] || { label: status, color: 'gray', icon: AlertCircle, next: null };
   };
 
   const getNextStatusLabel = (currentStatus) => {
@@ -134,11 +151,7 @@ function RestaurantOrdersPage() {
           <p>{filteredCommandes.length} commande{filteredCommandes.length > 1 ? 's' : ''}</p>
         </div>
         <button onClick={fetchCommandes} className="restaurant-orders__refresh" disabled={loading}>
-          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <polyline points="23 4 23 10 17 10"></polyline>
-            <polyline points="1 20 1 14 7 14"></polyline>
-            <path d="M3.51 9a9 9 0 0 1 14.85-3.36L23 10M1 14l4.64 4.36A9 9 0 0 0 20.49 15"></path>
-          </svg>
+          <RefreshCw size={18} />
           {loading ? 'Actualisation...' : 'Actualiser'}
         </button>
       </div>
@@ -149,31 +162,31 @@ function RestaurantOrdersPage() {
           className={`restaurant-orders__filter ${filter === 'actives' ? 'restaurant-orders__filter--active' : ''}`}
           onClick={() => handleFilterChange('actives')}
         >
-          🔥 Actives
+          <Flame size={16} /> Actives
         </button>
         <button
           className={`restaurant-orders__filter ${filter === 'en_attente' ? 'restaurant-orders__filter--active' : ''}`}
           onClick={() => handleFilterChange('en_attente')}
         >
-          ⏳ En attente
+          <Clock size={16} /> En attente
         </button>
         <button
           className={`restaurant-orders__filter ${filter === 'en_preparation' ? 'restaurant-orders__filter--active' : ''}`}
           onClick={() => handleFilterChange('en_preparation')}
         >
-          👨‍🍳 En préparation
+          <ChefHat size={16} /> En préparation
         </button>
         <button
           className={`restaurant-orders__filter ${filter === 'prete' ? 'restaurant-orders__filter--active' : ''}`}
           onClick={() => handleFilterChange('prete')}
         >
-          ✅ Prêtes
+          <CheckCircle size={16} /> Prêtes
         </button>
         <button
           className={`restaurant-orders__filter ${filter === 'terminees' ? 'restaurant-orders__filter--active' : ''}`}
           onClick={() => handleFilterChange('terminees')}
         >
-          📦 Terminées
+          <Package size={16} /> Terminées
         </button>
       </div>
 
@@ -189,10 +202,13 @@ function RestaurantOrdersPage() {
         <div className="restaurant-orders__kanban">
           {Object.entries(commandesByStatus).map(([status, orders]) => {
             const statusInfo = getStatusInfo(status);
+            const StatusIcon = statusInfo.icon;
             return (
               <div key={status} className="restaurant-orders__column">
                 <div className={`restaurant-orders__column-header restaurant-orders__column-header--${statusInfo.color}`}>
-                  <span className="restaurant-orders__column-icon">{statusInfo.icon}</span>
+                  <span className="restaurant-orders__column-icon">
+                    <StatusIcon size={18} />
+                  </span>
                   <span className="restaurant-orders__column-title">{statusInfo.label}</span>
                   <span className="restaurant-orders__column-count">{orders.length}</span>
                 </div>
@@ -228,7 +244,9 @@ function RestaurantOrdersPage() {
         <div className="restaurant-orders__list">
           {filteredCommandes.length === 0 ? (
             <div className="restaurant-orders__empty">
-              <div className="restaurant-orders__empty-icon">📦</div>
+              <div className="restaurant-orders__empty-icon">
+                <Package size={48} />
+              </div>
               <h3>Aucune commande</h3>
               <p>Aucune commande dans cette catégorie</p>
             </div>
@@ -293,9 +311,7 @@ function OrderCard({
       </div>
 
       <div className="order-card-restaurant__client">
-        <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-          <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
-        </svg>
+        <Phone size={14} />
         <a href={`tel:${commande.telephone_client}`}>{commande.telephone_client}</a>
       </div>
 
@@ -322,7 +338,7 @@ function OrderCard({
       <div className="order-card-restaurant__footer">
         <div className="order-card-restaurant__payment">
           <span className={`order-card-restaurant__payment-badge ${commande.mode_paiement === 'en_ligne' ? 'order-card-restaurant__payment-badge--online' : ''}`}>
-            {commande.mode_paiement === 'en_ligne' ? '💳' : '💵'}
+            {commande.mode_paiement === 'en_ligne' ? <CreditCard size={16} /> : <Banknote size={16} />}
           </span>
           {commande.paiement_statut === 'paye' && (
             <span className="order-card-restaurant__payment-status">Payé</span>
@@ -364,6 +380,7 @@ function OrderDetailsModal({
   updating 
 }) {
   const statusInfo = getStatusInfo(commande.statut);
+  const StatusIcon = statusInfo.icon;
   const nextStatusLabel = getNextStatusLabel(commande.statut);
 
   return (
@@ -375,17 +392,16 @@ function OrderDetailsModal({
             <p>{formatDate(commande.date_commande)}</p>
           </div>
           <button onClick={onClose} className="order-modal__close">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <line x1="18" y1="6" x2="6" y2="18"></line>
-              <line x1="6" y1="6" x2="18" y2="18"></line>
-            </svg>
+            <X size={24} />
           </button>
         </div>
 
         <div className="order-modal__content">
           {/* Statut */}
           <div className={`order-modal__status order-modal__status--${statusInfo.color}`}>
-            <span className="order-modal__status-icon">{statusInfo.icon}</span>
+            <span className="order-modal__status-icon">
+              <StatusIcon size={20} />
+            </span>
             <span className="order-modal__status-label">{statusInfo.label}</span>
           </div>
 
@@ -394,17 +410,12 @@ function OrderDetailsModal({
             <h3>Client</h3>
             <div className="order-modal__client-info">
               <div className="order-modal__client-row">
-                <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
-                </svg>
+                <Phone size={16} />
                 <a href={`tel:${commande.telephone_client}`}>{commande.telephone_client}</a>
               </div>
               {commande.email_client && (
                 <div className="order-modal__client-row">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M4 4h16c1.1 0 2 .9 2 2v12c0 1.1-.9 2-2 2H4c-1.1 0-2-.9-2-2V6c0-1.1.9-2 2-2z"></path>
-                    <polyline points="22,6 12,13 2,6"></polyline>
-                  </svg>
+                  <Mail size={16} />
                   <span>{commande.email_client}</span>
                 </div>
               )}
@@ -444,10 +455,24 @@ function OrderDetailsModal({
             <h3>Paiement</h3>
             <div className="order-modal__payment-info">
               <span className="order-modal__payment-method">
-                {commande.mode_paiement === 'en_ligne' ? '💳 Paiement en ligne' : '💵 Paiement sur place'}
+                {commande.mode_paiement === 'en_ligne' ? (
+                  <>
+                    <CreditCard size={16} style={{ display: 'inline', verticalAlign: 'middle' }} /> Paiement en ligne
+                  </>
+                ) : (
+                  <>
+                    <Banknote size={16} style={{ display: 'inline', verticalAlign: 'middle' }} /> Paiement sur place
+                  </>
+                )}
               </span>
               <span className={`order-modal__payment-status order-modal__payment-status--${commande.paiement_statut === 'paye' ? 'paid' : 'pending'}`}>
-                {commande.paiement_statut === 'paye' ? '✓ Payé' : 'En attente'}
+                {commande.paiement_statut === 'paye' ? (
+                  <>
+                    <CheckCircle2 size={16} style={{ display: 'inline', verticalAlign: 'middle' }} /> Payé
+                  </>
+                ) : (
+                  'En attente'
+                )}
               </span>
             </div>
           </div>

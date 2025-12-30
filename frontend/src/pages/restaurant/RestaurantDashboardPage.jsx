@@ -1,5 +1,24 @@
 import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
+import { 
+  Store, 
+  Clock, 
+  Phone, 
+  TrendingUp, 
+  Package, 
+  AlertTriangle, 
+  Sparkles, 
+  Bike,
+  MapPin,
+  Mail,
+  ChefHat,
+  FileText,
+  Utensils,
+  Settings,
+  Eye,
+  DollarSign,
+  Calendar
+} from 'lucide-react';
 import { restaurantAPI, commandeAPI } from '@services/api';
 
 function RestaurantDashboardPage() {
@@ -138,7 +157,9 @@ function RestaurantDashboardPage() {
   if (error === 'no_restaurant') {
     return (
       <div className="dashboard-empty-state">
-        <div className="dashboard-empty-state__icon">🏪</div>
+        <div className="dashboard-empty-state__icon">
+          <Store size={64} />
+        </div>
         <h2>Créez votre restaurant</h2>
         <p>Commencez par créer votre établissement pour recevoir des commandes.</p>
         <Link to="/dashboard/restaurant" className="dashboard-empty-state__btn">
@@ -148,17 +169,14 @@ function RestaurantDashboardPage() {
     );
   }
 
-  // PATCH pour frontend/src/pages/restaurant/RestaurantDashboardPage.jsx
-// À ajouter après la vérification de 'no_restaurant' et avant le return principal
-
-// Nouveau bloc à insérer après la ligne ~120 (après le if error === 'no_restaurant')
-
   // Vérifier si le restaurant est en attente d'activation
   if (restaurant && !restaurant.actif) {
     return (
       <div className="dashboard-pending-activation">
         <div className="dashboard-pending-activation__content">
-          <div className="dashboard-pending-activation__icon">⏳</div>
+          <div className="dashboard-pending-activation__icon">
+            <Clock size={64} />
+          </div>
           <h2>Restaurant en attente de validation</h2>
           <p>
             Votre restaurant <strong>{restaurant.nom}</strong> a été créé avec succès et est actuellement 
@@ -166,16 +184,11 @@ function RestaurantDashboardPage() {
           </p>
           <div className="dashboard-pending-activation__info">
             <div className="dashboard-pending-activation__info-item">
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="12" cy="12" r="10"></circle>
-                <polyline points="12 6 12 12 16 14"></polyline>
-              </svg>
+              <Clock size={20} />
               <span>Délai de validation : 24-48h</span>
             </div>
             <div className="dashboard-pending-activation__info-item">
-              <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
-              </svg>
+              <Phone size={20} />
               <span>Contact : {restaurant.telephone}</span>
             </div>
           </div>
@@ -198,7 +211,7 @@ function RestaurantDashboardPage() {
           </div>
           <div className="dashboard-pending-activation__actions">
             <p className="dashboard-pending-activation__note">
-              💡 En attendant la validation, vous pouvez préparer votre menu et configurer vos paramètres
+              <ChefHat size={18} style={{ display: 'inline', verticalAlign: 'middle' }} /> En attendant la validation, vous pouvez préparer votre menu et configurer vos paramètres
             </p>
             <div className="dashboard-pending-activation__buttons">
               <Link to="/dashboard/menu" className="dashboard-pending-activation__btn dashboard-pending-activation__btn--secondary">
@@ -268,7 +281,9 @@ function RestaurantDashboardPage() {
         {/* Toggle Livraison */}
         <div className="dashboard-quick-control">
           <div className="dashboard-quick-control__info">
-            <span className="dashboard-quick-control__icon">🚗</span>
+            <span className="dashboard-quick-control__icon">
+              <Bike size={24} />
+            </span>
             <div>
               <span className="dashboard-quick-control__label">Livraison</span>
               <span className={`dashboard-quick-control__status ${restaurant?.livraison_active ? 'dashboard-quick-control__status--on' : ''}`}>
@@ -289,7 +304,9 @@ function RestaurantDashboardPage() {
         {/* CA du jour */}
         <div className="dashboard-quick-control dashboard-quick-control--info">
           <div className="dashboard-quick-control__info">
-            <span className="dashboard-quick-control__icon">💰</span>
+            <span className="dashboard-quick-control__icon">
+              <DollarSign size={24} />
+            </span>
             <div>
               <span className="dashboard-quick-control__label">CA du jour</span>
               <span className="dashboard-quick-control__value">{formatPrice(stats?.ca_jour)}</span>
@@ -300,7 +317,9 @@ function RestaurantDashboardPage() {
         {/* Commandes du jour */}
         <div className="dashboard-quick-control dashboard-quick-control--info">
           <div className="dashboard-quick-control__info">
-            <span className="dashboard-quick-control__icon">📦</span>
+            <span className="dashboard-quick-control__icon">
+              <Package size={24} />
+            </span>
             <div>
               <span className="dashboard-quick-control__label">Commandes totales</span>
               <span className="dashboard-quick-control__value">{stats?.total_commandes || 0}</span>
@@ -312,7 +331,9 @@ function RestaurantDashboardPage() {
       {/* Alerte commandes en attente */}
       {commandesUrgentes.length > 0 && (
         <div className="dashboard-alert dashboard-alert--warning">
-          <div className="dashboard-alert__icon">⚠️</div>
+          <div className="dashboard-alert__icon">
+            <AlertTriangle size={24} />
+          </div>
           <div className="dashboard-alert__content">
             <strong>{commandesUrgentes.length} commande{commandesUrgentes.length > 1 ? 's' : ''} en attente de confirmation</strong>
             <span>Action requise</span>
@@ -339,7 +360,9 @@ function RestaurantDashboardPage() {
 
         {commandesEnAttente.length === 0 ? (
           <div className="dashboard-orders-empty">
-            <span className="dashboard-orders-empty__icon">✨</span>
+            <span className="dashboard-orders-empty__icon">
+              <Sparkles size={32} />
+            </span>
             <p>Aucune commande en cours</p>
           </div>
         ) : (
@@ -373,15 +396,19 @@ function RestaurantDashboardPage() {
 
                   {commande.notes && (
                     <div className="dashboard-order-card__notes">
-                      📝 {commande.notes}
+                      <FileText size={16} style={{ display: 'inline', verticalAlign: 'middle' }} /> {commande.notes}
                     </div>
                   )}
 
                   <div className="dashboard-order-card__footer">
                     <div className="dashboard-order-card__client">
-                      <a href={`tel:${commande.telephone_client}`}>📞 {commande.telephone_client}</a>
+                      <a href={`tel:${commande.telephone_client}`}>
+                        <Phone size={16} style={{ display: 'inline', verticalAlign: 'middle' }} /> {commande.telephone_client}
+                      </a>
                       {commande.mode_retrait === 'livraison' && (
-                        <span className="dashboard-order-card__delivery-badge">🚗 Livraison</span>
+                        <span className="dashboard-order-card__delivery-badge">
+                          <Bike size={16} style={{ display: 'inline', verticalAlign: 'middle' }} /> Livraison
+                        </span>
                       )}
                     </div>
                     <span className="dashboard-order-card__total">{formatPrice(commande.montant_total)}</span>
@@ -439,19 +466,27 @@ function RestaurantDashboardPage() {
       {/* Raccourcis */}
       <div className="dashboard-shortcuts">
         <Link to="/dashboard/commandes" className="dashboard-shortcut">
-          <span className="dashboard-shortcut__icon">📋</span>
+          <span className="dashboard-shortcut__icon">
+            <FileText size={24} />
+          </span>
           <span className="dashboard-shortcut__label">Commandes</span>
         </Link>
         <Link to="/dashboard/menu" className="dashboard-shortcut">
-          <span className="dashboard-shortcut__icon">🍽️</span>
+          <span className="dashboard-shortcut__icon">
+            <Utensils size={24} />
+          </span>
           <span className="dashboard-shortcut__label">Menu</span>
         </Link>
         <Link to="/dashboard/restaurant" className="dashboard-shortcut">
-          <span className="dashboard-shortcut__icon">⚙️</span>
+          <span className="dashboard-shortcut__icon">
+            <Settings size={24} />
+          </span>
           <span className="dashboard-shortcut__label">Paramètres</span>
         </Link>
         <Link to={`/restaurant/${restaurant?.id}`} className="dashboard-shortcut" target="_blank">
-          <span className="dashboard-shortcut__icon">👁️</span>
+          <span className="dashboard-shortcut__icon">
+            <Eye size={24} />
+          </span>
           <span className="dashboard-shortcut__label">Ma page</span>
         </Link>
       </div>

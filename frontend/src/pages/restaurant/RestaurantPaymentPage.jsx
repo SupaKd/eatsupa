@@ -1,4 +1,13 @@
 import { useState, useEffect } from 'react';
+import { 
+  CreditCard, 
+  Banknote, 
+  Check, 
+  Lock, 
+  DollarSign, 
+  Activity,
+  Sparkles
+} from 'lucide-react';
 import { restaurantAPI } from '@services/api';
 
 function RestaurantPaymentPage() {
@@ -43,7 +52,9 @@ function RestaurantPaymentPage() {
   if (error === 'no_restaurant') {
     return (
       <div className="payment-page__no-restaurant">
-        <div className="payment-page__no-restaurant-icon">💳</div>
+        <div className="payment-page__no-restaurant-icon">
+          <CreditCard size={64} />
+        </div>
         <h2>Créez d'abord votre restaurant</h2>
         <p>Vous devez créer votre restaurant avant de configurer les paiements.</p>
       </div>
@@ -70,14 +81,14 @@ function RestaurantPaymentPage() {
             <div className="payment-options">
               {/* Paiement sur place */}
               <div className="payment-option payment-option--active">
-                <div className="payment-option__icon">💵</div>
+                <div className="payment-option__icon">
+                  <Banknote size={32} />
+                </div>
                 <div className="payment-option__content">
                   <div className="payment-option__header">
                     <h3>Paiement sur place</h3>
                     <span className="payment-option__status payment-option__status--active">
-                      <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                        <polyline points="20 6 9 17 4 12"></polyline>
-                      </svg>
+                      <Check size={16} />
                       Activé
                     </span>
                   </div>
@@ -98,8 +109,12 @@ function RestaurantPaymentPage() {
           <div className="payment-form__section">
             <div className="payment-coming-soon">
               <div className="payment-coming-soon__header">
-                <div className="payment-coming-soon__icon">💳</div>
-                <div className="payment-coming-soon__badge">Bientôt disponible</div>
+                <div className="payment-coming-soon__icon">
+                  <CreditCard size={32} />
+                </div>
+                <div className="payment-coming-soon__badge">
+                  <Sparkles size={14} style={{ display: 'inline', verticalAlign: 'middle' }} /> Bientôt disponible
+                </div>
               </div>
               <h3>Paiement en ligne</h3>
               <p>
@@ -108,30 +123,19 @@ function RestaurantPaymentPage() {
               </p>
               <div className="payment-coming-soon__features">
                 <div className="payment-coming-soon__feature">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <rect x="3" y="11" width="18" height="11" rx="2" ry="2"></rect>
-                    <path d="M7 11V7a5 5 0 0 1 10 0v4"></path>
-                  </svg>
+                  <Lock size={18} />
                   <span>Paiements sécurisés et cryptés</span>
                 </div>
                 <div className="payment-coming-soon__feature">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <rect x="1" y="4" width="22" height="16" rx="2" ry="2"></rect>
-                    <line x1="1" y1="10" x2="23" y2="10"></line>
-                  </svg>
+                  <CreditCard size={18} />
                   <span>Visa, Mastercard, Apple Pay</span>
                 </div>
                 <div className="payment-coming-soon__feature">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <line x1="12" y1="1" x2="12" y2="23"></line>
-                    <path d="M17 5H9.5a3.5 3.5 0 0 0 0 7h5a3.5 3.5 0 0 1 0 7H6"></path>
-                  </svg>
+                  <DollarSign size={18} />
                   <span>Virements automatiques sur votre compte</span>
                 </div>
                 <div className="payment-coming-soon__feature">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M22 12h-4l-3 9L9 3l-3 9H2"></path>
-                  </svg>
+                  <Activity size={18} />
                   <span>Tableau de bord pour suivre vos revenus</span>
                 </div>
               </div>
@@ -146,13 +150,13 @@ function RestaurantPaymentPage() {
             <div className="payment-summary__item">
               <span className="payment-summary__label">Paiement sur place</span>
               <span className="payment-summary__value payment-summary__value--active">
-                ✓ Activé
+                <Check size={16} style={{ display: 'inline', verticalAlign: 'middle' }} /> Activé
               </span>
             </div>
             <div className="payment-summary__item">
               <span className="payment-summary__label">Paiement en ligne</span>
               <span className="payment-summary__value payment-summary__value--coming">
-                🔜 Bientôt
+                <Sparkles size={16} style={{ display: 'inline', verticalAlign: 'middle' }} /> Bientôt
               </span>
             </div>
           </div>

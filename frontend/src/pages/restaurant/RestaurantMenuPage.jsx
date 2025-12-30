@@ -1,4 +1,14 @@
 import { useState, useEffect } from 'react';
+import { 
+  Plus, 
+  Edit, 
+  Trash2, 
+  X, 
+  Check, 
+  XCircle, 
+  Utensils, 
+  ClipboardList 
+} from 'lucide-react';
 import { restaurantAPI, categoryAPI, platAPI } from '@services/api';
 
 function RestaurantMenuPage() {
@@ -156,7 +166,9 @@ function RestaurantMenuPage() {
   if (error === 'no_restaurant') {
     return (
       <div className="menu-page__no-restaurant">
-        <div className="menu-page__no-restaurant-icon">🍽️</div>
+        <div className="menu-page__no-restaurant-icon">
+          <Utensils size={64} />
+        </div>
         <h2>Créez d'abord votre restaurant</h2>
         <p>Vous devez créer votre restaurant avant de pouvoir gérer votre menu.</p>
       </div>
@@ -184,10 +196,7 @@ function RestaurantMenuPage() {
           <p>{categories.length} catégorie{categories.length > 1 ? 's' : ''} • {totalPlats} plat{totalPlats > 1 ? 's' : ''}</p>
         </div>
         <button className="menu-page__add-btn" onClick={handleAddCategory}>
-          <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <line x1="12" y1="5" x2="12" y2="19"></line>
-            <line x1="5" y1="12" x2="19" y2="12"></line>
-          </svg>
+          <Plus size={18} />
           Nouvelle catégorie
         </button>
       </div>
@@ -195,7 +204,9 @@ function RestaurantMenuPage() {
       {/* Liste des catégories */}
       {categories.length === 0 ? (
         <div className="menu-page__empty">
-          <div className="menu-page__empty-icon">📋</div>
+          <div className="menu-page__empty-icon">
+            <ClipboardList size={64} />
+          </div>
           <h3>Votre menu est vide</h3>
           <p>Commencez par créer une catégorie pour organiser vos plats</p>
           <button className="menu-page__empty-btn" onClick={handleAddCategory}>
@@ -222,30 +233,21 @@ function RestaurantMenuPage() {
                     onClick={() => handleAddPlat(category.id)}
                     title="Ajouter un plat"
                   >
-                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <line x1="12" y1="5" x2="12" y2="19"></line>
-                      <line x1="5" y1="12" x2="19" y2="12"></line>
-                    </svg>
+                    <Plus size={18} />
                   </button>
                   <button
                     className="menu-category__action"
                     onClick={() => handleEditCategory(category)}
                     title="Modifier la catégorie"
                   >
-                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                      <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-                    </svg>
+                    <Edit size={18} />
                   </button>
                   <button
                     className="menu-category__action menu-category__action--danger"
                     onClick={() => handleDeleteCategory(category.id)}
                     title="Supprimer la catégorie"
                   >
-                    <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                      <polyline points="3 6 5 6 21 6"></polyline>
-                      <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                    </svg>
+                    <Trash2 size={18} />
                   </button>
                 </div>
               </div>
@@ -280,7 +282,15 @@ function RestaurantMenuPage() {
                             className={`menu-plat__toggle ${plat.disponible ? 'menu-plat__toggle--active' : ''}`}
                             onClick={() => handleToggleDisponibilite(plat.id)}
                           >
-                            {plat.disponible ? '✓ Disponible' : '✗ Indisponible'}
+                            {plat.disponible ? (
+                              <>
+                                <Check size={16} style={{ display: 'inline', verticalAlign: 'middle' }} /> Disponible
+                              </>
+                            ) : (
+                              <>
+                                <XCircle size={16} style={{ display: 'inline', verticalAlign: 'middle' }} /> Indisponible
+                              </>
+                            )}
                           </button>
                           <div className="menu-plat__actions">
                             <button
@@ -288,20 +298,14 @@ function RestaurantMenuPage() {
                               onClick={() => handleEditPlat(plat, category.id)}
                               title="Modifier"
                             >
-                              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                <path d="M11 4H4a2 2 0 0 0-2 2v14a2 2 0 0 0 2 2h14a2 2 0 0 0 2-2v-7"></path>
-                                <path d="M18.5 2.5a2.121 2.121 0 0 1 3 3L12 15l-4 1 1-4 9.5-9.5z"></path>
-                              </svg>
+                              <Edit size={16} />
                             </button>
                             <button
                               className="menu-plat__action menu-plat__action--danger"
                               onClick={() => handleDeletePlat(plat.id)}
                               title="Supprimer"
                             >
-                              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                                <polyline points="3 6 5 6 21 6"></polyline>
-                                <path d="M19 6v14a2 2 0 0 1-2 2H7a2 2 0 0 1-2-2V6m3 0V4a2 2 0 0 1 2-2h4a2 2 0 0 1 2 2v2"></path>
-                              </svg>
+                              <Trash2 size={16} />
                             </button>
                           </div>
                         </div>
@@ -366,10 +370,7 @@ function CategoryModal({ category, onClose, onSave }) {
         <div className="modal__header">
           <h2>{category ? 'Modifier la catégorie' : 'Nouvelle catégorie'}</h2>
           <button onClick={onClose} className="modal__close">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <line x1="18" y1="6" x2="6" y2="18"></line>
-              <line x1="6" y1="6" x2="18" y2="18"></line>
-            </svg>
+            <X size={24} />
           </button>
         </div>
 
@@ -452,10 +453,7 @@ function PlatModal({ plat, onClose, onSave }) {
         <div className="modal__header">
           <h2>{plat ? 'Modifier le plat' : 'Nouveau plat'}</h2>
           <button onClick={onClose} className="modal__close">
-            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <line x1="18" y1="6" x2="6" y2="18"></line>
-              <line x1="6" y1="6" x2="18" y2="18"></line>
-            </svg>
+            <X size={24} />
           </button>
         </div>
 
