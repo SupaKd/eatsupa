@@ -1,9 +1,12 @@
 const path = require('path');
 const { deleteFile } = require('../utils/upload');
+const { compressImage, formatBytes } = require('../utils/imageCompression');
 
 /**
- * Upload d'une image
+ * Upload d'une image avec compression automatique
  * POST /api/upload/image
+ * Query params:
+ *   - type: restaurant | plat | profile (défaut: plat)
  */
 const uploadImage = async (req, res) => {
   try {
@@ -14,18 +17,37 @@ const uploadImage = async (req, res) => {
       });
     }
 
-    // Construire l'URL de l'image
-    const imageUrl = `/uploads/images/${req.file.filename}`;
+    const imageType = req.query.type || 'plat';
+    const originalPath = req.file.path;
+    let finalUrl = `/uploads/images/${req.file.filename}`;
+    let compressionResult = null;
+
+    try {
+      // Compresser l'image (convertit en WebP)
+      compressionResult = await compressImage(originalPath, null, imageType);
+      
+      // Mettre à jour l'URL avec le nouveau nom de fichier
+      if (compressionResult.newFilename !== req.file.filename) {
+        finalUrl = `/uploads/images/${compressionResult.newFilename}`;
+      }
+
+      console.log(`✅ Image compressée: ${formatBytes(compressionResult.originalSize)} → ${formatBytes(compressionResult.compressedSize)} (${compressionResult.savings} économisés)`);
+    } catch (compressionError) {
+      // Si la compression échoue, garder l'image originale
+      console.error('⚠️ Compression échouée (image originale conservée):', compressionError.message);
+    }
 
     res.status(201).json({
       success: true,
       message: 'Image uploadée avec succès',
       data: {
-        filename: req.file.filename,
+        filename: compressionResult?.newFilename || req.file.filename,
         originalName: req.file.originalname,
-        size: req.file.size,
-        mimetype: req.file.mimetype,
-        url: imageUrl
+        size: compressionResult?.compressedSize || req.file.size,
+        originalSize: req.file.size,
+        savings: compressionResult?.savings || '0%',
+        mimetype: compressionResult ? 'image/webp' : req.file.mimetype,
+        url: finalUrl
       }
     });
   } catch (error) {
