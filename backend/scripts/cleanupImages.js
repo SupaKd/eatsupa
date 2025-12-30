@@ -34,10 +34,10 @@ async function getUsedImages() {
   });
 
   // Images des utilisateurs (si applicable)
-  const [users] = await pool.query('SELECT photo FROM utilisateurs WHERE photo IS NOT NULL');
+  const [users] = await pool.query('SELECT photo_url FROM utilisateurs WHERE photo_url IS NOT NULL');
   users.forEach(u => {
-    if (u.photo && u.photo.startsWith('/uploads')) {
-      usedImages.add(path.basename(u.photo));
+    if (u.photo_url && u.photo_url.startsWith('/uploads')) {
+      usedImages.add(path.basename(u.photo_url));
     }
   });
 
