@@ -1,5 +1,6 @@
 const { pool } = require('../config/database');
 const { paginate, paginatedResponse } = require('../utils/helpers');
+const { deleteFile } = require('../utils/upload');
 
 // Récupérer les plats d'un restaurant
 const getPlatsByRestaurant = async (req, res) => {
@@ -97,7 +98,7 @@ const createPlat = async (req, res) => {
     const { restaurantId } = req.params;
     const {
       nom, description, prix, categorie_id,
-      allergenes, ordre, disponible = true
+      image_url, allergenes, ordre, disponible = true
     } = req.body;
 
     // Vérifier que la catégorie appartient au restaurant
@@ -126,14 +127,15 @@ const createPlat = async (req, res) => {
     }
 
     const [result] = await pool.query(
-      `INSERT INTO plats (restaurant_id, categorie_id, nom, description, prix, allergenes, ordre, disponible)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?)`,
+      `INSERT INTO plats (restaurant_id, categorie_id, nom, description, prix, image_url, allergenes, ordre, disponible)
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?)`,
       [
         restaurantId,
         categorie_id || null,
         nom,
         description || null,
         prix,
+        image_url || null,
         allergenes ? JSON.stringify(allergenes) : null,
         platOrder,
         disponible ? 1 : 0
@@ -168,9 +170,14 @@ const updatePlat = async (req, res) => {
     const { id } = req.params;
     const updates = req.body;
 
+    // Récupérer l'ancienne image
+    const [existing] = await pool.query('SELECT image_url FROM plats WHERE id = ?', [id]);
+    const oldImageUrl = existing.length > 0 ? existing[0].image_url : null;
+
+    // CORRECTION: Ajout de 'image_url' dans les champs autorisés
     const allowedFields = [
       'nom', 'description', 'prix', 'categorie_id',
-      'allergenes', 'ordre', 'disponible'
+      'image_url', 'allergenes', 'ordre', 'disponible'
     ];
 
     const updateFields = [];
@@ -203,6 +210,20 @@ const updatePlat = async (req, res) => {
       values
     );
 
+    // Supprimer l'ancienne image si une nouvelle a été uploadée
+    if (updates.image_url && oldImageUrl && updates.image_url !== oldImageUrl) {
+      // Vérifier que c'est une image locale (commence par /uploads)
+      if (oldImageUrl.startsWith('/uploads')) {
+        try {
+          await deleteFile(oldImageUrl.substring(1)); // Enlever le / initial
+          console.log('Ancienne image du plat supprimée:', oldImageUrl);
+        } catch (err) {
+          console.error('Erreur suppression ancienne image du plat:', err);
+          // On ne bloque pas la mise à jour si la suppression échoue
+        }
+      }
+    }
+
     const [updatedPlat] = await pool.query(
       `SELECT p.*, c.nom as categorie_nom
        FROM plats p
@@ -230,7 +251,21 @@ const deletePlat = async (req, res) => {
   try {
     const { id } = req.params;
 
+    // Récupérer l'image avant suppression
+    const [existing] = await pool.query('SELECT image_url FROM plats WHERE id = ?', [id]);
+    const imageUrl = existing.length > 0 ? existing[0].image_url : null;
+
     await pool.query('DELETE FROM plats WHERE id = ?', [id]);
+
+    // Supprimer l'image associée si elle existe et est locale
+    if (imageUrl && imageUrl.startsWith('/uploads')) {
+      try {
+        await deleteFile(imageUrl.substring(1));
+        console.log('Image du plat supprimée:', imageUrl);
+      } catch (err) {
+        console.error('Erreur suppression image du plat:', err);
+      }
+    }
 
     res.json({
       success: true,
@@ -257,12 +292,26 @@ const updatePlatImage = async (req, res) => {
       });
     }
 
+    // Récupérer l'ancienne image
+    const [existing] = await pool.query('SELECT image_url FROM plats WHERE id = ?', [id]);
+    const oldImageUrl = existing.length > 0 ? existing[0].image_url : null;
+
     const imageUrl = `/uploads/images/${req.file.filename}`;
 
     await pool.query(
       'UPDATE plats SET image_url = ? WHERE id = ?',
       [imageUrl, id]
     );
+
+    // Supprimer l'ancienne image si elle existe et est locale
+    if (oldImageUrl && oldImageUrl.startsWith('/uploads')) {
+      try {
+        await deleteFile(oldImageUrl.substring(1));
+        console.log('Ancienne image du plat supprimée:', oldImageUrl);
+      } catch (err) {
+        console.error('Erreur suppression ancienne image du plat:', err);
+      }
+    }
 
     res.json({
       success: true,
