@@ -1,6 +1,8 @@
+// src/pages/client/OrderTrackingPage.jsx - Version optimisée
 import { useState, useEffect } from 'react';
 import { useParams, Link } from 'react-router-dom';
 import { commandeAPI } from '@services/api';
+import { formatPrice, formatDateTime } from '@/utils';  // ✅ Imports centralisés
 import {
   ArrowLeft,
   RefreshCw,
@@ -27,14 +29,12 @@ function OrderTrackingPage() {
 
   useEffect(() => {
     fetchCommande();
-    // Polling toutes les 30 secondes pour mise à jour en temps réel
     const interval = setInterval(fetchCommande, 30000);
     return () => clearInterval(interval);
   }, [token]);
 
   const fetchCommande = async () => {
     try {
-      // CORRECTION: Utiliser trackByToken au lieu de getByToken
       const response = await commandeAPI.trackByToken(token);
       if (response.data.success) {
         setCommande(response.data.data);
@@ -48,20 +48,10 @@ function OrderTrackingPage() {
     }
   };
 
-  const formatPrice = (price) => {
-    return new Intl.NumberFormat('fr-FR', {
-      style: 'currency',
-      currency: 'EUR',
-    }).format(price);
-  };
+  // ❌ SUPPRIMÉ - formatPrice local (importé de @/utils)
+  // ❌ SUPPRIMÉ - formatDate local (remplacé par formatDateTime de @/utils)
 
-  const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleString('fr-FR', {
-      dateStyle: 'long',
-      timeStyle: 'short',
-    });
-  };
-
+  // ✅ getStatusInfo reste local car il contient des composants JSX et des données spécifiques à cette page
   const getStatusInfo = (status) => {
     const statusMap = {
       en_attente: { 
@@ -185,9 +175,7 @@ function OrderTrackingPage() {
                   className={`tracking-timeline__step ${isCompleted ? 'tracking-timeline__step--completed' : ''} ${isCurrent ? 'tracking-timeline__step--current' : ''}`}
                 >
                   <div className="tracking-timeline__dot">
-                    {isCompleted && (
-                      <Check size={14} strokeWidth={3} />
-                    )}
+                    {isCompleted && <Check size={14} strokeWidth={3} />}
                   </div>
                   {index < steps.length - 1 && (
                     <div className={`tracking-timeline__line ${isCompleted && statusInfo.step > step.id ? 'tracking-timeline__line--completed' : ''}`}></div>
@@ -201,35 +189,28 @@ function OrderTrackingPage() {
 
         {/* Infos restaurant */}
         <div className="tracking-card">
-          <h3>
-            <Home size={18} />
-            Restaurant
-          </h3>
+          <h3><Home size={18} /> Restaurant</h3>
           <p className="tracking-card__restaurant-name">{commande.restaurant_nom}</p>
           {commande.restaurant_adresse && (
             <p className="tracking-card__restaurant-address">{commande.restaurant_adresse}</p>
           )}
           {commande.restaurant_telephone && (
             <a href={`tel:${commande.restaurant_telephone}`} className="tracking-card__phone">
-              <Phone size={16} />
-              Appeler le restaurant
+              <Phone size={16} /> Appeler le restaurant
             </a>
           )}
         </div>
 
         {/* Détails commande */}
         <div className="tracking-card">
-          <h3>
-            <ShoppingBag size={18} />
-            Votre commande
-          </h3>
+          <h3><ShoppingBag size={18} /> Votre commande</h3>
           
           <div className="tracking-card__date">
-            Commandé le {formatDate(commande.date_commande)}
+            Commandé le {formatDateTime(commande.date_commande)}
           </div>
 
           <div className="tracking-card__items">
-            {commande.items && commande.items.map((item, idx) => (
+            {commande.items?.map((item, idx) => (
               <div key={idx} className="tracking-card__item">
                 <span className="tracking-card__item-qty">{item.quantite}x</span>
                 <span className="tracking-card__item-name">{item.nom_plat}</span>
@@ -245,13 +226,9 @@ function OrderTrackingPage() {
 
           <div className="tracking-card__payment">
             {commande.mode_paiement === 'sur_place' ? (
-              <span>
-                <Wallet size={16} /> Paiement sur place
-              </span>
+              <span><Wallet size={16} /> Paiement sur place</span>
             ) : (
-              <span>
-                <CreditCard size={16} /> Paiement en ligne {commande.paiement_statut === 'paye' && '(Payé ✓)'}
-              </span>
+              <span><CreditCard size={16} /> Paiement en ligne {commande.paiement_statut === 'paye' && '(Payé ✓)'}</span>
             )}
           </div>
         </div>

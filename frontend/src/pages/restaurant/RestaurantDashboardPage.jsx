@@ -1,25 +1,23 @@
+// src/pages/restaurant/RestaurantDashboardPage.jsx - Version optimisée
 import { useState, useEffect, useCallback } from 'react';
 import { Link } from 'react-router-dom';
 import { 
   Store, 
   Clock, 
   Phone, 
-  TrendingUp, 
   Package, 
   AlertTriangle, 
   Sparkles, 
   Bike,
-  MapPin,
-  Mail,
   ChefHat,
   FileText,
   Utensils,
   Settings,
   Eye,
   DollarSign,
-  Calendar
 } from 'lucide-react';
 import { restaurantAPI, commandeAPI } from '@services/api';
+import { formatPrice, formatTime, getOrderStatus } from '@/utils';  // ✅ Imports centralisés
 
 function RestaurantDashboardPage() {
   const [restaurant, setRestaurant] = useState(null);
@@ -43,7 +41,6 @@ function RestaurantDashboardPage() {
         setStats(data.stats);
       }
 
-      // Récupérer les commandes en attente
       const commandesResponse = await commandeAPI.getAll();
       if (commandesResponse.data.success) {
         const enAttente = commandesResponse.data.data.filter(
@@ -65,18 +62,15 @@ function RestaurantDashboardPage() {
 
   useEffect(() => {
     fetchDashboardData();
-    // Polling toutes les 30 secondes pour les nouvelles commandes
     const interval = setInterval(fetchDashboardData, 30000);
     return () => clearInterval(interval);
   }, [fetchDashboardData]);
 
-  // Toggle fermeture exceptionnelle (ouvrir/fermer le restaurant)
   const handleToggleFermeture = async () => {
     if (!restaurant || togglingFermeture) return;
     
     setTogglingFermeture(true);
     try {
-      // Utiliser la nouvelle route dédiée ou update classique
       await restaurantAPI.update(restaurant.id, {
         fermeture_exceptionnelle: !restaurant.fermeture_exceptionnelle
       });
@@ -89,7 +83,6 @@ function RestaurantDashboardPage() {
     }
   };
 
-  // Toggle livraison
   const handleToggleLivraison = async () => {
     if (!restaurant || togglingLivraison) return;
     
@@ -107,7 +100,6 @@ function RestaurantDashboardPage() {
     }
   };
 
-  // Mettre à jour le statut d'une commande
   const handleUpdateCommandeStatus = async (commandeId, newStatus) => {
     setUpdatingCommande(commandeId);
     try {
@@ -121,29 +113,9 @@ function RestaurantDashboardPage() {
     }
   };
 
-  const formatPrice = (price) => {
-    return new Intl.NumberFormat('fr-FR', {
-      style: 'currency',
-      currency: 'EUR',
-    }).format(price || 0);
-  };
-
-  const formatTime = (dateString) => {
-    return new Date(dateString).toLocaleTimeString('fr-FR', {
-      hour: '2-digit',
-      minute: '2-digit',
-    });
-  };
-
-  const getStatusInfo = (status) => {
-    const statusMap = {
-      en_attente: { label: 'En attente', color: 'yellow', next: 'confirmee', nextLabel: 'Confirmer' },
-      confirmee: { label: 'Confirmée', color: 'blue', next: 'en_preparation', nextLabel: 'Préparer' },
-      en_preparation: { label: 'En préparation', color: 'orange', next: 'prete', nextLabel: 'Prête' },
-      prete: { label: 'Prête', color: 'green', next: 'recuperee', nextLabel: 'Récupérée' },
-    };
-    return statusMap[status] || { label: status, color: 'gray' };
-  };
+  // ❌ SUPPRIMÉ - formatPrice local (importé de @/utils)
+  // ❌ SUPPRIMÉ - formatTime local (importé de @/utils)  
+  // ❌ SUPPRIMÉ - getStatusInfo local (remplacé par getOrderStatus de @/utils)
 
   if (loading) {
     return (
@@ -169,7 +141,6 @@ function RestaurantDashboardPage() {
     );
   }
 
-  // Vérifier si le restaurant est en attente d'activation
   if (restaurant && !restaurant.actif) {
     return (
       <div className="dashboard-pending-activation">
@@ -195,18 +166,10 @@ function RestaurantDashboardPage() {
           <div className="dashboard-pending-activation__details">
             <h3>Informations de votre restaurant</h3>
             <div className="dashboard-pending-activation__details-grid">
-              <div>
-                <strong>Nom :</strong> {restaurant.nom}
-              </div>
-              <div>
-                <strong>Type de cuisine :</strong> {restaurant.type_cuisine || 'Non spécifié'}
-              </div>
-              <div>
-                <strong>Adresse :</strong> {restaurant.adresse}, {restaurant.code_postal} {restaurant.ville}
-              </div>
-              <div>
-                <strong>Email :</strong> {restaurant.email}
-              </div>
+              <div><strong>Nom :</strong> {restaurant.nom}</div>
+              <div><strong>Type de cuisine :</strong> {restaurant.type_cuisine || 'Non spécifié'}</div>
+              <div><strong>Adresse :</strong> {restaurant.adresse}, {restaurant.code_postal} {restaurant.ville}</div>
+              <div><strong>Email :</strong> {restaurant.email}</div>
             </div>
           </div>
           <div className="dashboard-pending-activation__actions">
@@ -240,7 +203,7 @@ function RestaurantDashboardPage() {
 
   return (
     <div className="restaurant-dashboard">
-      {/* Statut du restaurant (basé sur les horaires + fermeture exceptionnelle) */}
+      {/* Statut du restaurant */}
       <div className={`dashboard-status-banner ${restaurant?.est_ouvert ? 'dashboard-status-banner--open' : 'dashboard-status-banner--closed'}`}>
         <div className="dashboard-status-banner__info">
           <div className="dashboard-status-banner__indicator">
@@ -252,9 +215,7 @@ function RestaurantDashboardPage() {
             </span>
           </div>
           {restaurant?.est_ouvert && restaurant?.heure_fermeture && (
-            <span className="dashboard-status-banner__hours">
-              Fermeture à {restaurant.heure_fermeture}
-            </span>
+            <span className="dashboard-status-banner__hours">Fermeture à {restaurant.heure_fermeture}</span>
           )}
           {!restaurant?.est_ouvert && !restaurant?.fermeture_exceptionnelle && restaurant?.prochaine_ouverture && (
             <span className="dashboard-status-banner__hours">
@@ -262,9 +223,7 @@ function RestaurantDashboardPage() {
             </span>
           )}
           {restaurant?.fermeture_exceptionnelle && (
-            <span className="dashboard-status-banner__hours">
-              Cliquez sur "Ouvrir" pour reprendre les commandes
-            </span>
+            <span className="dashboard-status-banner__hours">Cliquez sur "Ouvrir" pour reprendre les commandes</span>
           )}
         </div>
         <button
@@ -278,12 +237,9 @@ function RestaurantDashboardPage() {
 
       {/* Contrôles rapides */}
       <div className="dashboard-quick-controls">
-        {/* Toggle Livraison */}
         <div className="dashboard-quick-control">
           <div className="dashboard-quick-control__info">
-            <span className="dashboard-quick-control__icon">
-              <Bike size={24} />
-            </span>
+            <span className="dashboard-quick-control__icon"><Bike size={24} /></span>
             <div>
               <span className="dashboard-quick-control__label">Livraison</span>
               <span className={`dashboard-quick-control__status ${restaurant?.livraison_active ? 'dashboard-quick-control__status--on' : ''}`}>
@@ -301,12 +257,9 @@ function RestaurantDashboardPage() {
           </button>
         </div>
 
-        {/* CA du jour */}
         <div className="dashboard-quick-control dashboard-quick-control--info">
           <div className="dashboard-quick-control__info">
-            <span className="dashboard-quick-control__icon">
-              <DollarSign size={24} />
-            </span>
+            <span className="dashboard-quick-control__icon"><DollarSign size={24} /></span>
             <div>
               <span className="dashboard-quick-control__label">CA du jour</span>
               <span className="dashboard-quick-control__value">{formatPrice(stats?.ca_jour)}</span>
@@ -314,12 +267,9 @@ function RestaurantDashboardPage() {
           </div>
         </div>
 
-        {/* Commandes du jour */}
         <div className="dashboard-quick-control dashboard-quick-control--info">
           <div className="dashboard-quick-control__info">
-            <span className="dashboard-quick-control__icon">
-              <Package size={24} />
-            </span>
+            <span className="dashboard-quick-control__icon"><Package size={24} /></span>
             <div>
               <span className="dashboard-quick-control__label">Commandes totales</span>
               <span className="dashboard-quick-control__value">{stats?.total_commandes || 0}</span>
@@ -331,16 +281,12 @@ function RestaurantDashboardPage() {
       {/* Alerte commandes en attente */}
       {commandesUrgentes.length > 0 && (
         <div className="dashboard-alert dashboard-alert--warning">
-          <div className="dashboard-alert__icon">
-            <AlertTriangle size={24} />
-          </div>
+          <div className="dashboard-alert__icon"><AlertTriangle size={24} /></div>
           <div className="dashboard-alert__content">
             <strong>{commandesUrgentes.length} commande{commandesUrgentes.length > 1 ? 's' : ''} en attente de confirmation</strong>
             <span>Action requise</span>
           </div>
-          <Link to="/dashboard/commandes?statut=en_attente" className="dashboard-alert__action">
-            Voir tout
-          </Link>
+          <Link to="/dashboard/commandes?statut=en_attente" className="dashboard-alert__action">Voir tout</Link>
         </div>
       )}
 
@@ -353,22 +299,18 @@ function RestaurantDashboardPage() {
               <span className="dashboard-orders-section__badge">{commandesEnAttente.length}</span>
             )}
           </h2>
-          <Link to="/dashboard/commandes" className="dashboard-orders-section__link">
-            Toutes les commandes →
-          </Link>
+          <Link to="/dashboard/commandes" className="dashboard-orders-section__link">Toutes les commandes →</Link>
         </div>
 
         {commandesEnAttente.length === 0 ? (
           <div className="dashboard-orders-empty">
-            <span className="dashboard-orders-empty__icon">
-              <Sparkles size={32} />
-            </span>
+            <span className="dashboard-orders-empty__icon"><Sparkles size={32} /></span>
             <p>Aucune commande en cours</p>
           </div>
         ) : (
           <div className="dashboard-orders-list">
             {commandesEnAttente.slice(0, 5).map((commande) => {
-              const statusInfo = getStatusInfo(commande.statut);
+              const statusInfo = getOrderStatus(commande.statut);  // ✅ Utilise la fonction centralisée
               const isUpdating = updatingCommande === commande.id;
 
               return (
@@ -385,9 +327,7 @@ function RestaurantDashboardPage() {
 
                   <div className="dashboard-order-card__items">
                     {commande.items?.slice(0, 3).map((item, idx) => (
-                      <span key={idx} className="dashboard-order-card__item">
-                        {item.quantite}× {item.nom_plat}
-                      </span>
+                      <span key={idx} className="dashboard-order-card__item">{item.quantite}× {item.nom_plat}</span>
                     ))}
                     {commande.items?.length > 3 && (
                       <span className="dashboard-order-card__more">+{commande.items.length - 3} autres</span>
@@ -466,27 +406,19 @@ function RestaurantDashboardPage() {
       {/* Raccourcis */}
       <div className="dashboard-shortcuts">
         <Link to="/dashboard/commandes" className="dashboard-shortcut">
-          <span className="dashboard-shortcut__icon">
-            <FileText size={24} />
-          </span>
+          <span className="dashboard-shortcut__icon"><FileText size={24} /></span>
           <span className="dashboard-shortcut__label">Commandes</span>
         </Link>
         <Link to="/dashboard/menu" className="dashboard-shortcut">
-          <span className="dashboard-shortcut__icon">
-            <Utensils size={24} />
-          </span>
+          <span className="dashboard-shortcut__icon"><Utensils size={24} /></span>
           <span className="dashboard-shortcut__label">Menu</span>
         </Link>
         <Link to="/dashboard/restaurant" className="dashboard-shortcut">
-          <span className="dashboard-shortcut__icon">
-            <Settings size={24} />
-          </span>
+          <span className="dashboard-shortcut__icon"><Settings size={24} /></span>
           <span className="dashboard-shortcut__label">Paramètres</span>
         </Link>
         <Link to={`/restaurant/${restaurant?.id}`} className="dashboard-shortcut" target="_blank">
-          <span className="dashboard-shortcut__icon">
-            <Eye size={24} />
-          </span>
+          <span className="dashboard-shortcut__icon"><Eye size={24} /></span>
           <span className="dashboard-shortcut__label">Ma page</span>
         </Link>
       </div>

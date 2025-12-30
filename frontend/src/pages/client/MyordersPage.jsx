@@ -1,9 +1,10 @@
+// src/pages/client/MyOrdersPage.jsx - Version optimisée
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { commandeAPI } from '@services/api';
 import { Home, ChevronRight } from 'lucide-react';
-
+import { formatPrice, formatDateTime, getOrderStatus } from '@/utils';  // ✅ Imports centralisés
 
 function MyOrdersPage() {
   const { isAuthenticated } = useSelector((state) => state.auth);
@@ -31,35 +32,9 @@ function MyOrdersPage() {
     }
   };
 
-  const formatPrice = (price) => {
-    return new Intl.NumberFormat('fr-FR', {
-      style: 'currency',
-      currency: 'EUR',
-    }).format(price);
-  };
-
-  const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleDateString('fr-FR', {
-      day: 'numeric',
-      month: 'long',
-      year: 'numeric',
-      hour: '2-digit',
-      minute: '2-digit',
-    });
-  };
-
-  const getStatusInfo = (status) => {
-    const statusMap = {
-      en_attente: { label: 'En attente', color: 'yellow', icon: '⏳' },
-      confirmee: { label: 'Confirmée', color: 'blue', icon: '✓' },
-      en_preparation: { label: 'En préparation', color: 'orange', icon: '👨‍🍳' },
-      prete: { label: 'Prête', color: 'green', icon: '✅' },
-      livree: { label: 'Livrée', color: 'green', icon: '🚗' },
-      recuperee: { label: 'Récupérée', color: 'green', icon: '🎉' },
-      annulee: { label: 'Annulée', color: 'red', icon: '❌' },
-    };
-    return statusMap[status] || { label: status, color: 'gray', icon: '?' };
-  };
+  // ❌ SUPPRIMÉ - formatPrice local (importé de @/utils)
+  // ❌ SUPPRIMÉ - formatDate local (remplacé par formatDateTime de @/utils)
+  // ❌ SUPPRIMÉ - getStatusInfo local (remplacé par getOrderStatus de @/utils)
 
   // Filtrer les commandes
   const filteredCommandes = commandes.filter((c) => {
@@ -142,7 +117,7 @@ function MyOrdersPage() {
         ) : (
           <div className="my-orders-page__list">
             {filteredCommandes.map((commande) => {
-              const statusInfo = getStatusInfo(commande.statut);
+              const statusInfo = getOrderStatus(commande.statut);  // ✅ Fonction centralisée
               return (
                 <Link
                   key={commande.id}
@@ -152,7 +127,7 @@ function MyOrdersPage() {
                   <div className="order-card__header">
                     <div>
                       <span className="order-card__number">{commande.numero_commande}</span>
-                      <span className="order-card__date">{formatDate(commande.date_commande)}</span>
+                      <span className="order-card__date">{formatDateTime(commande.date_commande)}</span>
                     </div>
                     <div className={`order-card__status order-card__status--${statusInfo.color}`}>
                       {statusInfo.icon} {statusInfo.label}
@@ -160,18 +135,17 @@ function MyOrdersPage() {
                   </div>
 
                   <div className="order-card__restaurant">
-                  <Home size={16} strokeWidth={2} />
-
+                    <Home size={16} strokeWidth={2} />
                     {commande.restaurant_nom}
                   </div>
 
                   <div className="order-card__items">
-                    {commande.items && commande.items.slice(0, 3).map((item, idx) => (
+                    {commande.items?.slice(0, 3).map((item, idx) => (
                       <span key={idx} className="order-card__item">
                         {item.quantite}x {item.nom_plat}
                       </span>
                     ))}
-                    {commande.items && commande.items.length > 3 && (
+                    {commande.items?.length > 3 && (
                       <span className="order-card__more">
                         +{commande.items.length - 3} autre(s)
                       </span>
@@ -179,13 +153,10 @@ function MyOrdersPage() {
                   </div>
 
                   <div className="order-card__footer">
-                    <span className="order-card__total">
-                      {formatPrice(commande.montant_total)}
-                    </span>
+                    <span className="order-card__total">{formatPrice(commande.montant_total)}</span>
                     <span className="order-card__view">
                       Voir détails
                       <ChevronRight size={16} strokeWidth={2} />
-
                     </span>
                   </div>
                 </Link>

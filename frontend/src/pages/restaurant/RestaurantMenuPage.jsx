@@ -1,3 +1,4 @@
+// src/pages/restaurant/RestaurantMenuPage.jsx - Version optimisée
 import { useState, useEffect } from 'react';
 import { 
   Plus, 
@@ -12,6 +13,7 @@ import {
 import { restaurantAPI, categoryAPI, platAPI } from '@services/api';
 import uploadService from '@services/uploadService';
 import ImageUpload from '@components/ImageUpload';
+import { formatPrice } from '@/utils';  // ✅ Import centralisé
 
 function RestaurantMenuPage() {
   const [restaurant, setRestaurant] = useState(null);
@@ -40,9 +42,7 @@ function RestaurantMenuPage() {
         const data = response.data.data;
         setRestaurant(data.restaurant);
         
-        // Charger les catégories avec les plats
         if (data.restaurant?.id) {
-          // CORRECTION: Ajouter le paramètre include_plats=true
           const catResponse = await categoryAPI.getByRestaurant(data.restaurant.id, { include_plats: true });
           if (catResponse.data.success) {
             setCategories(catResponse.data.data);
@@ -149,12 +149,7 @@ function RestaurantMenuPage() {
     }
   };
 
-  const formatPrice = (price) => {
-    return new Intl.NumberFormat('fr-FR', {
-      style: 'currency',
-      currency: 'EUR',
-    }).format(price);
-  };
+  // ❌ SUPPRIMÉ - formatPrice local (importé de @/utils)
 
   // Helper pour construire l'URL de l'image
   const getImageUrl = (imageUrl) => {
@@ -163,7 +158,7 @@ function RestaurantMenuPage() {
       return imageUrl;
     }
     if (imageUrl.startsWith('/uploads')) {
-      const baseUrl = 'http://localhost:3000';
+      const baseUrl = import.meta.env.VITE_API_URL || 'http://localhost:3000';
       return `${baseUrl}${imageUrl}`;
     }
     return imageUrl;
@@ -199,7 +194,6 @@ function RestaurantMenuPage() {
     );
   }
 
-  // Calculer le nombre total de plats
   const totalPlats = categories.reduce((acc, cat) => acc + (cat.plats?.length || 0), 0);
 
   return (
@@ -243,25 +237,13 @@ function RestaurantMenuPage() {
                   </span>
                 </div>
                 <div className="menu-category__actions">
-                  <button
-                    className="menu-category__action"
-                    onClick={() => handleAddPlat(category.id)}
-                    title="Ajouter un plat"
-                  >
+                  <button className="menu-category__action" onClick={() => handleAddPlat(category.id)} title="Ajouter un plat">
                     <Plus size={18} />
                   </button>
-                  <button
-                    className="menu-category__action"
-                    onClick={() => handleEditCategory(category)}
-                    title="Modifier la catégorie"
-                  >
+                  <button className="menu-category__action" onClick={() => handleEditCategory(category)} title="Modifier la catégorie">
                     <Edit size={18} />
                   </button>
-                  <button
-                    className="menu-category__action menu-category__action--danger"
-                    onClick={() => handleDeleteCategory(category.id)}
-                    title="Supprimer la catégorie"
-                  >
+                  <button className="menu-category__action menu-category__action--danger" onClick={() => handleDeleteCategory(category.id)} title="Supprimer la catégorie">
                     <Trash2 size={18} />
                   </button>
                 </div>
@@ -272,20 +254,14 @@ function RestaurantMenuPage() {
                 {!category.plats || category.plats.length === 0 ? (
                   <div className="menu-category__plats-empty">
                     <p>Aucun plat dans cette catégorie</p>
-                    <button onClick={() => handleAddPlat(category.id)}>
-                      + Ajouter un plat
-                    </button>
+                    <button onClick={() => handleAddPlat(category.id)}>+ Ajouter un plat</button>
                   </div>
                 ) : (
                   category.plats.map((plat) => (
                     <div key={plat.id} className={`menu-plat ${!plat.disponible ? 'menu-plat--unavailable' : ''}`}>
                       {plat.image_url && (
                         <div className="menu-plat__image">
-                          <img 
-                            src={getImageUrl(plat.image_url)} 
-                            alt={plat.nom}
-                            onError={(e) => e.target.style.display = 'none'}
-                          />
+                          <img src={getImageUrl(plat.image_url)} alt={plat.nom} onError={(e) => e.target.style.display = 'none'} />
                         </div>
                       )}
                       <div className="menu-plat__content">
@@ -302,28 +278,16 @@ function RestaurantMenuPage() {
                             onClick={() => handleToggleDisponibilite(plat.id)}
                           >
                             {plat.disponible ? (
-                              <>
-                                <Check size={16} style={{ display: 'inline', verticalAlign: 'middle' }} /> Disponible
-                              </>
+                              <><Check size={16} style={{ display: 'inline', verticalAlign: 'middle' }} /> Disponible</>
                             ) : (
-                              <>
-                                <XCircle size={16} style={{ display: 'inline', verticalAlign: 'middle' }} /> Indisponible
-                              </>
+                              <><XCircle size={16} style={{ display: 'inline', verticalAlign: 'middle' }} /> Indisponible</>
                             )}
                           </button>
                           <div className="menu-plat__actions">
-                            <button
-                              className="menu-plat__action"
-                              onClick={() => handleEditPlat(plat, category.id)}
-                              title="Modifier"
-                            >
+                            <button className="menu-plat__action" onClick={() => handleEditPlat(plat, category.id)} title="Modifier">
                               <Edit size={16} />
                             </button>
-                            <button
-                              className="menu-plat__action menu-plat__action--danger"
-                              onClick={() => handleDeletePlat(plat.id)}
-                              title="Supprimer"
-                            >
+                            <button className="menu-plat__action menu-plat__action--danger" onClick={() => handleDeletePlat(plat.id)} title="Supprimer">
                               <Trash2 size={16} />
                             </button>
                           </div>
@@ -388,9 +352,7 @@ function CategoryModal({ category, onClose, onSave }) {
       <div className="modal" onClick={(e) => e.stopPropagation()}>
         <div className="modal__header">
           <h2>{category ? 'Modifier la catégorie' : 'Nouvelle catégorie'}</h2>
-          <button onClick={onClose} className="modal__close">
-            <X size={24} />
-          </button>
+          <button onClick={onClose} className="modal__close"><X size={24} /></button>
         </div>
 
         {error && <div className="modal__error">{error}</div>}
@@ -418,9 +380,7 @@ function CategoryModal({ category, onClose, onSave }) {
           </div>
 
           <div className="modal__actions">
-            <button type="button" onClick={onClose} className="modal__btn modal__btn--secondary">
-              Annuler
-            </button>
+            <button type="button" onClick={onClose} className="modal__btn modal__btn--secondary">Annuler</button>
             <button type="submit" className="modal__btn modal__btn--primary" disabled={loading}>
               {loading ? 'Enregistrement...' : category ? 'Modifier' : 'Créer'}
             </button>
@@ -485,9 +445,7 @@ function PlatModal({ plat, onClose, onSave }) {
       <div className="modal modal--large" onClick={(e) => e.stopPropagation()}>
         <div className="modal__header">
           <h2>{plat ? 'Modifier le plat' : 'Nouveau plat'}</h2>
-          <button onClick={onClose} className="modal__close">
-            <X size={24} />
-          </button>
+          <button onClick={onClose} className="modal__close"><X size={24} /></button>
         </div>
 
         {error && <div className="modal__error">{error}</div>}
@@ -561,9 +519,7 @@ function PlatModal({ plat, onClose, onSave }) {
           </div>
 
           <div className="modal__actions">
-            <button type="button" onClick={onClose} className="modal__btn modal__btn--secondary">
-              Annuler
-            </button>
+            <button type="button" onClick={onClose} className="modal__btn modal__btn--secondary">Annuler</button>
             <button type="submit" className="modal__btn modal__btn--primary" disabled={loading}>
               {loading ? 'Enregistrement...' : plat ? 'Modifier' : 'Créer'}
             </button>

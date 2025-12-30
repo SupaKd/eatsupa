@@ -1,3 +1,4 @@
+// src/components/CartSidebar.jsx - Version optimisée
 import { useSelector, useDispatch } from 'react-redux';
 import { useNavigate } from 'react-router-dom';
 import {
@@ -10,6 +11,7 @@ import {
   removeFromCart,
   clearCart,
 } from '@store/slices/cartSlice';
+import { formatPrice } from '@/utils';  // ✅ Import centralisé
 import { ShoppingCart, X, Minus, Plus, Trash2, ArrowRight } from 'lucide-react';
 
 function CartSidebar({ isOpen, onClose }) {
@@ -25,8 +27,7 @@ function CartSidebar({ isOpen, onClose }) {
     navigate('/commander');
   };
 
-  const formatPrice = (price) =>
-    new Intl.NumberFormat('fr-FR', { style: 'currency', currency: 'EUR' }).format(price);
+  // ❌ SUPPRIMÉ - formatPrice local (importé de @/utils)
 
   return (
     <>
@@ -50,9 +51,10 @@ function CartSidebar({ isOpen, onClose }) {
         <div className="cart-sidebar__content">
           {isEmpty ? (
             <div className="cart-sidebar__empty">
-<div className="cart-sidebar__empty-icon">
-  <ShoppingCart size={48} strokeWidth={2} />
-</div>              <p className="cart-sidebar__empty-text">Votre panier est vide</p>
+              <div className="cart-sidebar__empty-icon">
+                <ShoppingCart size={48} strokeWidth={2} />
+              </div>
+              <p className="cart-sidebar__empty-text">Votre panier est vide</p>
               <p className="cart-sidebar__empty-subtext">
                 Ajoutez des plats depuis un restaurant pour commencer votre commande
               </p>

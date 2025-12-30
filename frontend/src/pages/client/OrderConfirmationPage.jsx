@@ -1,17 +1,13 @@
+// src/pages/client/OrderConfirmationPage.jsx - Version optimisée
 import { useEffect, useState } from 'react';
 import { useParams, useLocation, Link } from 'react-router-dom';
 import { commandeAPI } from '@services/api';
+import { formatPrice, formatDateTime, getOrderStatus } from '@/utils';  // ✅ Imports centralisés
 import {
   CheckCircle,
   Home,
   Calendar,
   CreditCard,
-  Clock,
-  ChefHat,
-  Truck,
-  PartyPopper,
-  XCircle,
-  AlertCircle,
   Search,
   Copy
 } from 'lucide-react';
@@ -44,64 +40,9 @@ function OrderConfirmationPage() {
     }
   };
 
-  const formatPrice = (price) => {
-    return new Intl.NumberFormat('fr-FR', {
-      style: 'currency',
-      currency: 'EUR',
-    }).format(price);
-  };
-
-  const formatDate = (dateString) => {
-    return new Date(dateString).toLocaleString('fr-FR', {
-      dateStyle: 'long',
-      timeStyle: 'short',
-    });
-  };
-
-  const getStatusInfo = (status) => {
-    const statusMap = {
-      en_attente: { 
-        label: 'En attente', 
-        color: 'yellow', 
-        icon: <Clock size={20} />
-      },
-      confirmee: { 
-        label: 'Confirmée', 
-        color: 'blue', 
-        icon: <CheckCircle size={20} />
-      },
-      en_preparation: { 
-        label: 'En préparation', 
-        color: 'orange', 
-        icon: <ChefHat size={20} />
-      },
-      prete: { 
-        label: 'Prête', 
-        color: 'green', 
-        icon: <CheckCircle size={20} />
-      },
-      livree: { 
-        label: 'Livrée', 
-        color: 'green', 
-        icon: <Truck size={20} />
-      },
-      recuperee: { 
-        label: 'Récupérée', 
-        color: 'green', 
-        icon: <PartyPopper size={20} />
-      },
-      annulee: { 
-        label: 'Annulée', 
-        color: 'red', 
-        icon: <XCircle size={20} />
-      },
-    };
-    return statusMap[status] || { 
-      label: status, 
-      color: 'gray', 
-      icon: <AlertCircle size={20} />
-    };
-  };
+  // ❌ SUPPRIMÉ - formatPrice local (importé de @/utils)
+  // ❌ SUPPRIMÉ - formatDate local (remplacé par formatDateTime de @/utils)
+  // ❌ SUPPRIMÉ - getStatusInfo local (remplacé par getOrderStatus de @/utils)
 
   if (loading) {
     return (
@@ -124,7 +65,7 @@ function OrderConfirmationPage() {
     );
   }
 
-  const statusInfo = getStatusInfo(commande.statut);
+  const statusInfo = getOrderStatus(commande.statut);  // ✅ Fonction centralisée
 
   return (
     <div className="confirmation-page">
@@ -148,7 +89,7 @@ function OrderConfirmationPage() {
               <span className="confirmation-card__order-number">{commande.numero_commande}</span>
             </div>
             <div className={`confirmation-card__status confirmation-card__status--${statusInfo.color}`}>
-              {statusInfo.icon}
+              <span>{statusInfo.icon}</span>
               {statusInfo.label}
             </div>
           </div>
@@ -160,7 +101,7 @@ function OrderConfirmationPage() {
             </div>
             <div className="confirmation-card__info-item">
               <Calendar size={18} />
-              <span>{formatDate(commande.date_commande)}</span>
+              <span>{formatDateTime(commande.date_commande)}</span>
             </div>
             <div className="confirmation-card__info-item">
               <CreditCard size={18} />
@@ -174,34 +115,26 @@ function OrderConfirmationPage() {
           {/* Items */}
           <div className="confirmation-card__items">
             <h3>Détail de la commande</h3>
-            {commande.items && commande.items.map((item, index) => (
+            {commande.items?.map((item, index) => (
               <div key={index} className="confirmation-card__item">
                 <span className="confirmation-card__item-qty">{item.quantite}x</span>
                 <span className="confirmation-card__item-name">{item.nom_plat}</span>
-                <span className="confirmation-card__item-price">
-                  {formatPrice(item.sous_total)}
-                </span>
+                <span className="confirmation-card__item-price">{formatPrice(item.sous_total)}</span>
               </div>
             ))}
           </div>
 
           <div className="confirmation-card__total">
             <span>Total</span>
-            <span className="confirmation-card__total-amount">
-              {formatPrice(commande.montant_total)}
-            </span>
+            <span className="confirmation-card__total-amount">{formatPrice(commande.montant_total)}</span>
           </div>
         </div>
 
         {/* Token de suivi */}
         {location.state?.token && (
           <div className="confirmation-page__tracking">
-            <h3>
-              <Search size={20} /> Suivez votre commande
-            </h3>
-            <p>
-              Conservez ce lien pour suivre l'état de votre commande :
-            </p>
+            <h3><Search size={20} /> Suivez votre commande</h3>
+            <p>Conservez ce lien pour suivre l'état de votre commande :</p>
             <div className="confirmation-page__tracking-link">
               <code>{window.location.origin}/suivi/{location.state.token}</code>
               <button

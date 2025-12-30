@@ -1,25 +1,20 @@
+// src/components/PlatCard.jsx - Version optimisée
 import { useDispatch } from 'react-redux';
 import { addToCart } from '@store/slices/cartSlice';
 import { Plus } from 'lucide-react';
-import { getImageUrl, DEFAULT_PLAT_IMAGE } from '../../services/imageUtils';
+import { getImageUrl } from '@services/imageUtils';
+import { formatPrice } from '@/utils';  // ✅ Import centralisé
 
 function PlatCard({ plat, restaurantId, restaurantName, restaurantOuvert = true }) {
   const dispatch = useDispatch();
 
   const { id, nom, description, prix, image_url, disponible, allergenes } = plat;
 
-  // Utiliser le helper pour construire l'URL de l'image
   const imageSource = getImageUrl(image_url);
 
-  const formatPrice = (price) => {
-    return new Intl.NumberFormat('fr-FR', {
-      style: 'currency',
-      currency: 'EUR',
-    }).format(price);
-  };
+  // ❌ SUPPRIMÉ - formatPrice local (importé de @/utils)
 
   const handleAddToCart = () => {
-    // Vérifier que le restaurant est ouvert ET le plat disponible
     if (!disponible || !restaurantOuvert) return;
     dispatch(addToCart({ plat, restaurantId, restaurantName }));
   };
@@ -29,10 +24,8 @@ function PlatCard({ plat, restaurantId, restaurantName, restaurantOuvert = true 
     ? JSON.parse(allergenes) 
     : allergenes;
 
-  // Déterminer si la carte doit être désactivée
   const isUnavailable = !disponible || !restaurantOuvert;
 
-  // Déterminer le texte du bouton
   const getButtonText = () => {
     if (!restaurantOuvert) return 'Fermé';
     if (!disponible) return 'Indisponible';
@@ -50,7 +43,6 @@ function PlatCard({ plat, restaurantId, restaurantName, restaurantOuvert = true 
             className="plat-card__image"
             loading="lazy"
             onError={(e) => {
-              // Si l'image ne charge pas, la cacher ou afficher une image par défaut
               e.target.style.display = 'none';
             }}
           />
@@ -69,7 +61,7 @@ function PlatCard({ plat, restaurantId, restaurantName, restaurantOuvert = true 
           {description && (
             <p className="plat-card__description">{description}</p>
           )}
-          {allergenesArray && allergenesArray.length > 0 && (
+          {allergenesArray?.length > 0 && (
             <div className="plat-card__allergenes">
               <span className="plat-card__allergenes-label">Allergènes:</span>
               {allergenesArray.map((allergene, index) => (

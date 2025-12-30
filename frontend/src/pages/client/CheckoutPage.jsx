@@ -1,3 +1,4 @@
+// src/pages/client/CheckoutPage.jsx - Version optimisée
 import { useState, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { useNavigate, Link } from 'react-router-dom';
@@ -11,8 +12,9 @@ import {
   removeFromCart,
   clearCart,
 } from '@store/slices/cartSlice';
-import { commandeAPI, paiementAPI, restaurantAPI } from '@services/api';
+import { commandeAPI, restaurantAPI } from '@services/api';
 import { useToast } from '@/contexts/ToastContext';
+import { formatPrice } from '@/utils';  // ✅ Import centralisé
 import { 
   ArrowLeft, 
   AlertCircle, 
@@ -35,7 +37,7 @@ function CheckoutPage() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
   const toast = useToast();
-  const { user, isAuthenticated } = useSelector((state) => state.auth);
+  const { user } = useSelector((state) => state.auth);
   const items = useSelector(selectCartItems);
   const restaurant = useSelector(selectCartRestaurant);
   const cartTotal = useSelector(selectCartTotal);
@@ -58,6 +60,9 @@ function CheckoutPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
+  // ❌ SUPPRIMÉ - formatPrice local (maintenant importé de @/utils)
+  // const formatPrice = (price) => { ... }
+
   // Vérifier si le restaurant est ouvert
   useEffect(() => {
     if (restaurantDetails && !restaurantDetails.est_ouvert) {
@@ -65,9 +70,9 @@ function CheckoutPage() {
     } else if (restaurantDetails && restaurantDetails.est_ouvert && error === 'Ce restaurant est actuellement fermé. Vous ne pouvez pas passer commande.') {
       setError(null);
     }
-  }, [restaurantDetails]);
+  }, [restaurantDetails, error]);
 
-  // Charger les détails du restaurant pour avoir les modes de retrait disponibles
+  // Charger les détails du restaurant
   useEffect(() => {
     if (restaurant?.id) {
       fetchRestaurantDetails();
@@ -80,7 +85,6 @@ function CheckoutPage() {
       const response = await restaurantAPI.getById(restaurant.id);
       if (response.data.success) {
         setRestaurantDetails(response.data.data);
-        // Si le restaurant ne fait que la livraison, la sélectionner par défaut
         const resto = response.data.data;
         if (resto.livraison_active && !resto.a_emporter_active) {
           setFormData(prev => ({ ...prev, mode_retrait: 'livraison' }));
@@ -94,14 +98,7 @@ function CheckoutPage() {
     }
   };
 
-  const formatPrice = (price) => {
-    return new Intl.NumberFormat('fr-FR', {
-      style: 'currency',
-      currency: 'EUR',
-    }).format(price);
-  };
-
-  // Calculer les frais de livraison et le total
+  // Calculs
   const fraisLivraison = formData.mode_retrait === 'livraison' 
     ? (parseFloat(restaurantDetails?.frais_livraison) || 0) 
     : 0;
@@ -120,16 +117,10 @@ function CheckoutPage() {
     setError(null);
   };
 
-  const handleRemoveItem = (item) => {
-    dispatch(removeFromCart(item.id));
-    toast.info(`${item.nom} retiré du panier`);
-  };
-
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError(null);
 
-    // Validation du restaurant ouvert
     if (restaurantDetails && !restaurantDetails.est_ouvert) {
       toast.error('Ce restaurant est actuellement fermé');
       return;
@@ -140,7 +131,6 @@ function CheckoutPage() {
       return;
     }
 
-    // Validation pour la livraison
     if (formData.mode_retrait === 'livraison') {
       if (!formData.adresse_livraison) {
         toast.error('L\'adresse de livraison est requise');
@@ -159,13 +149,11 @@ function CheckoutPage() {
     try {
       setLoading(true);
 
-      // Préparer les items pour l'API
       const commandeItems = items.map(item => ({
         plat_id: item.id,
         quantite: item.quantite,
       }));
 
-      // Créer la commande
       const response = await commandeAPI.create({
         restaurant_id: restaurant.id,
         items: commandeItems,
@@ -182,21 +170,12 @@ function CheckoutPage() {
 
       if (response.data.success) {
         const commande = response.data.data;
-
-        // Vider le panier
         dispatch(clearCart());
-
-        // Toast de succès
         toast.success('Votre commande a été envoyée au restaurant !', {
           title: 'Commande confirmée',
         });
-
-        // Rediriger vers la page de confirmation
         navigate(`/commande/${commande.id}/confirmation`, {
-          state: {
-            commande,
-            token: commande.token_suivi,
-          },
+          state: { commande, token: commande.token_suivi },
         });
       }
     } catch (err) {
@@ -209,7 +188,7 @@ function CheckoutPage() {
     }
   };
 
-  // Si panier vide, rediriger
+  // Si panier vide
   if (isEmpty) {
     return (
       <div className="checkout-page__empty">
@@ -225,12 +204,9 @@ function CheckoutPage() {
     );
   }
 
-  // Les modes de retrait disponibles
   const modesRetrait = restaurantDetails?.modes_retrait || [];
   const livraisonDisponible = modesRetrait.some(m => m.id === 'livraison');
   const aEmporterDisponible = modesRetrait.some(m => m.id === 'a_emporter');
-
-  // Vérifier si le restaurant est fermé pour afficher un message d'alerte
   const isRestaurantClosed = restaurantDetails && !restaurantDetails.est_ouvert;
 
   return (
@@ -287,9 +263,7 @@ function CheckoutPage() {
 
                   <div className="checkout-form__retrait-options">
                     {aEmporterDisponible && (
-                      <label 
-                        className={`checkout-form__retrait-option ${formData.mode_retrait === 'a_emporter' ? 'checkout-form__retrait-option--selected' : ''}`}
-                      >
+                      <label className={`checkout-form__retrait-option ${formData.mode_retrait === 'a_emporter' ? 'checkout-form__retrait-option--selected' : ''}`}>
                         <input
                           type="radio"
                           name="mode_retrait"
@@ -298,14 +272,10 @@ function CheckoutPage() {
                           onChange={() => handleModeRetraitChange('a_emporter')}
                         />
                         <div className="checkout-form__retrait-content">
-                          <span className="checkout-form__retrait-icon">
-                            <Package size={24} />
-                          </span>
+                          <span className="checkout-form__retrait-icon"><Package size={24} /></span>
                           <div className="checkout-form__retrait-text">
                             <span className="checkout-form__retrait-label">À emporter</span>
-                            <span className="checkout-form__retrait-desc">
-                              Récupérez votre commande au restaurant
-                            </span>
+                            <span className="checkout-form__retrait-desc">Récupérez votre commande au restaurant</span>
                             <span className="checkout-form__retrait-time">
                               <Clock size={14} /> Prêt en ~{restaurantDetails?.delai_preparation || 30} min
                             </span>
@@ -316,9 +286,7 @@ function CheckoutPage() {
                     )}
 
                     {livraisonDisponible && (
-                      <label 
-                        className={`checkout-form__retrait-option ${formData.mode_retrait === 'livraison' ? 'checkout-form__retrait-option--selected' : ''}`}
-                      >
+                      <label className={`checkout-form__retrait-option ${formData.mode_retrait === 'livraison' ? 'checkout-form__retrait-option--selected' : ''}`}>
                         <input
                           type="radio"
                           name="mode_retrait"
@@ -327,14 +295,10 @@ function CheckoutPage() {
                           onChange={() => handleModeRetraitChange('livraison')}
                         />
                         <div className="checkout-form__retrait-content">
-                          <span className="checkout-form__retrait-icon">
-                            <Truck size={24} />
-                          </span>
+                          <span className="checkout-form__retrait-icon"><Truck size={24} /></span>
                           <div className="checkout-form__retrait-text">
                             <span className="checkout-form__retrait-label">Livraison</span>
-                            <span className="checkout-form__retrait-desc">
-                              Livré à votre adresse
-                            </span>
+                            <span className="checkout-form__retrait-desc">Livré à votre adresse</span>
                             <span className="checkout-form__retrait-time">
                               <Clock size={14} /> Livré en ~{restaurantDetails?.delai_livraison || 45} min
                             </span>
@@ -352,7 +316,6 @@ function CheckoutPage() {
                     )}
                   </div>
 
-                  {/* Alerte si sous le minimum */}
                   {estSousMinimum && (
                     <div className="checkout-form__warning">
                       <AlertTriangle size={20} />
@@ -367,132 +330,56 @@ function CheckoutPage() {
               {/* Adresse de livraison */}
               {formData.mode_retrait === 'livraison' && (
                 <div className="checkout-form__section">
-                  <h3 className="checkout-form__section-title">
-                    <MapPin size={20} />
-                    Adresse de livraison
-                  </h3>
-
+                  <h3 className="checkout-form__section-title"><MapPin size={20} />Adresse de livraison</h3>
                   <div className="checkout-form__group">
                     <label htmlFor="adresse_livraison">Adresse *</label>
-                    <input
-                      type="text"
-                      id="adresse_livraison"
-                      name="adresse_livraison"
-                      value={formData.adresse_livraison}
-                      onChange={handleChange}
-                      placeholder="12 rue de la Paix"
-                      required={formData.mode_retrait === 'livraison'}
-                      disabled={isRestaurantClosed}
-                    />
+                    <input type="text" id="adresse_livraison" name="adresse_livraison" value={formData.adresse_livraison} onChange={handleChange} placeholder="12 rue de la Paix" required disabled={isRestaurantClosed} />
                   </div>
-
                   <div className="checkout-form__row">
                     <div className="checkout-form__group checkout-form__group--small">
                       <label htmlFor="code_postal_livraison">Code postal</label>
-                      <input
-                        type="text"
-                        id="code_postal_livraison"
-                        name="code_postal_livraison"
-                        value={formData.code_postal_livraison}
-                        onChange={handleChange}
-                        placeholder="01100"
-                        disabled={isRestaurantClosed}
-                      />
+                      <input type="text" id="code_postal_livraison" name="code_postal_livraison" value={formData.code_postal_livraison} onChange={handleChange} placeholder="01100" disabled={isRestaurantClosed} />
                     </div>
                     <div className="checkout-form__group">
                       <label htmlFor="ville_livraison">Ville *</label>
-                      <input
-                        type="text"
-                        id="ville_livraison"
-                        name="ville_livraison"
-                        value={formData.ville_livraison}
-                        onChange={handleChange}
-                        placeholder="Oyonnax"
-                        required={formData.mode_retrait === 'livraison'}
-                        disabled={isRestaurantClosed}
-                      />
+                      <input type="text" id="ville_livraison" name="ville_livraison" value={formData.ville_livraison} onChange={handleChange} placeholder="Oyonnax" required disabled={isRestaurantClosed} />
                     </div>
                   </div>
-
                   <div className="checkout-form__group">
                     <label htmlFor="instructions_livraison">Instructions pour le livreur</label>
-                    <textarea
-                      id="instructions_livraison"
-                      name="instructions_livraison"
-                      value={formData.instructions_livraison}
-                      onChange={handleChange}
-                      placeholder="Code d'entrée, étage, digicode..."
-                      rows={2}
-                      disabled={isRestaurantClosed}
-                    />
+                    <textarea id="instructions_livraison" name="instructions_livraison" value={formData.instructions_livraison} onChange={handleChange} placeholder="Code d'entrée, étage, digicode..." rows={2} disabled={isRestaurantClosed} />
                   </div>
                 </div>
               )}
 
               {/* Coordonnées */}
               <div className="checkout-form__section">
-                <h3 className="checkout-form__section-title">
-                  <User size={20} />
-                  Vos coordonnées
-                </h3>
-
+                <h3 className="checkout-form__section-title"><User size={20} />Vos coordonnées</h3>
                 <div className="checkout-form__group">
                   <label htmlFor="telephone">Téléphone *</label>
-                  <input
-                    type="tel"
-                    id="telephone"
-                    name="telephone"
-                    value={formData.telephone}
-                    onChange={handleChange}
-                    placeholder="06 12 34 56 78"
-                    required
-                    disabled={isRestaurantClosed}
-                  />
+                  <input type="tel" id="telephone" name="telephone" value={formData.telephone} onChange={handleChange} placeholder="06 12 34 56 78" required disabled={isRestaurantClosed} />
                   <span className="checkout-form__hint">Pour vous contacter en cas de besoin</span>
                 </div>
-
                 <div className="checkout-form__group">
                   <label htmlFor="email">Email (optionnel)</label>
-                  <input
-                    type="email"
-                    id="email"
-                    name="email"
-                    value={formData.email}
-                    onChange={handleChange}
-                    placeholder="votre@email.com"
-                    disabled={isRestaurantClosed}
-                  />
+                  <input type="email" id="email" name="email" value={formData.email} onChange={handleChange} placeholder="votre@email.com" disabled={isRestaurantClosed} />
                 </div>
               </div>
 
               {/* Mode de paiement */}
               <div className="checkout-form__section">
-                <h3 className="checkout-form__section-title">
-                  <CreditCard size={20} />
-                  Mode de paiement
-                </h3>
-
+                <h3 className="checkout-form__section-title"><CreditCard size={20} />Mode de paiement</h3>
                 <div className="checkout-form__payment-options">
                   <label className="checkout-form__payment-option checkout-form__payment-option--selected">
-                    <input
-                      type="radio"
-                      name="mode_paiement"
-                      value="sur_place"
-                      checked={true}
-                      readOnly
-                    />
+                    <input type="radio" name="mode_paiement" value="sur_place" checked readOnly />
                     <div className="checkout-form__payment-content">
-                      <span className="checkout-form__payment-icon">
-                        <Wallet size={24} />
-                      </span>
+                      <span className="checkout-form__payment-icon"><Wallet size={24} /></span>
                       <div>
                         <span className="checkout-form__payment-label">
                           {formData.mode_retrait === 'livraison' ? 'Paiement à la livraison' : 'Paiement sur place'}
                         </span>
                         <span className="checkout-form__payment-desc">
-                          {formData.mode_retrait === 'livraison' 
-                            ? 'Espèces ou carte à la réception' 
-                            : 'Espèces ou carte à la récupération'}
+                          {formData.mode_retrait === 'livraison' ? 'Espèces ou carte à la réception' : 'Espèces ou carte à la récupération'}
                         </span>
                       </div>
                     </div>
@@ -502,44 +389,19 @@ function CheckoutPage() {
 
               {/* Notes */}
               <div className="checkout-form__section">
-                <h3 className="checkout-form__section-title">
-                  <MessageSquare size={20} />
-                  Instructions spéciales
-                </h3>
-
+                <h3 className="checkout-form__section-title"><MessageSquare size={20} />Instructions spéciales</h3>
                 <div className="checkout-form__group">
-                  <textarea
-                    id="notes"
-                    name="notes"
-                    value={formData.notes}
-                    onChange={handleChange}
-                    placeholder="Allergies, préférences de cuisson..."
-                    rows={3}
-                    disabled={isRestaurantClosed}
-                  />
+                  <textarea id="notes" name="notes" value={formData.notes} onChange={handleChange} placeholder="Allergies, préférences de cuisson..." rows={3} disabled={isRestaurantClosed} />
                 </div>
               </div>
 
-              <button
-                type="submit"
-                className="checkout-form__submit"
-                disabled={loading || estSousMinimum || isRestaurantClosed}
-              >
+              <button type="submit" className="checkout-form__submit" disabled={loading || estSousMinimum || isRestaurantClosed}>
                 {loading ? (
-                  <>
-                    <span className="checkout-form__submit-spinner"></span>
-                    Traitement en cours...
-                  </>
+                  <><span className="checkout-form__submit-spinner"></span>Traitement en cours...</>
                 ) : isRestaurantClosed ? (
-                  <>
-                    <XCircle size={20} />
-                    Restaurant fermé
-                  </>
+                  <><XCircle size={20} />Restaurant fermé</>
                 ) : (
-                  <>
-                    Confirmer la commande
-                    <span className="checkout-form__submit-price">{formatPrice(total)}</span>
-                  </>
+                  <>Confirmer la commande<span className="checkout-form__submit-price">{formatPrice(total)}</span></>
                 )}
               </button>
             </form>
@@ -562,23 +424,11 @@ function CheckoutPage() {
                     </div>
                     <div className="checkout-summary__item-actions">
                       <div className="checkout-summary__item-controls">
-                        <button 
-                          onClick={() => dispatch(decrementQuantity(item.id))}
-                          disabled={isRestaurantClosed}
-                        >
-                          <Minus size={16} />
-                        </button>
+                        <button onClick={() => dispatch(decrementQuantity(item.id))} disabled={isRestaurantClosed}><Minus size={16} /></button>
                         <span>{item.quantite}</span>
-                        <button 
-                          onClick={() => dispatch(incrementQuantity(item.id))}
-                          disabled={isRestaurantClosed}
-                        >
-                          <Plus size={16} />
-                        </button>
+                        <button onClick={() => dispatch(incrementQuantity(item.id))} disabled={isRestaurantClosed}><Plus size={16} /></button>
                       </div>
-                      <span className="checkout-summary__item-price">
-                        {formatPrice(item.prix * item.quantite)}
-                      </span>
+                      <span className="checkout-summary__item-price">{formatPrice(item.prix * item.quantite)}</span>
                     </div>
                   </div>
                 ))}
@@ -602,16 +452,11 @@ function CheckoutPage() {
                 <span className="checkout-summary__total-amount">{formatPrice(total)}</span>
               </div>
 
-              {/* Badge mode de retrait */}
               <div className="checkout-summary__mode">
                 {formData.mode_retrait === 'livraison' ? (
-                  <span className="checkout-summary__mode-badge checkout-summary__mode-badge--delivery">
-                    <Truck size={16} /> Livraison
-                  </span>
+                  <span className="checkout-summary__mode-badge checkout-summary__mode-badge--delivery"><Truck size={16} /> Livraison</span>
                 ) : (
-                  <span className="checkout-summary__mode-badge checkout-summary__mode-badge--pickup">
-                    <Package size={16} /> À emporter
-                  </span>
+                  <span className="checkout-summary__mode-badge checkout-summary__mode-badge--pickup"><Package size={16} /> À emporter</span>
                 )}
               </div>
             </div>
