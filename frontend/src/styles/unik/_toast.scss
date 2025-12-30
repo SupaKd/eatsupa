@@ -1,0 +1,539 @@
+// ==============================================
+// TOAST NOTIFICATIONS
+// Système de notifications globales
+// ==============================================
+
+// Variables
+$toast-colors: (
+  success: (
+    bg: #ecfdf5,
+    border: #10b981,
+    icon: #059669,
+    text: #065f46,
+    progress: #10b981,
+  ),
+  error: (
+    bg: #fef2f2,
+    border: #ef4444,
+    icon: #dc2626,
+    text: #991b1b,
+    progress: #ef4444,
+  ),
+  warning: (
+    bg: #fffbeb,
+    border: #f59e0b,
+    icon: #d97706,
+    text: #92400e,
+    progress: #f59e0b,
+  ),
+  info: (
+    bg: #eff6ff,
+    border: #3b82f6,
+    icon: #2563eb,
+    text: #1e40af,
+    progress: #3b82f6,
+  ),
+);
+
+$toast-z-index: 9999;
+$toast-max-width: 420px;
+$toast-min-width: 320px;
+$toast-padding: 16px;
+$toast-border-radius: 12px;
+$toast-gap: 12px;
+$toast-offset: 24px;
+
+// Animations
+@keyframes toast-slide-in-right {
+  from {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes toast-slide-in-left {
+  from {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateX(0);
+    opacity: 1;
+  }
+}
+
+@keyframes toast-slide-in-top {
+  from {
+    transform: translateY(-100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes toast-slide-in-bottom {
+  from {
+    transform: translateY(100%);
+    opacity: 0;
+  }
+  to {
+    transform: translateY(0);
+    opacity: 1;
+  }
+}
+
+@keyframes toast-slide-out-right {
+  from {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateX(100%);
+    opacity: 0;
+  }
+}
+
+@keyframes toast-slide-out-left {
+  from {
+    transform: translateX(0);
+    opacity: 1;
+  }
+  to {
+    transform: translateX(-100%);
+    opacity: 0;
+  }
+}
+
+@keyframes toast-fade-out {
+  from {
+    opacity: 1;
+    transform: scale(1);
+  }
+  to {
+    opacity: 0;
+    transform: scale(0.95);
+  }
+}
+
+@keyframes toast-progress {
+  from {
+    width: 100%;
+  }
+  to {
+    width: 0%;
+  }
+}
+
+@keyframes toast-icon-pop {
+  0% {
+    transform: scale(0);
+  }
+  50% {
+    transform: scale(1.2);
+  }
+  100% {
+    transform: scale(1);
+  }
+}
+
+@keyframes toast-shake {
+  0%, 100% {
+    transform: translateX(0);
+  }
+  10%, 30%, 50%, 70%, 90% {
+    transform: translateX(-4px);
+  }
+  20%, 40%, 60%, 80% {
+    transform: translateX(4px);
+  }
+}
+
+// Container des toasts
+.toast-container {
+  position: fixed;
+  z-index: $toast-z-index;
+  display: flex;
+  flex-direction: column;
+  gap: $toast-gap;
+  pointer-events: none;
+  max-height: calc(100vh - #{$toast-offset * 2});
+  overflow: hidden;
+
+  // Positions
+  &--top-right {
+    top: $toast-offset;
+    right: $toast-offset;
+    align-items: flex-end;
+
+    .toast {
+      animation: toast-slide-in-right 0.4s cubic-bezier(0.21, 1.02, 0.73, 1) forwards;
+
+      &--exiting {
+        animation: toast-slide-out-right 0.3s ease-in forwards;
+      }
+    }
+  }
+
+  &--top-left {
+    top: $toast-offset;
+    left: $toast-offset;
+    align-items: flex-start;
+
+    .toast {
+      animation: toast-slide-in-left 0.4s cubic-bezier(0.21, 1.02, 0.73, 1) forwards;
+
+      &--exiting {
+        animation: toast-slide-out-left 0.3s ease-in forwards;
+      }
+    }
+  }
+
+  &--top-center {
+    top: $toast-offset;
+    left: 50%;
+    transform: translateX(-50%);
+    align-items: center;
+
+    .toast {
+      animation: toast-slide-in-top 0.4s cubic-bezier(0.21, 1.02, 0.73, 1) forwards;
+
+      &--exiting {
+        animation: toast-fade-out 0.3s ease-in forwards;
+      }
+    }
+  }
+
+  &--bottom-right {
+    bottom: $toast-offset;
+    right: $toast-offset;
+    align-items: flex-end;
+    flex-direction: column-reverse;
+
+    .toast {
+      animation: toast-slide-in-right 0.4s cubic-bezier(0.21, 1.02, 0.73, 1) forwards;
+
+      &--exiting {
+        animation: toast-slide-out-right 0.3s ease-in forwards;
+      }
+    }
+  }
+
+  &--bottom-left {
+    bottom: $toast-offset;
+    left: $toast-offset;
+    align-items: flex-start;
+    flex-direction: column-reverse;
+
+    .toast {
+      animation: toast-slide-in-left 0.4s cubic-bezier(0.21, 1.02, 0.73, 1) forwards;
+
+      &--exiting {
+        animation: toast-slide-out-left 0.3s ease-in forwards;
+      }
+    }
+  }
+
+  &--bottom-center {
+    bottom: $toast-offset;
+    left: 50%;
+    transform: translateX(-50%);
+    align-items: center;
+    flex-direction: column-reverse;
+
+    .toast {
+      animation: toast-slide-in-bottom 0.4s cubic-bezier(0.21, 1.02, 0.73, 1) forwards;
+
+      &--exiting {
+        animation: toast-fade-out 0.3s ease-in forwards;
+      }
+    }
+  }
+}
+
+// Toast individuel
+.toast {
+  position: relative;
+  display: flex;
+  align-items: flex-start;
+  gap: 12px;
+  min-width: $toast-min-width;
+  max-width: $toast-max-width;
+  padding: $toast-padding;
+  padding-bottom: calc(#{$toast-padding} + 4px);
+  border-radius: $toast-border-radius;
+  box-shadow: 
+    0 4px 6px -1px rgba(0, 0, 0, 0.1),
+    0 2px 4px -2px rgba(0, 0, 0, 0.1),
+    0 0 0 1px rgba(0, 0, 0, 0.05);
+  pointer-events: auto;
+  overflow: hidden;
+  backdrop-filter: blur(8px);
+  border-left: 4px solid transparent;
+
+  // Types de toast
+  @each $type, $colors in $toast-colors {
+    &--#{$type} {
+      background-color: map-get($colors, bg);
+      border-left-color: map-get($colors, border);
+
+      .toast__icon {
+        color: map-get($colors, icon);
+      }
+
+      .toast__title {
+        color: map-get($colors, text);
+      }
+
+      .toast__message {
+        color: rgba(map-get($colors, text), 0.85);
+      }
+
+      .toast__progress-bar {
+        background-color: map-get($colors, progress);
+      }
+
+      .toast__action {
+        color: map-get($colors, icon);
+        border-color: map-get($colors, icon);
+
+        &:hover {
+          background-color: map-get($colors, icon);
+          color: white;
+        }
+      }
+    }
+  }
+
+  // Animation spéciale pour les erreurs
+  &--error {
+    animation-name: toast-slide-in-right, toast-shake !important;
+    animation-duration: 0.4s, 0.5s;
+    animation-delay: 0s, 0.4s;
+    animation-timing-function: cubic-bezier(0.21, 1.02, 0.73, 1), ease-in-out;
+  }
+
+  // Hover effect
+  &:hover {
+    box-shadow: 
+      0 10px 15px -3px rgba(0, 0, 0, 0.1),
+      0 4px 6px -4px rgba(0, 0, 0, 0.1),
+      0 0 0 1px rgba(0, 0, 0, 0.05);
+    
+    .toast__progress-bar {
+      animation-play-state: paused;
+    }
+  }
+
+  // Icône
+  &__icon {
+    flex-shrink: 0;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    animation: toast-icon-pop 0.4s cubic-bezier(0.21, 1.02, 0.73, 1) 0.1s both;
+
+    svg {
+      width: 20px;
+      height: 20px;
+    }
+  }
+
+  // Contenu
+  &__content {
+    flex: 1;
+    min-width: 0;
+    padding-right: 24px;
+  }
+
+  &__title {
+    margin: 0 0 4px 0;
+    font-size: 14px;
+    font-weight: 600;
+    line-height: 1.4;
+  }
+
+  &__message {
+    margin: 0;
+    font-size: 13px;
+    line-height: 1.5;
+    word-wrap: break-word;
+  }
+
+  // Bouton d'action
+  &__action {
+    display: inline-flex;
+    align-items: center;
+    margin-top: 10px;
+    padding: 6px 12px;
+    font-size: 12px;
+    font-weight: 600;
+    text-transform: uppercase;
+    letter-spacing: 0.5px;
+    border: 1.5px solid;
+    border-radius: 6px;
+    background: transparent;
+    cursor: pointer;
+    transition: all 0.2s ease;
+
+    &:hover {
+      transform: translateY(-1px);
+    }
+
+    &:active {
+      transform: translateY(0);
+    }
+  }
+
+  // Bouton de fermeture
+  &__close {
+    position: absolute;
+    top: 12px;
+    right: 12px;
+    display: flex;
+    align-items: center;
+    justify-content: center;
+    width: 24px;
+    height: 24px;
+    padding: 0;
+    border: none;
+    border-radius: 6px;
+    background: transparent;
+    color: currentColor;
+    opacity: 0.5;
+    cursor: pointer;
+    transition: all 0.2s ease;
+
+    &:hover {
+      opacity: 1;
+      background-color: rgba(0, 0, 0, 0.08);
+    }
+
+    &:active {
+      transform: scale(0.95);
+    }
+  }
+
+  // Barre de progression
+  &__progress {
+    position: absolute;
+    bottom: 0;
+    left: 0;
+    right: 0;
+    height: 4px;
+    background-color: rgba(0, 0, 0, 0.08);
+    overflow: hidden;
+  }
+
+  &__progress-bar {
+    height: 100%;
+    transition: width 0.05s linear;
+    border-radius: 0 2px 2px 0;
+  }
+}
+
+// Responsive
+@media (max-width: 480px) {
+  .toast-container {
+    left: $toast-gap !important;
+    right: $toast-gap !important;
+    transform: none !important;
+
+    &--top-right,
+    &--top-left,
+    &--top-center {
+      top: $toast-gap;
+    }
+
+    &--bottom-right,
+    &--bottom-left,
+    &--bottom-center {
+      bottom: $toast-gap;
+    }
+  }
+
+  .toast {
+    min-width: 0;
+    max-width: none;
+    width: 100%;
+  }
+}
+
+// Dark mode support
+@media (prefers-color-scheme: dark) {
+  .toast {
+    box-shadow: 
+      0 4px 6px -1px rgba(0, 0, 0, 0.3),
+      0 2px 4px -2px rgba(0, 0, 0, 0.2),
+      0 0 0 1px rgba(255, 255, 255, 0.05);
+
+    &--success {
+      background-color: rgba(16, 185, 129, 0.15);
+      
+      .toast__title,
+      .toast__message {
+        color: #a7f3d0;
+      }
+    }
+
+    &--error {
+      background-color: rgba(239, 68, 68, 0.15);
+      
+      .toast__title,
+      .toast__message {
+        color: #fecaca;
+      }
+    }
+
+    &--warning {
+      background-color: rgba(245, 158, 11, 0.15);
+      
+      .toast__title,
+      .toast__message {
+        color: #fde68a;
+      }
+    }
+
+    &--info {
+      background-color: rgba(59, 130, 246, 0.15);
+      
+      .toast__title,
+      .toast__message {
+        color: #bfdbfe;
+      }
+    }
+
+    &__close:hover {
+      background-color: rgba(255, 255, 255, 0.1);
+    }
+
+    &__progress {
+      background-color: rgba(255, 255, 255, 0.1);
+    }
+  }
+}
+
+// Accessibilité - Réduction des mouvements
+@media (prefers-reduced-motion: reduce) {
+  .toast-container .toast {
+    animation: none !important;
+    opacity: 1;
+    transform: none;
+
+    &--exiting {
+      opacity: 0;
+      transition: opacity 0.2s ease;
+    }
+  }
+
+  .toast__icon {
+    animation: none;
+  }
+}

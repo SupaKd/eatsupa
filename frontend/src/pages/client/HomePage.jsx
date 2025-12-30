@@ -195,14 +195,6 @@ function HomePage() {
                   </div>
                 ))}
               </div>
-
-              <div className="restaurants__footer">
-                <p className="restaurants__count">
-                  {restaurants.length} restaurant
-                  {restaurants.length > 1 ? "s" : ""} disponible
-                  {restaurants.length > 1 ? "s" : ""}
-                </p>
-              </div>
             </>
           )}
         </div>
