@@ -30,17 +30,7 @@ function Header({ onCartClick }) {
           <span className="header__logo-text">Yumioo</span>
         </Link>
 
-        {/* Navigation Desktop */}
-        <nav className={`header__nav ${menuOpen ? 'header__nav--open' : ''}`}>
-          <Link to="/" className="header__nav-link" onClick={() => setMenuOpen(false)}>
-            Restaurants
-          </Link>
-          {isAuthenticated && user?.role === 'client' && (
-            <Link to="/mes-commandes" className="header__nav-link" onClick={() => setMenuOpen(false)}>
-              Mes commandes
-            </Link>
-          )}
-        </nav>
+       
 
         {/* Actions */}
         <div className="header__actions">
@@ -153,10 +143,7 @@ function Header({ onCartClick }) {
             </div>
           )}
 
-          {/* Menu burger mobile */}
-          <button className="header__burger" onClick={toggleMenu}>
-            <span className={`header__burger-line ${menuOpen ? 'header__burger-line--open' : ''}`}></span>
-          </button>
+          
         </div>
       </div>
 

@@ -74,7 +74,6 @@ function RestaurantLayout({ children }) {
       <aside className={`restaurant-sidebar ${sidebarOpen ? 'restaurant-sidebar--open' : ''}`}>
         <div className="restaurant-sidebar__header">
           <NavLink to="/" className="restaurant-sidebar__logo">
-            <span className="restaurant-sidebar__logo-icon">🍽️</span>
             <span className="restaurant-sidebar__logo-text">Yumioo</span>
           </NavLink>
           <button

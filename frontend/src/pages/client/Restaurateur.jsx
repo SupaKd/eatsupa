@@ -45,7 +45,7 @@ function Restaurateur() {
         </svg>
       ),
       title: 'Paiements Sécurisés',
-      description: 'Stripe gère tous les paiements. Virements automatiques sur votre compte bancaire sous 48h.',
+      description: 'Paiement en ligne bientot disponible. Le client paie directement au restaurant, sans intermédiaire.',
     },
     {
       icon: (
@@ -143,7 +143,7 @@ function Restaurateur() {
     },
     {
       question: 'Quand et comment suis-je payé ?',
-      answer: 'Les paiements sont traités par Stripe. Vous recevez vos fonds directement sur votre compte bancaire sous 48h après chaque commande. Vous gardez 100% du montant des ventes.',
+      answer: 'Les clients paient directement au restaurant par carte bancaire ou espèces.',
     },
     {
       question: 'Puis-je modifier mon menu à tout moment ?',
@@ -151,7 +151,7 @@ function Restaurateur() {
     },
     {
       question: 'Que se passe-t-il si j\'ai un problème technique ?',
-      answer: 'Notre équipe support basée à Oyonnax est disponible pour vous aider. Les abonnés Pro et Premium bénéficient d\'un support prioritaire avec réponse sous 2h.',
+      answer: 'Notre équipe support est disponible pour vous aider.',
     },
     {
       question: 'Dois-je gérer la livraison moi-même ?',
@@ -159,7 +159,7 @@ function Restaurateur() {
     },
     {
       question: 'Comment les clients me trouvent-ils ?',
-      answer: 'Votre restaurant apparaît sur la plateforme Yumioo visible par tous les habitants d\'Oyonnax. Vous pouvez aussi partager directement le lien de votre page restaurant.',
+      answer: 'Votre restaurant apparaît sur la plateforme Yumioo visible par tous. Vous pouvez aussi partager directement le lien de votre page restaurant.',
     },
   ];
 
@@ -200,7 +200,7 @@ function Restaurateur() {
           <h1 className="resto-hero__title">
             <span className="resto-hero__title-line">Gardez</span>
             <span className="resto-hero__title-line resto-hero__title-line--accent">100% de vos ventes</span>
-            <span className="resto-hero__title-line resto-hero__title-line--small">Zéro commission. Toujours.</span>
+            <span className="resto-hero__title-line resto-hero__title-line--small">Zéro commission.</span>
           </h1>
 
           <p className="resto-hero__subtitle">
@@ -232,7 +232,7 @@ function Restaurateur() {
             <div className="resto-hero__comparison-item resto-hero__comparison-item--good">
               <span className="resto-hero__comparison-label">Yumioo</span>
               <span className="resto-hero__comparison-value">0%</span>
-              <span className="resto-hero__comparison-note">de commission, jamais</span>
+              <span className="resto-hero__comparison-note">de commission</span>
             </div>
           </div>
         </div>

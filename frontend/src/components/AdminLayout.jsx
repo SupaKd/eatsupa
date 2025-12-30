@@ -67,7 +67,6 @@ function AdminLayout({ children }) {
       <aside className={`admin-sidebar ${sidebarOpen ? 'admin-sidebar--open' : ''}`}>
         <div className="admin-sidebar__header">
           <NavLink to="/" className="admin-sidebar__logo">
-            <span className="admin-sidebar__logo-icon">🍽️</span>
             <span className="admin-sidebar__logo-text">Yumioo</span>
           </NavLink>
           <button

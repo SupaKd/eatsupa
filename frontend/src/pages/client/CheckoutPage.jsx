@@ -39,18 +39,15 @@ function CheckoutPage() {
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
 
-  // Vérifier si le restaurant est ouvert
-useEffect(() => {
-  if (restaurantDetails && !restaurantDetails.est_ouvert) {
-    setError('Ce restaurant est actuellement fermé. Vous ne pouvez pas passer commande.');
-  }
-}, [restaurantDetails]);
-
-// Dans le handleSubmit, avant la création de commande :
-if (restaurantDetails && !restaurantDetails.est_ouvert) {
-  setError('Ce restaurant est actuellement fermé. Vous ne pouvez pas passer commande.');
-  return;
-}
+  // Vérifier si le restaurant est ouvert - CORRIGÉ: maintenant dans useEffect
+  useEffect(() => {
+    if (restaurantDetails && !restaurantDetails.est_ouvert) {
+      setError('Ce restaurant est actuellement fermé. Vous ne pouvez pas passer commande.');
+    } else if (restaurantDetails && restaurantDetails.est_ouvert && error === 'Ce restaurant est actuellement fermé. Vous ne pouvez pas passer commande.') {
+      // Effacer l'erreur si le restaurant est maintenant ouvert
+      setError(null);
+    }
+  }, [restaurantDetails]);
 
   // Charger les détails du restaurant pour avoir les modes de retrait disponibles
   useEffect(() => {
@@ -107,6 +104,12 @@ if (restaurantDetails && !restaurantDetails.est_ouvert) {
   const handleSubmit = async (e) => {
     e.preventDefault();
     setError(null);
+
+    // CORRIGÉ: Validation du restaurant ouvert dans handleSubmit
+    if (restaurantDetails && !restaurantDetails.est_ouvert) {
+      setError('Ce restaurant est actuellement fermé. Vous ne pouvez pas passer commande.');
+      return;
+    }
 
     if (!formData.telephone) {
       setError('Le numéro de téléphone est requis');
@@ -194,6 +197,9 @@ if (restaurantDetails && !restaurantDetails.est_ouvert) {
   const livraisonDisponible = modesRetrait.some(m => m.id === 'livraison');
   const aEmporterDisponible = modesRetrait.some(m => m.id === 'a_emporter');
 
+  // Vérifier si le restaurant est fermé pour afficher un message d'alerte
+  const isRestaurantClosed = restaurantDetails && !restaurantDetails.est_ouvert;
+
   return (
     <div className="checkout-page">
       <div className="checkout-page__container">
@@ -208,6 +214,31 @@ if (restaurantDetails && !restaurantDetails.est_ouvert) {
           </Link>
           <h1 className="checkout-page__title">Finaliser la commande</h1>
         </div>
+
+        {/* Alerte restaurant fermé */}
+        {isRestaurantClosed && (
+          <div className="checkout-page__closed-alert">
+            <svg xmlns="http://www.w3.org/2000/svg" width="24" height="24" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+              <circle cx="12" cy="12" r="10"></circle>
+              <line x1="12" y1="8" x2="12" y2="12"></line>
+              <line x1="12" y1="16" x2="12.01" y2="16"></line>
+            </svg>
+            <div>
+              <strong>Restaurant fermé</strong>
+              <p>
+                Ce restaurant est actuellement fermé. 
+                {restaurantDetails?.prochaine_ouverture && (
+                  <> Prochaine ouverture : {restaurantDetails.prochaine_ouverture.estAujourdHui 
+                    ? `aujourd'hui à ${restaurantDetails.prochaine_ouverture.heure}`
+                    : restaurantDetails.prochaine_ouverture.estDemain
+                    ? `demain à ${restaurantDetails.prochaine_ouverture.heure}`
+                    : `${restaurantDetails.prochaine_ouverture.jourCapitalized} à ${restaurantDetails.prochaine_ouverture.heure}`
+                  }</>
+                )}
+              </p>
+            </div>
+          </div>
+        )}
 
         <div className="checkout-page__content">
           {/* Formulaire */}
@@ -337,6 +368,7 @@ if (restaurantDetails && !restaurantDetails.est_ouvert) {
                       onChange={handleChange}
                       placeholder="12 rue de la Paix"
                       required={formData.mode_retrait === 'livraison'}
+                      disabled={isRestaurantClosed}
                     />
                   </div>
 
@@ -350,6 +382,7 @@ if (restaurantDetails && !restaurantDetails.est_ouvert) {
                         value={formData.code_postal_livraison}
                         onChange={handleChange}
                         placeholder="75001"
+                        disabled={isRestaurantClosed}
                       />
                     </div>
                     <div className="checkout-form__group">
@@ -362,6 +395,7 @@ if (restaurantDetails && !restaurantDetails.est_ouvert) {
                         onChange={handleChange}
                         placeholder="Paris"
                         required={formData.mode_retrait === 'livraison'}
+                        disabled={isRestaurantClosed}
                       />
                     </div>
                   </div>
@@ -375,6 +409,7 @@ if (restaurantDetails && !restaurantDetails.est_ouvert) {
                       onChange={handleChange}
                       placeholder="Code d'entrée, étage, digicode..."
                       rows={2}
+                      disabled={isRestaurantClosed}
                     />
                   </div>
                 </div>
@@ -400,6 +435,7 @@ if (restaurantDetails && !restaurantDetails.est_ouvert) {
                     onChange={handleChange}
                     placeholder="06 12 34 56 78"
                     required
+                    disabled={isRestaurantClosed}
                   />
                   <span className="checkout-form__hint">Pour vous contacter en cas de besoin</span>
                 </div>
@@ -413,6 +449,7 @@ if (restaurantDetails && !restaurantDetails.est_ouvert) {
                     value={formData.email}
                     onChange={handleChange}
                     placeholder="votre@email.com"
+                    disabled={isRestaurantClosed}
                   />
                 </div>
               </div>
@@ -472,6 +509,7 @@ if (restaurantDetails && !restaurantDetails.est_ouvert) {
                     onChange={handleChange}
                     placeholder="Allergies, préférences de cuisson..."
                     rows={3}
+                    disabled={isRestaurantClosed}
                   />
                 </div>
               </div>
@@ -479,12 +517,20 @@ if (restaurantDetails && !restaurantDetails.est_ouvert) {
               <button
                 type="submit"
                 className="checkout-form__submit"
-                disabled={loading || estSousMinimum}
+                disabled={loading || estSousMinimum || isRestaurantClosed}
               >
                 {loading ? (
                   <>
                     <span className="checkout-form__submit-spinner"></span>
                     Traitement en cours...
+                  </>
+                ) : isRestaurantClosed ? (
+                  <>
+                    <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
+                      <circle cx="12" cy="12" r="10"></circle>
+                      <line x1="4.93" y1="4.93" x2="19.07" y2="19.07"></line>
+                    </svg>
+                    Restaurant fermé
                   </>
                 ) : (
                   <>
@@ -513,9 +559,19 @@ if (restaurantDetails && !restaurantDetails.est_ouvert) {
                     </div>
                     <div className="checkout-summary__item-actions">
                       <div className="checkout-summary__item-controls">
-                        <button onClick={() => dispatch(decrementQuantity(item.id))}>-</button>
+                        <button 
+                          onClick={() => dispatch(decrementQuantity(item.id))}
+                          disabled={isRestaurantClosed}
+                        >
+                          -
+                        </button>
                         <span>{item.quantite}</span>
-                        <button onClick={() => dispatch(incrementQuantity(item.id))}>+</button>
+                        <button 
+                          onClick={() => dispatch(incrementQuantity(item.id))}
+                          disabled={isRestaurantClosed}
+                        >
+                          +
+                        </button>
                       </div>
                       <span className="checkout-summary__item-price">
                         {formatPrice(item.prix * item.quantite)}
