@@ -4,11 +4,12 @@ const { paginate, paginatedResponse, isRestaurantOpen, getNextOpeningTime, getCl
 // Récupérer tous les restaurants (public)
 const getAllRestaurants = async (req, res) => {
   try {
-    const { page = 1, limit = 10, ville, type_cuisine, search, actif, livraison } = req.query;
+    const { page = 1, limit = 10, ville, type_cuisine, search, actif, livraison, ouvert } = req.query;
     const { limit: queryLimit, offset } = paginate(page, limit);
 
-    // Par défaut: restaurants actifs ET non en fermeture exceptionnelle
-    let whereClause = 'WHERE r.actif = 1 AND r.fermeture_exceptionnelle = 0';
+    // CORRECTION: Ne plus filtrer automatiquement fermeture_exceptionnelle
+    // Les restaurants fermés temporairement restent visibles mais marqués comme "fermés"
+    let whereClause = 'WHERE r.actif = 1';
     const params = [];
 
     // Pour les admins, permettre de voir les inactifs aussi
@@ -64,7 +65,7 @@ const getAllRestaurants = async (req, res) => {
     );
 
     // Ajouter le statut d'ouverture pour chaque restaurant
-    const restaurantsWithStatus = restaurants.map(r => {
+    let restaurantsWithStatus = restaurants.map(r => {
       const fermetureExceptionnelle = Boolean(r.fermeture_exceptionnelle);
       const estOuvert = isRestaurantOpen(r.horaires_ouverture, fermetureExceptionnelle);
       return {
@@ -80,9 +81,17 @@ const getAllRestaurants = async (req, res) => {
       };
     });
 
+    // Filtrer par restaurants ouverts (côté serveur) - APRÈS avoir calculé le statut
+    if (ouvert === 'true') {
+      restaurantsWithStatus = restaurantsWithStatus.filter(r => r.est_ouvert);
+    }
+
+    // Recalculer le total après le filtre "ouvert"
+    const finalTotal = ouvert === 'true' ? restaurantsWithStatus.length : total;
+
     res.json({
       success: true,
-      ...paginatedResponse(restaurantsWithStatus, page, queryLimit, total)
+      ...paginatedResponse(restaurantsWithStatus, page, queryLimit, finalTotal)
     });
   } catch (error) {
     console.error('Erreur récupération restaurants:', error);

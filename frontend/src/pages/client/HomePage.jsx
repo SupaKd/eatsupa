@@ -1,4 +1,4 @@
-import { useState, useEffect } from "react";
+import { useState, useEffect, useCallback } from "react";
 import { Link } from "react-router-dom";
 import {
   ArrowRight,
@@ -9,21 +9,41 @@ import {
 } from "lucide-react";
 import { restaurantAPI } from "@services/api";
 import RestaurantCard from "../../components/client/RestaurantCard";
+import SearchFilters from "../../components/client/SearchFilters";
 
 function HomePage() {
   const [restaurants, setRestaurants] = useState([]);
   const [loading, setLoading] = useState(true);
   const [error, setError] = useState(null);
+  const [filters, setFilters] = useState({
+    search: "",
+    type_cuisine: "",
+    openOnly: false
+  });
 
-  const fetchRestaurants = async () => {
+  const fetchRestaurants = useCallback(async () => {
     try {
       setLoading(true);
       setError(null);
 
-      const response = await restaurantAPI.getAll({
+      // Construire les paramètres de requête
+      const params = {
         page: 1,
-        limit: 12,
-      });
+        limit: 50, // Augmenté pour avoir tous les restaurants
+      };
+
+      // Ajouter les filtres actifs
+      if (filters.search) {
+        params.search = filters.search;
+      }
+      if (filters.type_cuisine) {
+        params.type_cuisine = filters.type_cuisine;
+      }
+      if (filters.openOnly) {
+        params.ouvert = 'true'; // Nouveau paramètre backend
+      }
+
+      const response = await restaurantAPI.getAll(params);
 
       if (response.data.success && Array.isArray(response.data.data)) {
         setRestaurants(response.data.data);
@@ -44,37 +64,20 @@ function HomePage() {
     } finally {
       setLoading(false);
     }
-  };
+  }, [filters]);
 
   useEffect(() => {
     fetchRestaurants();
+  }, [fetchRestaurants]);
+
+  const handleFilterChange = useCallback((newFilters) => {
+    setFilters(newFilters);
   }, []);
 
   const stats = [
     { value: "0%", label: "Commission" },
     { value: "100%", label: "Local" },
     { value: "∞", label: "Passion" },
-  ];
-
-  const values = [
-    {
-      icon: <Euro size={32} strokeWidth={1.5} />,
-      title: "Zéro Commission",
-      description:
-        "Contrairement aux géants de la livraison, nous ne prenons aucune commission sur vos ventes.",
-    },
-    {
-      icon: <Heart size={32} strokeWidth={1.5} />,
-      title: "Fait avec Amour",
-      description:
-        "Créé par des passionnés pour soutenir l'économie locale d'Oyonnax.",
-    },
-    {
-      icon: <Users size={32} strokeWidth={1.5} />,
-      title: "Communauté",
-      description:
-        "Chaque commande renforce l'économie locale et soutient les restaurateurs.",
-    },
   ];
 
   return (
@@ -136,9 +139,15 @@ function HomePage() {
             <span className="restaurants__label">Découvrir</span>
             <h2 className="restaurants__title">Les restaurants</h2>
             <p className="restaurants__subtitle">
-              Une sélection d’établissements locaux engagés
+              Une sélection d'établissements locaux engagés
             </p>
           </div>
+
+          {/* Barre de recherche et filtres */}
+          <SearchFilters 
+            onFilterChange={handleFilterChange}
+            restaurantsCount={restaurants.length}
+          />
 
           {loading ? (
             <div className="restaurants__loading">
@@ -158,16 +167,20 @@ function HomePage() {
             </div>
           ) : restaurants.length === 0 ? (
             <div className="restaurants__empty">
-              <h3>Bientôt disponible</h3>
+              <h3>Aucun restaurant trouvé</h3>
               <p>
-                Les premiers restaurants arrivent très bientôt sur Yumioo !
+                {filters.search || filters.type_cuisine || filters.openOnly 
+                  ? "Essayez de modifier vos critères de recherche."
+                  : "Les premiers restaurants arrivent très bientôt sur Yumioo !"}
               </p>
-              <Link
-                to="/register?role=restaurateur"
-                className="restaurants__empty-btn"
-              >
-                Être le premier restaurant
-              </Link>
+              {(filters.search || filters.type_cuisine || filters.openOnly) && (
+                <button
+                  onClick={() => setFilters({ search: "", type_cuisine: "", openOnly: false })}
+                  className="restaurants__empty-btn"
+                >
+                  Réinitialiser les filtres
+                </button>
+              )}
             </div>
           ) : (
             <>

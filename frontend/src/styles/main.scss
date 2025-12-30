@@ -1,6 +1,10 @@
-@import "base";
-@import "header";
-@import "footer";
+@import "unik/base";
+@import "unik/header";
+@import "unik/footer";
+@import "unik/profil";
+
+//________________________//
+
 @import "client/restaurantcard";
 @import "client/home";
 @import "client/myorderspage";
@@ -15,8 +19,8 @@
 @import "client/ordertracking";
 @import "client/resto";
 @import "client/close";
-@import "admin";
-@import "profil";
+
+//________________________//
 
 @import "restaurant/layout";
 @import "restaurant/menu";
@@ -27,3 +31,7 @@
 @import "restaurant/components";
 @import "restaurant/livraison";
 @import "restaurant/modals";
+
+//________________________//
+
+@import "admin/admin";
