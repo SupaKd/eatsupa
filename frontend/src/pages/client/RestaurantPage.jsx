@@ -3,6 +3,7 @@ import { useParams, Link } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { restaurantAPI } from '@services/api';
 import { selectCartItemsCount, selectCartRestaurant } from '@store/slices/cartSlice';
+import { getImageUrl, DEFAULT_RESTAURANT_IMAGE } from '../../services/imageUtils';
 import PlatCard from '@components/client/PlatCard';
 import {
   ArrowLeft,
@@ -105,12 +106,20 @@ function RestaurantPage() {
   }
 
   const horaires = formatHoraires(restaurant.horaires_ouverture);
-  const imageUrl = restaurant.image || 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=1200&h=400&fit=crop';
+  // Utiliser le helper pour construire l'URL de l'image
+  const imageUrl = getImageUrl(restaurant.image, DEFAULT_RESTAURANT_IMAGE);
 
   return (
     <div className="restaurant-page">
       <div className="restaurant-header">
-        <img src={imageUrl} alt={restaurant.nom} className="restaurant-header__image"/>
+        <img 
+          src={imageUrl} 
+          alt={restaurant.nom} 
+          className="restaurant-header__image"
+          onError={(e) => {
+            e.target.src = DEFAULT_RESTAURANT_IMAGE;
+          }}
+        />
         <div className="restaurant-header__overlay"></div>
         <div className="restaurant-header__content">
           <Link to="/" className="restaurant-header__back">

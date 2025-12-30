@@ -1,5 +1,6 @@
 import { Link } from 'react-router-dom';
 import { Clock, MapPin } from "lucide-react";
+import { getImageUrl, DEFAULT_RESTAURANT_IMAGE } from '../../services/imageUtils';
 
 function RestaurantCard({ restaurant }) {
   const {
@@ -15,8 +16,10 @@ function RestaurantCard({ restaurant }) {
     fermeture_exceptionnelle,
   } = restaurant;
 
-  // Image par défaut si pas d'image
-  const imageUrl = image || 'https://images.unsplash.com/photo-1517248135467-4c7edcad34c4?w=400&h=300&fit=crop';
+  // Utiliser le helper pour construire l'URL de l'image
+  const imageUrl = getImageUrl(image, DEFAULT_RESTAURANT_IMAGE);
+  
+
 
   // Formater le message de prochaine ouverture
   const getNextOpeningMessage = () => {
@@ -49,6 +52,9 @@ function RestaurantCard({ restaurant }) {
           alt={nom} 
           className="restaurant-card__image"
           loading="lazy"
+          onError={(e) => {
+            e.target.src = DEFAULT_RESTAURANT_IMAGE;
+          }}
         />
         {/* Badge ouvert/fermé */}
         <div className={`restaurant-card__status ${est_ouvert ? 'restaurant-card__status--open' : 'restaurant-card__status--closed'}`}>

@@ -1,5 +1,6 @@
 const { pool } = require('../config/database');
 const { paginate, paginatedResponse, isRestaurantOpen, getNextOpeningTime, getClosingTime } = require('../utils/helpers');
+const { deleteFile } = require('../utils/upload');
 
 // Récupérer tous les restaurants (public)
 const getAllRestaurants = async (req, res) => {
@@ -229,7 +230,7 @@ const createRestaurant = async (req, res) => {
     const {
       nom, description, adresse, ville, code_postal,
       telephone, email, type_cuisine, delai_preparation,
-      frais_livraison, horaires_ouverture,
+      frais_livraison, horaires_ouverture, image,
       paiement_sur_place = true, paiement_en_ligne = false,
       livraison_active = false, a_emporter_active = true,
       zone_livraison_km = 5, minimum_livraison = 15, delai_livraison = 45
@@ -252,10 +253,10 @@ const createRestaurant = async (req, res) => {
       `INSERT INTO restaurants 
        (utilisateur_id, nom, description, adresse, ville, code_postal, 
         telephone, email, type_cuisine, delai_preparation, frais_livraison, 
-        horaires_ouverture, paiement_sur_place, paiement_en_ligne,
+        horaires_ouverture, image, paiement_sur_place, paiement_en_ligne,
         livraison_active, a_emporter_active, zone_livraison_km, minimum_livraison, delai_livraison,
         fermeture_exceptionnelle, actif)
-       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 0)`,
+       VALUES (?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, ?, 0, 0)`,
       [
         req.user.id,
         nom,
@@ -269,6 +270,7 @@ const createRestaurant = async (req, res) => {
         delai_preparation || 30,
         frais_livraison || 0,
         horaires_ouverture ? JSON.stringify(horaires_ouverture) : null,
+        image || null,
         paiement_sur_place ? 1 : 0,
         paiement_en_ligne ? 1 : 0,
         livraison_active ? 1 : 0,
@@ -311,8 +313,8 @@ const updateRestaurant = async (req, res) => {
     const { id } = req.params;
     const updates = req.body;
 
-    // Vérifier que le restaurant existe
-    const [existing] = await pool.query('SELECT id FROM restaurants WHERE id = ?', [id]);
+    // Vérifier que le restaurant existe et récupérer l'ancienne image
+    const [existing] = await pool.query('SELECT id, image FROM restaurants WHERE id = ?', [id]);
     if (existing.length === 0) {
       return res.status(404).json({
         success: false,
@@ -320,11 +322,14 @@ const updateRestaurant = async (req, res) => {
       });
     }
 
+    const oldImage = existing[0].image;
+
     // Construire la requête de mise à jour dynamiquement
+    // CORRECTION: Ajout de 'image' dans les champs autorisés
     const allowedFields = [
       'nom', 'description', 'adresse', 'ville', 'code_postal',
       'telephone', 'email', 'type_cuisine', 'delai_preparation',
-      'frais_livraison', 'horaires_ouverture', 'actif',
+      'frais_livraison', 'horaires_ouverture', 'image', 'actif',
       'fermeture_exceptionnelle',
       'paiement_sur_place', 'paiement_en_ligne',
       'livraison_active', 'a_emporter_active', 'zone_livraison_km',
@@ -360,6 +365,20 @@ const updateRestaurant = async (req, res) => {
       `UPDATE restaurants SET ${updateFields.join(', ')} WHERE id = ?`,
       values
     );
+
+    // Supprimer l'ancienne image si une nouvelle a été uploadée
+    if (updates.image && oldImage && updates.image !== oldImage) {
+      // Vérifier que c'est une image locale (commence par /uploads)
+      if (oldImage.startsWith('/uploads')) {
+        try {
+          await deleteFile(oldImage.substring(1)); // Enlever le / initial
+          console.log('Ancienne image supprimée:', oldImage);
+        } catch (err) {
+          console.error('Erreur suppression ancienne image:', err);
+          // On ne bloque pas la mise à jour si la suppression échoue
+        }
+      }
+    }
 
     const [updatedRestaurant] = await pool.query(
       'SELECT * FROM restaurants WHERE id = ?',
@@ -442,12 +461,26 @@ const updateImage = async (req, res) => {
       });
     }
 
+    // Récupérer l'ancienne image
+    const [existing] = await pool.query('SELECT image FROM restaurants WHERE id = ?', [id]);
+    const oldImage = existing.length > 0 ? existing[0].image : null;
+
     const imageUrl = `/uploads/images/${req.file.filename}`;
 
     await pool.query(
       'UPDATE restaurants SET image = ? WHERE id = ?',
       [imageUrl, id]
     );
+
+    // Supprimer l'ancienne image si elle existe et est locale
+    if (oldImage && oldImage.startsWith('/uploads')) {
+      try {
+        await deleteFile(oldImage.substring(1)); // Enlever le / initial
+        console.log('Ancienne image supprimée:', oldImage);
+      } catch (err) {
+        console.error('Erreur suppression ancienne image:', err);
+      }
+    }
 
     res.json({
       success: true,

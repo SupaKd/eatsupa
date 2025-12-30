@@ -1,6 +1,7 @@
 import { useState, useRef, useCallback, useEffect } from 'react';
 import { Upload, X, Image as ImageIcon, Loader2 } from 'lucide-react';
 import PropTypes from 'prop-types';
+import { getImageUrl } from '../services/imageUtils';
 
 function ImageUpload({ 
   value, 
@@ -19,13 +20,7 @@ function ImageUpload({
   // Mettre à jour la preview quand value change
   useEffect(() => {
     if (value) {
-      // Si c'est une URL relative, construire l'URL complète
-      if (value.startsWith('/uploads')) {
-        const baseUrl = import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:3000';
-        setPreview(`${baseUrl}${value}`);
-      } else {
-        setPreview(value);
-      }
+      setPreview(getImageUrl(value));
     } else {
       setPreview(null);
     }
@@ -72,18 +67,13 @@ function ImageUpload({
         URL.revokeObjectURL(localPreview);
         
         // Construire l'URL complète pour la preview
-        if (uploadedUrl.startsWith('/uploads')) {
-          const baseUrl = import.meta.env.VITE_API_URL?.replace('/api', '') || 'http://localhost:3000';
-          setPreview(`${baseUrl}${uploadedUrl}`);
-        } else {
-          setPreview(uploadedUrl);
-        }
+        setPreview(getImageUrl(uploadedUrl));
         
         // Retourner l'URL relative pour stockage en BDD
         onChange?.(uploadedUrl);
       } catch (err) {
         setError(err.message || "Erreur lors de l'upload");
-        setPreview(value || null);
+        setPreview(value ? getImageUrl(value) : null);
         URL.revokeObjectURL(localPreview);
       } finally {
         setIsUploading(false);

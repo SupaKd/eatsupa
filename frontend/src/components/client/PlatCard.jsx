@@ -1,12 +1,15 @@
 import { useDispatch } from 'react-redux';
 import { addToCart } from '@store/slices/cartSlice';
 import { Plus } from 'lucide-react';
-
+import { getImageUrl, DEFAULT_PLAT_IMAGE } from '../../services/imageUtils';
 
 function PlatCard({ plat, restaurantId, restaurantName, restaurantOuvert = true }) {
   const dispatch = useDispatch();
 
   const { id, nom, description, prix, image_url, disponible, allergenes } = plat;
+
+  // Utiliser le helper pour construire l'URL de l'image
+  const imageSource = getImageUrl(image_url);
 
   const formatPrice = (price) => {
     return new Intl.NumberFormat('fr-FR', {
@@ -39,13 +42,17 @@ function PlatCard({ plat, restaurantId, restaurantName, restaurantOuvert = true 
   return (
     <div className={`plat-card ${isUnavailable ? 'plat-card--unavailable' : ''}`}>
       {/* Image */}
-      {image_url && (
+      {imageSource && (
         <div className="plat-card__image-wrapper">
           <img 
-            src={image_url} 
+            src={imageSource} 
             alt={nom} 
             className="plat-card__image"
             loading="lazy"
+            onError={(e) => {
+              // Si l'image ne charge pas, la cacher ou afficher une image par défaut
+              e.target.style.display = 'none';
+            }}
           />
           {isUnavailable && (
             <div className="plat-card__unavailable-badge">
@@ -81,7 +88,6 @@ function PlatCard({ plat, restaurantId, restaurantName, restaurantOuvert = true 
             title={!restaurantOuvert ? 'Le restaurant est actuellement fermé' : !disponible ? 'Ce plat n\'est pas disponible' : 'Ajouter au panier'}
           >
             <Plus size={18} strokeWidth={2} />
-
             {getButtonText()}
           </button>
         </div>

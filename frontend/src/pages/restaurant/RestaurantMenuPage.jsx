@@ -10,6 +10,8 @@ import {
   ClipboardList 
 } from 'lucide-react';
 import { restaurantAPI, categoryAPI, platAPI } from '@services/api';
+import uploadService from '@services/uploadService';
+import ImageUpload from '@components/ImageUpload';
 
 function RestaurantMenuPage() {
   const [restaurant, setRestaurant] = useState(null);
@@ -154,6 +156,19 @@ function RestaurantMenuPage() {
     }).format(price);
   };
 
+  // Helper pour construire l'URL de l'image
+  const getImageUrl = (imageUrl) => {
+    if (!imageUrl) return null;
+    if (imageUrl.startsWith('http://') || imageUrl.startsWith('https://')) {
+      return imageUrl;
+    }
+    if (imageUrl.startsWith('/uploads')) {
+      const baseUrl = 'http://localhost:3000';
+      return `${baseUrl}${imageUrl}`;
+    }
+    return imageUrl;
+  };
+
   if (loading) {
     return (
       <div className="menu-page__loading">
@@ -266,7 +281,11 @@ function RestaurantMenuPage() {
                     <div key={plat.id} className={`menu-plat ${!plat.disponible ? 'menu-plat--unavailable' : ''}`}>
                       {plat.image_url && (
                         <div className="menu-plat__image">
-                          <img src={plat.image_url} alt={plat.nom} />
+                          <img 
+                            src={getImageUrl(plat.image_url)} 
+                            alt={plat.nom}
+                            onError={(e) => e.target.style.display = 'none'}
+                          />
                         </div>
                       )}
                       <div className="menu-plat__content">
@@ -412,7 +431,7 @@ function CategoryModal({ category, onClose, onSave }) {
   );
 }
 
-// Modal Plat
+// Modal Plat avec upload d'image
 function PlatModal({ plat, onClose, onSave }) {
   const [formData, setFormData] = useState({
     nom: plat?.nom || '',
@@ -427,6 +446,20 @@ function PlatModal({ plat, onClose, onSave }) {
   const [allergenesInput, setAllergenesInput] = useState(
     Array.isArray(plat?.allergenes) ? plat.allergenes.join(', ') : ''
   );
+
+  const handleImageChange = (imageUrl) => {
+    setFormData({ ...formData, image_url: imageUrl });
+  };
+
+  const handleImageUpload = async (file) => {
+    try {
+      const imageUrl = await uploadService.uploadImage(file);
+      return imageUrl;
+    } catch (err) {
+      console.error('Erreur upload image:', err);
+      throw new Error("Impossible d'uploader l'image. Veuillez réessayer.");
+    }
+  };
 
   const handleSubmit = async (e) => {
     e.preventDefault();
@@ -496,18 +529,14 @@ function PlatModal({ plat, onClose, onSave }) {
           </div>
 
           <div className="modal__field">
-            <label>URL de l'image</label>
-            <input
-              type="url"
+            <label>Photo du plat</label>
+            <ImageUpload
               value={formData.image_url}
-              onChange={(e) => setFormData({ ...formData, image_url: e.target.value })}
-              placeholder="https://exemple.com/image.jpg"
+              onChange={handleImageChange}
+              onUpload={handleImageUpload}
+              placeholder="Glissez-déposez une photo ou cliquez pour sélectionner"
+              maxSize={5}
             />
-            {formData.image_url && (
-              <div className="modal__image-preview">
-                <img src={formData.image_url} alt="Aperçu" onError={(e) => e.target.style.display = 'none'} />
-              </div>
-            )}
           </div>
 
           <div className="modal__field">
