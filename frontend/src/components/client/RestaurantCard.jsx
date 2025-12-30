@@ -1,4 +1,5 @@
 import { Link } from 'react-router-dom';
+import { Clock, MapPin } from "lucide-react";
 
 function RestaurantCard({ restaurant }) {
   const {
@@ -31,10 +32,8 @@ function RestaurantCard({ restaurant }) {
         </div>
         {/* Délai de préparation */}
         <div className="restaurant-card__time">
-          <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <circle cx="12" cy="12" r="10"></circle>
-            <polyline points="12 6 12 12 16 14"></polyline>
-          </svg>
+        <Clock size={14} strokeWidth={2} />
+
           {delai_preparation} min
         </div>
       </div>
@@ -53,10 +52,8 @@ function RestaurantCard({ restaurant }) {
         
         <div className="restaurant-card__footer">
           <div className="restaurant-card__location">
-            <svg xmlns="http://www.w3.org/2000/svg" width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
-              <circle cx="12" cy="10" r="3"></circle>
-            </svg>
+          <MapPin size={14} strokeWidth={2} />
+
             {ville}
           </div>
           

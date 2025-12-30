@@ -4,6 +4,15 @@ import { useSelector } from 'react-redux';
 import { restaurantAPI } from '@services/api';
 import { selectCartItemsCount, selectCartRestaurant } from '@store/slices/cartSlice';
 import PlatCard from '@components/client/PlatCard';
+import {
+  ArrowLeft,
+  MapPin,
+  Clock,
+  Phone,
+  ChevronDown,
+  ArrowRight,
+  Lock
+} from 'lucide-react';
 
 function RestaurantPage() {
   const { id } = useParams();
@@ -12,19 +21,18 @@ function RestaurantPage() {
   const [error, setError] = useState(null);
   const [activeCategory, setActiveCategory] = useState(null);
   const [showHoraires, setShowHoraires] = useState(false);
-  
+
   const cartItemsCount = useSelector(selectCartItemsCount);
   const cartRestaurant = useSelector(selectCartRestaurant);
-  
+
   const categoriesRef = useRef({});
 
-  // Charger le restaurant
   useEffect(() => {
     const fetchRestaurant = async () => {
       try {
         setLoading(true);
         const response = await restaurantAPI.getById(id);
-        
+
         if (response.data.success) {
           setRestaurant(response.data.data);
           if (response.data.data.categories?.length > 0) {
@@ -42,7 +50,6 @@ function RestaurantPage() {
     fetchRestaurant();
   }, [id]);
 
-  // Scroll vers une catégorie
   const scrollToCategory = (categoryId) => {
     setActiveCategory(categoryId);
     const element = categoriesRef.current[categoryId];
@@ -50,7 +57,7 @@ function RestaurantPage() {
       const headerHeight = 140;
       const elementPosition = element.getBoundingClientRect().top;
       const offsetPosition = elementPosition + window.pageYOffset - headerHeight;
-      
+
       window.scrollTo({
         top: offsetPosition,
         behavior: 'smooth',
@@ -58,12 +65,11 @@ function RestaurantPage() {
     }
   };
 
-  // Formater les horaires
   const formatHoraires = (horaires) => {
     if (!horaires) return null;
     const parsed = typeof horaires === 'string' ? JSON.parse(horaires) : horaires;
     const jours = ['lundi', 'mardi', 'mercredi', 'jeudi', 'vendredi', 'samedi', 'dimanche'];
-    
+
     return jours.map(jour => {
       const config = parsed[jour];
       if (!config?.ouvert || !config.horaires?.length) {
@@ -103,55 +109,49 @@ function RestaurantPage() {
 
   return (
     <div className="restaurant-page">
-      {/* Header avec image */}
       <div className="restaurant-header">
-        <img 
-          src={imageUrl} 
-          alt={restaurant.nom} 
-          className="restaurant-header__image"
-        />
+        <img src={imageUrl} alt={restaurant.nom} className="restaurant-header__image"/>
         <div className="restaurant-header__overlay"></div>
         <div className="restaurant-header__content">
           <Link to="/" className="restaurant-header__back">
-            <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-              <line x1="19" y1="12" x2="5" y2="12"></line>
-              <polyline points="12 19 5 12 12 5"></polyline>
-            </svg>
+            <ArrowLeft size={20}/>
             Retour
           </Link>
         </div>
       </div>
 
-      {/* Infos restaurant */}
       <div className="restaurant-info">
-        {/* Bandeau restaurant fermé */}
-{!restaurant.est_ouvert && (
-  <div className="restaurant-closed-banner">
-    <div className="restaurant-closed-banner__container">
-      <div className="restaurant-closed-banner__icon">🔒</div>
-      <div className="restaurant-closed-banner__content">
-        <h3>Restaurant actuellement fermé</h3>
-        <p>
-          {restaurant.prochaine_ouverture ? (
-            <>
-              Prochaine ouverture : {' '}
-              <strong>
-                {restaurant.prochaine_ouverture.estAujourdHui 
-                  ? `Aujourd'hui à ${restaurant.prochaine_ouverture.heure}`
-                  : restaurant.prochaine_ouverture.estDemain
-                  ? `Demain à ${restaurant.prochaine_ouverture.heure}`
-                  : `${restaurant.prochaine_ouverture.jourCapitalized} à ${restaurant.prochaine_ouverture.heure}`
-                }
-              </strong>
-            </>
-          ) : (
-            'Horaires non disponibles'
-          )}
-        </p>
-      </div>
-    </div>
-  </div>
-)}
+
+        {!restaurant.est_ouvert && (
+          <div className="restaurant-closed-banner">
+            <div className="restaurant-closed-banner__container">
+              <div className="restaurant-closed-banner__icon">
+                <Lock size={18}/>
+              </div>
+              <div className="restaurant-closed-banner__content">
+                <h3>Restaurant actuellement fermé</h3>
+                <p>
+                  {restaurant.prochaine_ouverture ? (
+                    <>
+                      Prochaine ouverture :{' '}
+                      <strong>
+                        {restaurant.prochaine_ouverture.estAujourdHui
+                          ? `Aujourd'hui à ${restaurant.prochaine_ouverture.heure}`
+                          : restaurant.prochaine_ouverture.estDemain
+                          ? `Demain à ${restaurant.prochaine_ouverture.heure}`
+                          : `${restaurant.prochaine_ouverture.jourCapitalized} à ${restaurant.prochaine_ouverture.heure}`
+                        }
+                      </strong>
+                    </>
+                  ) : (
+                    'Horaires non disponibles'
+                  )}
+                </p>
+              </div>
+            </div>
+          </div>
+        )}
+
         <div className="restaurant-info__container">
           <div className="restaurant-info__main">
             <div className="restaurant-info__header">
@@ -160,43 +160,34 @@ function RestaurantPage() {
                 {restaurant.est_ouvert ? 'Ouvert' : 'Fermé'}
               </div>
             </div>
-            
+
             {restaurant.type_cuisine && (
               <span className="restaurant-info__cuisine">{restaurant.type_cuisine}</span>
             )}
-            
+
             {restaurant.description && (
               <p className="restaurant-info__description">{restaurant.description}</p>
             )}
 
             <div className="restaurant-info__details">
               <div className="restaurant-info__detail">
-                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <path d="M21 10c0 7-9 13-9 13s-9-6-9-13a9 9 0 0 1 18 0z"></path>
-                  <circle cx="12" cy="10" r="3"></circle>
-                </svg>
+                <MapPin size={18}/>
                 <span>{restaurant.adresse}, {restaurant.code_postal} {restaurant.ville}</span>
               </div>
-              
+
               <div className="restaurant-info__detail">
-                <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                  <circle cx="12" cy="12" r="10"></circle>
-                  <polyline points="12 6 12 12 16 14"></polyline>
-                </svg>
+                <Clock size={18}/>
                 <span>Préparation: ~{restaurant.delai_preparation} min</span>
               </div>
 
               {restaurant.telephone && (
                 <div className="restaurant-info__detail">
-                  <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                    <path d="M22 16.92v3a2 2 0 0 1-2.18 2 19.79 19.79 0 0 1-8.63-3.07 19.5 19.5 0 0 1-6-6 19.79 19.79 0 0 1-3.07-8.67A2 2 0 0 1 4.11 2h3a2 2 0 0 1 2 1.72 12.84 12.84 0 0 0 .7 2.81 2 2 0 0 1-.45 2.11L8.09 9.91a16 16 0 0 0 6 6l1.27-1.27a2 2 0 0 1 2.11-.45 12.84 12.84 0 0 0 2.81.7A2 2 0 0 1 22 16.92z"></path>
-                  </svg>
+                  <Phone size={18}/>
                   <a href={`tel:${restaurant.telephone}`}>{restaurant.telephone}</a>
                 </div>
               )}
             </div>
 
-            {/* Modes de paiement */}
             {restaurant.modes_paiement && restaurant.modes_paiement.length > 0 && (
               <div className="restaurant-info__payment">
                 <span className="restaurant-info__payment-label">Paiement:</span>
@@ -209,22 +200,16 @@ function RestaurantPage() {
             )}
           </div>
 
-          {/* Horaires */}
           <div className="restaurant-info__horaires">
-            <button 
+            <button
               className="restaurant-info__horaires-toggle"
               onClick={() => setShowHoraires(!showHoraires)}
             >
-              <svg xmlns="http://www.w3.org/2000/svg" width="18" height="18" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-                <circle cx="12" cy="12" r="10"></circle>
-                <polyline points="12 6 12 12 16 14"></polyline>
-              </svg>
+              <Clock size={18}/>
               Horaires d'ouverture
-              <svg xmlns="http://www.w3.org/2000/svg" width="16" height="16" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round" className={showHoraires ? 'rotate' : ''}>
-                <polyline points="6 9 12 15 18 9"></polyline>
-              </svg>
+              <ChevronDown size={16} className={showHoraires ? 'rotate' : ''}/>
             </button>
-            
+
             {showHoraires && horaires && (
               <div className="restaurant-info__horaires-list">
                 {horaires.map(({ jour, horaires: h }) => (
@@ -241,7 +226,6 @@ function RestaurantPage() {
         </div>
       </div>
 
-      {/* Navigation catégories sticky */}
       {restaurant.categories && restaurant.categories.length > 0 && (
         <nav className="restaurant-nav">
           <div className="restaurant-nav__container">
@@ -261,7 +245,6 @@ function RestaurantPage() {
         </nav>
       )}
 
-      {/* Menu */}
       <div className="restaurant-menu">
         <div className="restaurant-menu__container">
           {restaurant.categories && restaurant.categories.length > 0 ? (
@@ -275,7 +258,7 @@ function RestaurantPage() {
                 {category.description && (
                   <p className="restaurant-menu__section-description">{category.description}</p>
                 )}
-                
+
                 {category.plats && category.plats.length > 0 ? (
                   <div className="restaurant-menu__grid">
                     {category.plats.map((plat) => (
@@ -301,15 +284,11 @@ function RestaurantPage() {
         </div>
       </div>
 
-      {/* Bouton panier flottant */}
       {cartItemsCount > 0 && cartRestaurant.id === parseInt(id) && (
         <Link to="/commander" className="restaurant-page__cart-btn">
           <span className="restaurant-page__cart-count">{cartItemsCount}</span>
           <span>Voir le panier</span>
-          <svg xmlns="http://www.w3.org/2000/svg" width="20" height="20" viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="2" strokeLinecap="round" strokeLinejoin="round">
-            <line x1="5" y1="12" x2="19" y2="12"></line>
-            <polyline points="12 5 19 12 12 19"></polyline>
-          </svg>
+          <ArrowRight size={20}/>
         </Link>
       )}
     </div>

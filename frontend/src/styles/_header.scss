@@ -33,7 +33,7 @@
     font-size: 1.5rem;
     color: var(--color-dark);
     transition: transform var(--transition-fast);
-    
+
     &:hover {
       transform: scale(1.02);
     }
@@ -44,7 +44,11 @@
     }
 
     &-text {
-      background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark));
+      background: linear-gradient(
+        135deg,
+        var(--color-primary),
+        var(--color-primary-dark)
+      );
       -webkit-background-clip: text;
       -webkit-text-fill-color: transparent;
       background-clip: text;
@@ -92,10 +96,14 @@
       overflow: hidden;
 
       &::before {
-        content: '';
+        content: "";
         position: absolute;
         inset: 0;
-        background: linear-gradient(135deg, var(--color-primary-light), rgba(255, 87, 34, 0.1));
+        background: linear-gradient(
+          135deg,
+          var(--color-primary-light),
+          rgba(255, 87, 34, 0.1)
+        );
         opacity: 0;
         transition: opacity var(--transition-fast);
         border-radius: inherit;
@@ -103,7 +111,7 @@
 
       &:hover {
         color: var(--color-primary);
-        
+
         &::before {
           opacity: 1;
         }
@@ -118,7 +126,7 @@
         padding: var(--spacing-md);
         border-bottom: 1px solid var(--color-gray-light);
         border-radius: 0;
-        
+
         &::before {
           border-radius: 0;
         }
@@ -159,7 +167,11 @@
       min-width: 20px;
       height: 20px;
       padding: 0 6px;
-      background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark));
+      background: linear-gradient(
+        135deg,
+        var(--color-primary),
+        var(--color-primary-dark)
+      );
       color: var(--color-white);
       font-size: 0.75rem;
       font-weight: 700;
@@ -199,7 +211,11 @@
       display: flex;
       align-items: center;
       justify-content: center;
-      background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark));
+      background: linear-gradient(
+        135deg,
+        var(--color-primary),
+        var(--color-primary-dark)
+      );
       color: var(--color-white);
       font-size: 0.8125rem;
       font-weight: 700;
@@ -233,7 +249,11 @@
 
       &-header {
         padding: var(--spacing-md);
-        background: linear-gradient(135deg, var(--color-gray-light), rgba(255, 87, 34, 0.05));
+        background: linear-gradient(
+          135deg,
+          var(--color-gray-light),
+          rgba(255, 87, 34, 0.05)
+        );
         border-bottom: 1px solid var(--color-gray-light);
       }
 
@@ -314,15 +334,15 @@
         color: var(--color-primary);
         background: var(--color-primary-light);
       }
-
-      @media (max-width: 640px) {
-        display: none;
-      }
     }
 
     &-btn {
       padding: var(--spacing-sm) var(--spacing-lg);
-      background: linear-gradient(135deg, var(--color-primary), var(--color-primary-dark));
+      background: linear-gradient(
+        135deg,
+        var(--color-primary),
+        var(--color-primary-dark)
+      );
       color: var(--color-white);
       font-weight: 600;
       font-size: 0.9375rem;
@@ -334,81 +354,9 @@
         transform: translateY(-2px);
         box-shadow: 0 6px 20px rgba(255, 87, 34, 0.35);
       }
-    }
-  }
-
-  // Burger Menu
-  &__burger {
-    display: none;
-    width: 44px;
-    height: 44px;
-    align-items: center;
-    justify-content: center;
-    border-radius: var(--radius-lg);
-    transition: background var(--transition-fast);
-
-    &:hover {
-      background: var(--color-gray-light);
-    }
-
-    @media (max-width: 768px) {
-      display: flex;
-    }
-
-    &-line {
-      position: relative;
-      width: 22px;
-      height: 2px;
-      background: var(--color-dark);
-      border-radius: 2px;
-      transition: all var(--transition-normal);
-
-      &::before,
-      &::after {
-        content: '';
-        position: absolute;
-        left: 0;
-        width: 100%;
-        height: 2px;
-        background: var(--color-dark);
-        border-radius: 2px;
-        transition: all var(--transition-normal);
-      }
-
-      &::before {
-        top: -7px;
-      }
-
-      &::after {
-        bottom: -7px;
-      }
-
-      &--open {
-        background: transparent;
-
-        &::before {
-          top: 0;
-          transform: rotate(45deg);
-        }
-
-        &::after {
-          bottom: 0;
-          transform: rotate(-45deg);
-        }
+      @media (max-width: 640px) {
+        display: none;
       }
     }
-  }
-
-  // Overlay
-  &__overlay {
-    position: fixed;
-    top: 72px;
-    left: 0;
-    right: 0;
-    bottom: 0;
-    background: rgba(0, 0, 0, 0.3);
-    backdrop-filter: blur(4px);
-    z-index: 98;
-    animation: fade-in 0.2s ease;
   }
 }
