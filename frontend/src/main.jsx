@@ -11,7 +11,7 @@ ReactDOM.createRoot(document.getElementById('root')).render(
   <React.StrictMode>
     <Provider store={store}>
       <BrowserRouter>
-        <ToastProvider position={TOAST_POSITIONS.TOP_RIGHT} maxToasts={5}>
+        <ToastProvider position={TOAST_POSITIONS.BOTTOM_RIGHT} maxToasts={5}>
           <App />
           <ToastContainer />
         </ToastProvider>

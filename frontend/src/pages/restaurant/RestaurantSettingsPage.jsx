@@ -364,11 +364,11 @@ function RestaurantSettingsPage() {
               <div className="settings-form__row">
                 <div className="settings-form__field settings-form__field--small">
                   <label>Code postal *</label>
-                  <input type="text" name="code_postal" value={formData.code_postal} onChange={handleChange} placeholder="75001" required />
+                  <input type="text" name="code_postal" value={formData.code_postal} onChange={handleChange} placeholder="01100" required />
                 </div>
                 <div className="settings-form__field">
                   <label>Ville *</label>
-                  <input type="text" name="ville" value={formData.ville} onChange={handleChange} placeholder="Paris" required />
+                  <input type="text" name="ville" value={formData.ville} onChange={handleChange} placeholder="Oyonnax" required />
                 </div>
               </div>
             </div>

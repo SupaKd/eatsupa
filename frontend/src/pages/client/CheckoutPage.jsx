@@ -395,7 +395,7 @@ function CheckoutPage() {
                         name="code_postal_livraison"
                         value={formData.code_postal_livraison}
                         onChange={handleChange}
-                        placeholder="75001"
+                        placeholder="01100"
                         disabled={isRestaurantClosed}
                       />
                     </div>
@@ -407,7 +407,7 @@ function CheckoutPage() {
                         name="ville_livraison"
                         value={formData.ville_livraison}
                         onChange={handleChange}
-                        placeholder="Paris"
+                        placeholder="Oyonnax"
                         required={formData.mode_retrait === 'livraison'}
                         disabled={isRestaurantClosed}
                       />

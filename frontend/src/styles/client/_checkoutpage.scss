@@ -264,6 +264,13 @@
     }
   }
 
+  .checkout-form__retrait-time{
+    flex-direction: row;
+    display: flex;
+    align-items: center;
+    gap: 6px;
+  }
+
   &__retrait-content {
     display: flex;
     align-items: flex-start;

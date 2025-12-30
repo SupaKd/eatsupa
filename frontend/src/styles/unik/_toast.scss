@@ -541,13 +541,13 @@ $toast-offset: 24px;
     &--success {
       background: linear-gradient(135deg, 
         rgba(22, 163, 74, 0.2) 0%, 
-        rgba(22, 163, 74, 0.15) 100%
+        rgba(22, 163, 74, 0.40) 100%
       );
       border-color: #16A34A;
       
       .toast__title,
       .toast__message {
-        color: #BBF7D0;
+        color: #16A34A;
       }
 
       .toast__icon::before {
@@ -559,13 +559,13 @@ $toast-offset: 24px;
     &--error {
       background: linear-gradient(135deg, 
         rgba(220, 38, 38, 0.2) 0%, 
-        rgba(220, 38, 38, 0.15) 100%
+        rgba(220, 38, 38, 0.40) 100%
       );
       border-color: #DC2626;
       
       .toast__title,
       .toast__message {
-        color: #FECACA;
+        color: #DC2626;
       }
 
       .toast__icon::before {
@@ -577,13 +577,13 @@ $toast-offset: 24px;
     &--warning {
       background: linear-gradient(135deg, 
         rgba(245, 158, 11, 0.2) 0%, 
-        rgba(245, 158, 11, 0.15) 100%
+        rgba(245, 158, 11, 0.40) 100%
       );
       border-color: #F59E0B;
       
       .toast__title,
       .toast__message {
-        color: #FDE68A;
+        color: #F59E0B;
       }
 
       .toast__icon::before {
@@ -595,13 +595,13 @@ $toast-offset: 24px;
     &--info {
       background: linear-gradient(135deg, 
         rgba(59, 130, 246, 0.2) 0%, 
-        rgba(59, 130, 246, 0.15) 100%
+        rgba(59, 130, 246, 0.40) 100%
       );
       border-color: #3B82F6;
       
       .toast__title,
       .toast__message {
-        color: #BFDBFE;
+        color: #3B82F6;
       }
 
       .toast__icon::before {
