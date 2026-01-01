@@ -267,3 +267,6 @@ export function useScrollTo() {
 
 // Re-export du hook useToast existant
 export { useToast, ToastProvider, TOAST_TYPES, TOAST_POSITIONS } from '@/contexts/ToastContext';
+
+// Hook pour les notifications sonores des commandes
+export { useOrderNotifications } from './useOrderNotifications';

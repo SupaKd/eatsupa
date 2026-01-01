@@ -1,6 +1,6 @@
-// src/pages/restaurant/RestaurantDashboardPage.jsx - Version optimisée
+// src/pages/restaurant/RestaurantDashboardPage.jsx - Version avec notifications sonores
 import { useState, useEffect, useCallback } from 'react';
-import { Link } from 'react-router-dom';
+import { Link, useNavigate } from 'react-router-dom';
 import { 
   Store, 
   Clock, 
@@ -15,11 +15,16 @@ import {
   Settings,
   Eye,
   DollarSign,
+  Volume2,
+  VolumeX,
 } from 'lucide-react';
 import { restaurantAPI, commandeAPI } from '@services/api';
-import { formatPrice, formatTime, getOrderStatus } from '@/utils';  // ✅ Imports centralisés
+import { formatPrice, formatTime, getOrderStatus } from '@/utils';
+import { useOrderNotifications } from '@/hooks/useOrderNotifications';
+import { NotificationPanel, UrgentOrderAlert } from '../../components/NotificationsControl';
 
 function RestaurantDashboardPage() {
+  const navigate = useNavigate();
   const [restaurant, setRestaurant] = useState(null);
   const [stats, setStats] = useState(null);
   const [commandesEnAttente, setCommandesEnAttente] = useState([]);
@@ -28,6 +33,23 @@ function RestaurantDashboardPage() {
   const [togglingFermeture, setTogglingFermeture] = useState(false);
   const [togglingLivraison, setTogglingLivraison] = useState(false);
   const [updatingCommande, setUpdatingCommande] = useState(null);
+  const [showUrgentAlert, setShowUrgentAlert] = useState(false);
+
+  // Hook pour les notifications sonores
+  const {
+    soundEnabled,
+    pendingCount,
+    toggleSound,
+    testSound,
+    clearNotifications,
+  } = useOrderNotifications(commandesEnAttente, {
+    enabled: true,
+    autoRepeat: true,
+    onNewOrder: (commande) => {
+      console.log('Nouvelle commande reçue:', commande.numero_commande);
+      setShowUrgentAlert(true);
+    },
+  });
 
   const fetchDashboardData = useCallback(async () => {
     try {
@@ -105,6 +127,10 @@ function RestaurantDashboardPage() {
     try {
       await commandeAPI.updateStatus(commandeId, newStatus);
       await fetchDashboardData();
+      // Marquer comme vue si confirmée
+      if (newStatus === 'confirmee') {
+        clearNotifications();
+      }
     } catch (err) {
       console.error('Erreur mise à jour commande:', err);
       alert('Erreur lors de la mise à jour');
@@ -113,9 +139,15 @@ function RestaurantDashboardPage() {
     }
   };
 
-  // ❌ SUPPRIMÉ - formatPrice local (importé de @/utils)
-  // ❌ SUPPRIMÉ - formatTime local (importé de @/utils)  
-  // ❌ SUPPRIMÉ - getStatusInfo local (remplacé par getOrderStatus de @/utils)
+  const handleViewOrders = () => {
+    setShowUrgentAlert(false);
+    clearNotifications();
+    navigate('/dashboard/commandes?statut=en_attente');
+  };
+
+  const handleDismissAlert = () => {
+    setShowUrgentAlert(false);
+  };
 
   if (loading) {
     return (
@@ -203,6 +235,15 @@ function RestaurantDashboardPage() {
 
   return (
     <div className="restaurant-dashboard">
+      {/* Alerte urgente flottante */}
+      {showUrgentAlert && commandesUrgentes.length > 0 && (
+        <UrgentOrderAlert
+          count={commandesUrgentes.length}
+          onViewOrders={handleViewOrders}
+          onDismiss={handleDismissAlert}
+        />
+      )}
+
       {/* Statut du restaurant */}
       <div className={`dashboard-status-banner ${restaurant?.est_ouvert ? 'dashboard-status-banner--open' : 'dashboard-status-banner--closed'}`}>
         <div className="dashboard-status-banner__info">
@@ -226,13 +267,23 @@ function RestaurantDashboardPage() {
             <span className="dashboard-status-banner__hours">Cliquez sur "Ouvrir" pour reprendre les commandes</span>
           )}
         </div>
-        <button
-          className={`dashboard-status-banner__toggle ${restaurant?.fermeture_exceptionnelle ? 'dashboard-status-banner__toggle--open' : 'dashboard-status-banner__toggle--close'}`}
-          onClick={handleToggleFermeture}
-          disabled={togglingFermeture}
-        >
-          {togglingFermeture ? '...' : (restaurant?.fermeture_exceptionnelle ? 'Ouvrir' : 'Fermer')}
-        </button>
+        
+        {/* Contrôle des notifications */}
+        <div className="dashboard-status-banner__controls">
+          <NotificationPanel
+            soundEnabled={soundEnabled}
+            onToggleSound={toggleSound}
+            onTestSound={testSound}
+            pendingCount={pendingCount}
+          />
+          <button
+            className={`dashboard-status-banner__toggle ${restaurant?.fermeture_exceptionnelle ? 'dashboard-status-banner__toggle--open' : 'dashboard-status-banner__toggle--close'}`}
+            onClick={handleToggleFermeture}
+            disabled={togglingFermeture}
+          >
+            {togglingFermeture ? '...' : (restaurant?.fermeture_exceptionnelle ? 'Ouvrir' : 'Fermer')}
+          </button>
+        </div>
       </div>
 
       {/* Contrôles rapides */}
@@ -252,6 +303,28 @@ function RestaurantDashboardPage() {
             onClick={handleToggleLivraison}
             disabled={togglingLivraison}
             aria-label="Toggle livraison"
+          >
+            <span className="dashboard-quick-control__switch-handle"></span>
+          </button>
+        </div>
+
+        {/* Contrôle du son - Version compacte */}
+        <div className="dashboard-quick-control">
+          <div className="dashboard-quick-control__info">
+            <span className="dashboard-quick-control__icon">
+              {soundEnabled ? <Volume2 size={24} /> : <VolumeX size={24} />}
+            </span>
+            <div>
+              <span className="dashboard-quick-control__label">Son alertes</span>
+              <span className={`dashboard-quick-control__status ${soundEnabled ? 'dashboard-quick-control__status--on' : ''}`}>
+                {soundEnabled ? 'Activé' : 'Désactivé'}
+              </span>
+            </div>
+          </div>
+          <button
+            className={`dashboard-quick-control__switch ${soundEnabled ? 'dashboard-quick-control__switch--on' : ''}`}
+            onClick={toggleSound}
+            aria-label="Toggle son notifications"
           >
             <span className="dashboard-quick-control__switch-handle"></span>
           </button>
@@ -286,7 +359,9 @@ function RestaurantDashboardPage() {
             <strong>{commandesUrgentes.length} commande{commandesUrgentes.length > 1 ? 's' : ''} en attente de confirmation</strong>
             <span>Action requise</span>
           </div>
-          <Link to="/dashboard/commandes?statut=en_attente" className="dashboard-alert__action">Voir tout</Link>
+          <Link to="/dashboard/commandes?statut=en_attente" className="dashboard-alert__action" onClick={clearNotifications}>
+            Voir tout
+          </Link>
         </div>
       )}
 
@@ -310,7 +385,7 @@ function RestaurantDashboardPage() {
         ) : (
           <div className="dashboard-orders-list">
             {commandesEnAttente.slice(0, 5).map((commande) => {
-              const statusInfo = getOrderStatus(commande.statut);  // ✅ Utilise la fonction centralisée
+              const statusInfo = getOrderStatus(commande.statut);
               const isUpdating = updatingCommande === commande.id;
 
               return (

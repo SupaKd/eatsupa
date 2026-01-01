@@ -64,7 +64,8 @@ function HomePage() {
     } finally {
       setLoading(false);
     }
-  }, [filters]);
+  }, [filters.search, filters.type_cuisine, filters.openOnly]);
+
 
   useEffect(() => {
     fetchRestaurants();
