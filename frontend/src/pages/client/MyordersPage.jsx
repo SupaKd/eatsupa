@@ -1,10 +1,10 @@
-// src/pages/client/MyOrdersPage.jsx - Version optimisée
+// src/pages/client/MyOrdersPage.jsx - Version corrigée
 import { useState, useEffect } from 'react';
 import { Link } from 'react-router-dom';
 import { useSelector } from 'react-redux';
 import { commandeAPI } from '@services/api';
 import { Home, ChevronRight } from 'lucide-react';
-import { formatPrice, formatDateTime, getOrderStatus } from '@/utils';  // ✅ Imports centralisés
+import { formatPrice, formatDateTime, getOrderStatus } from '@/utils';
 
 function MyOrdersPage() {
   const { isAuthenticated } = useSelector((state) => state.auth);
@@ -31,10 +31,6 @@ function MyOrdersPage() {
       setLoading(false);
     }
   };
-
-  // ❌ SUPPRIMÉ - formatPrice local (importé de @/utils)
-  // ❌ SUPPRIMÉ - formatDate local (remplacé par formatDateTime de @/utils)
-  // ❌ SUPPRIMÉ - getStatusInfo local (remplacé par getOrderStatus de @/utils)
 
   // Filtrer les commandes
   const filteredCommandes = commandes.filter((c) => {
@@ -117,7 +113,9 @@ function MyOrdersPage() {
         ) : (
           <div className="my-orders-page__list">
             {filteredCommandes.map((commande) => {
-              const statusInfo = getOrderStatus(commande.statut);  // ✅ Fonction centralisée
+              const statusInfo = getOrderStatus(commande.statut);
+              const IconComponent = statusInfo.icon;
+              
               return (
                 <Link
                   key={commande.id}
@@ -130,7 +128,8 @@ function MyOrdersPage() {
                       <span className="order-card__date">{formatDateTime(commande.date_commande)}</span>
                     </div>
                     <div className={`order-card__status order-card__status--${statusInfo.color}`}>
-                      {statusInfo.icon} {statusInfo.label}
+                      <IconComponent size={16} strokeWidth={2} />
+                      Commande {statusInfo.label.toLowerCase()}
                     </div>
                   </div>
 

@@ -1,8 +1,8 @@
-// src/pages/client/OrderConfirmationPage.jsx - Version optimisée
+// src/pages/client/OrderConfirmationPage.jsx - Version corrigée
 import { useEffect, useState } from 'react';
 import { useParams, useLocation, Link } from 'react-router-dom';
 import { commandeAPI } from '@services/api';
-import { formatPrice, formatDateTime, getOrderStatus } from '@/utils';  // ✅ Imports centralisés
+import { formatPrice, formatDateTime, getOrderStatus } from '@/utils';
 import {
   CheckCircle,
   Home,
@@ -40,10 +40,6 @@ function OrderConfirmationPage() {
     }
   };
 
-  // ❌ SUPPRIMÉ - formatPrice local (importé de @/utils)
-  // ❌ SUPPRIMÉ - formatDate local (remplacé par formatDateTime de @/utils)
-  // ❌ SUPPRIMÉ - getStatusInfo local (remplacé par getOrderStatus de @/utils)
-
   if (loading) {
     return (
       <div className="confirmation-page__loading">
@@ -65,7 +61,8 @@ function OrderConfirmationPage() {
     );
   }
 
-  const statusInfo = getOrderStatus(commande.statut);  // ✅ Fonction centralisée
+  const statusInfo = getOrderStatus(commande.statut);
+  const StatusIcon = statusInfo.icon;
 
   return (
     <div className="confirmation-page">
@@ -89,8 +86,8 @@ function OrderConfirmationPage() {
               <span className="confirmation-card__order-number">{commande.numero_commande}</span>
             </div>
             <div className={`confirmation-card__status confirmation-card__status--${statusInfo.color}`}>
-              <span>{statusInfo.icon}</span>
-              {statusInfo.label}
+              <StatusIcon size={16} strokeWidth={2} />
+              Commande {statusInfo.label.toLowerCase()}
             </div>
           </div>
 
