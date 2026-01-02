@@ -1,14 +1,15 @@
+// src/pages/client/RegisterPage.jsx - Version corrigée avec Redux
 import { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate, Link } from 'react-router-dom';
-import { register } from '@store/slices/authSlice';
-import { useToast } from '@/contexts/ToastContext';
+import { register } from '@/store/slices/authSlice';
+import { useToast } from '@/hooks/useToast';  // ✅ Import corrigé
 import { Info } from 'lucide-react';
 
 function RegisterPage() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const toast = useToast();
+  const toast = useToast();  // ✅ Utilise le hook Redux
   const { loading, error } = useSelector((state) => state.auth);
 
   const [activeRole, setActiveRole] = useState('client');
@@ -40,10 +41,8 @@ function RegisterPage() {
     e.preventDefault();
     
     try {
-      const result = await dispatch(register(formData)).unwrap();
-      toast.success('Votre compte a été créé avec succès !', {
-        title: 'Bienvenue sur Yumioo',
-      });
+      await dispatch(register(formData)).unwrap();
+      toast.success('Votre compte a été créé avec succès !');
       
       // Rediriger vers le dashboard approprié selon le rôle
       if (formData.role === 'restaurateur') {

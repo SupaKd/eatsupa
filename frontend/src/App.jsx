@@ -1,5 +1,5 @@
 // src/App.jsx
-// Version mise à jour - Utilise uniquement Redux (plus de Context API)
+// Version corrigée - Utilise uniquement Redux (plus de Context API)
 
 import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { lazy, Suspense, useEffect } from 'react';
@@ -32,8 +32,8 @@ const NotFound = lazy(() => import('./pages/NotFound'));
 const AdminLogin = lazy(() => import('./pages/admin/Login'));
 const AdminDashboard = lazy(() => import('./pages/admin/Dashboard'));
 const AdminOrders = lazy(() => import('./pages/admin/Orders'));
-const AdminProducts = lazy(() => import('./pages/admin/Products'));
-const AdminServiceHours = lazy(() => import('./pages/admin/AdminServiceHours'));
+const AdminUsers = lazy(() => import('./pages/admin/AdminUsersPage'));
+const AdminRestaurants = lazy(() => import('./pages/admin/AdminRestaurantsPage'));
 
 // ✅ LAZY LOADING - Restaurant dashboard pages
 const RestaurantDashboardPage = lazy(() => import('./pages/restaurant/RestaurantDashboardPage'));
@@ -95,10 +95,6 @@ function SessionInitializer({ children }) {
 function App() {
   return (
     <ErrorBoundary>
-      {/* ✅ Plus besoin de Provider ici - il est dans main.jsx */}
-      {/* ✅ Plus besoin de AuthProvider - remplacé par Redux */}
-      {/* ✅ Plus besoin de ServiceStatusProvider - remplacé par Redux */}
-      
       {/* Toast de react-hot-toast (garde pour compatibilité) */}
       <Toaster position="bottom-right" />
       
@@ -111,21 +107,78 @@ function App() {
           <div className="app">
             <Suspense fallback={<LoadingFallback />}>
               <Routes>
-                {/* Routes Client */}
+                {/* ========== Routes Client Public ========== */}
                 <Route path="/" element={<><Navbar /><Home /><Footer /></>} />
-                <Route path="/cart" element={<><Navbar /><Cart /><Footer /></>} />
-                <Route path="/checkout" element={<><Navbar /><Checkout /><Footer /></>} />
-                <Route path="/checkout/success" element={<><Navbar /><CheckoutSuccess /><Footer /></>} /> 
-                <Route path="/cgv" element={<><Navbar /><Cgv /><Footer /></>}/>
+                <Route path="/restaurant/:id" element={<><Navbar /><RestaurantPage /><Footer /></>} />
+                <Route path="/commander" element={<><Navbar /><Checkout /><Footer /></>} />
+                <Route path="/commande/:id/confirmation" element={<><Navbar /><OrderConfirmationPage /><Footer /></>} />
+                <Route path="/suivi/:token" element={<><Navbar /><OrderTrackingPage /><Footer /></>} />
+                
+                {/* Auth */}
+                <Route path="/login" element={<><Navbar /><LoginPage /><Footer /></>} />
+                <Route path="/register" element={<><Navbar /><RegisterPage /><Footer /></>} />
+                
+                {/* Pages client authentifié */}
+                <Route path="/mes-commandes" element={<><Navbar /><MyOrdersPage /><Footer /></>} />
+                <Route path="/profil" element={<ProtectedRoute><><Navbar /><ProfilePage /><Footer /></></ProtectedRoute>} />
+                
+                {/* Pages info */}
+                <Route path="/devenir-restaurateur" element={<><Navbar /><Restaurateur /><Footer /></>} />
+                <Route path="/cgv" element={<><Navbar /><Cgv /><Footer /></>} />
                 <Route path="/politique" element={<><Navbar /><Politique /><Footer /></>} />
                 <Route path="/mention" element={<><Navbar /><Mention /><Footer /></>} />
+                <Route path="/mentions-legales" element={<><Navbar /><Mention /><Footer /></>} />
+                <Route path="/confidentialite" element={<><Navbar /><Politique /><Footer /></>} />
 
-                {/* Routes Admin (pas de footer ici) */}
+                {/* ========== Routes Restaurant Dashboard ========== */}
+                <Route path="/dashboard" element={
+                  <ProtectedRoute allowedRoles={['restaurateur', 'admin']}>
+                    <RestaurantLayout><RestaurantDashboardPage /></RestaurantLayout>
+                  </ProtectedRoute>
+                } />
+                <Route path="/dashboard/commandes" element={
+                  <ProtectedRoute allowedRoles={['restaurateur', 'admin']}>
+                    <RestaurantLayout><RestaurantOrdersPage /></RestaurantLayout>
+                  </ProtectedRoute>
+                } />
+                <Route path="/dashboard/menu" element={
+                  <ProtectedRoute allowedRoles={['restaurateur', 'admin']}>
+                    <RestaurantLayout><RestaurantMenuPage /></RestaurantLayout>
+                  </ProtectedRoute>
+                } />
+                <Route path="/dashboard/restaurant" element={
+                  <ProtectedRoute allowedRoles={['restaurateur', 'admin']}>
+                    <RestaurantLayout><RestaurantSettingsPage /></RestaurantLayout>
+                  </ProtectedRoute>
+                } />
+                <Route path="/dashboard/paiement" element={
+                  <ProtectedRoute allowedRoles={['restaurateur', 'admin']}>
+                    <RestaurantLayout><RestaurantPaymentPage /></RestaurantLayout>
+                  </ProtectedRoute>
+                } />
+
+                {/* ========== Routes Admin ========== */}
                 <Route path="/admin/login" element={<AdminLogin />} />
-                <Route path="/admin" element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
-                <Route path="/admin/orders" element={<ProtectedRoute><AdminOrders /></ProtectedRoute>} />
-                <Route path="/admin/products" element={<ProtectedRoute><AdminProducts /></ProtectedRoute>} />
-                <Route path="/admin/horaires" element={<ProtectedRoute><AdminServiceHours /></ProtectedRoute>} />
+                <Route path="/admin" element={
+                  <ProtectedRoute allowedRoles={['admin']}>
+                    <AdminLayout><AdminDashboard /></AdminLayout>
+                  </ProtectedRoute>
+                } />
+                <Route path="/admin/orders" element={
+                  <ProtectedRoute allowedRoles={['admin']}>
+                    <AdminLayout><AdminOrders /></AdminLayout>
+                  </ProtectedRoute>
+                } />
+                <Route path="/admin/users" element={
+                  <ProtectedRoute allowedRoles={['admin']}>
+                    <AdminLayout><AdminUsers /></AdminLayout>
+                  </ProtectedRoute>
+                } />
+                <Route path="/admin/restaurants" element={
+                  <ProtectedRoute allowedRoles={['admin']}>
+                    <AdminLayout><AdminRestaurants /></AdminLayout>
+                  </ProtectedRoute>
+                } />
 
                 {/* 404 - Doit être en dernier */}
                 <Route path="*" element={<><Navbar /><NotFound /><Footer /></>} />

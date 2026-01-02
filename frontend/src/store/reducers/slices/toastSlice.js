@@ -1,5 +1,5 @@
 // src/store/slices/toastSlice.js
-// Remplace ToastContext - Gestion centralisée des notifications toast via Redux
+// Gestion centralisée des notifications toast via Redux
 
 import { createSlice } from '@reduxjs/toolkit';
 
@@ -95,8 +95,6 @@ export const selectToasts = (state) => state.toast?.toasts ?? [];
 export const selectToastPosition = (state) => state.toast?.position ?? TOAST_POSITIONS.BOTTOM_RIGHT;
 
 // ===== ACTION CREATORS HELPERS =====
-// Ces fonctions créent des actions avec des configurations prédéfinies
-
 export const showSuccess = (message, options = {}) =>
   addToast({ type: TOAST_TYPES.SUCCESS, message, ...options });
 

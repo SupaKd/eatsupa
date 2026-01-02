@@ -283,7 +283,7 @@ const authSlice = createSlice({
         state.token = null;
         state.isAuthenticated = false;
         state.sessionChecked = true;
-        state.error = null; // Ne pas afficher d'erreur pour session expirée
+        state.error = null;
       });
 
     // Login
@@ -343,7 +343,6 @@ const authSlice = createSlice({
         state.error = null;
       })
       .addCase(logout.rejected, (state) => {
-        // Même en cas d'erreur, on déconnecte localement
         state.loading = false;
         state.user = null;
         state.token = null;
@@ -394,14 +393,8 @@ export const selectIsAuthenticated = (state) => state.auth?.isAuthenticated ?? f
 export const selectAuthLoading = (state) => state.auth?.loading ?? false;
 export const selectAuthError = (state) => state.auth?.error ?? null;
 export const selectSessionChecked = (state) => state.auth?.sessionChecked ?? false;
-
-// Sélecteur pour le rôle de l'utilisateur
 export const selectUserRole = (state) => state.auth?.user?.role ?? null;
-
-// Sélecteur pour vérifier si l'utilisateur est admin
 export const selectIsAdmin = (state) => state.auth?.user?.role === 'admin';
-
-// Sélecteur pour vérifier si l'utilisateur est restaurateur
 export const selectIsRestaurateur = (state) => state.auth?.user?.role === 'restaurateur';
 
 export default authSlice.reducer;

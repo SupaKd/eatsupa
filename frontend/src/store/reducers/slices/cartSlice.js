@@ -87,6 +87,18 @@ const cartSlice = createSlice({
       saveCartToStorage(state);
     },
 
+    // Alias pour removeFromCart (compatibilité)
+    removeItem: (state, action) => {
+      const platId = action.payload;
+      state.items = state.items.filter(item => item.id !== platId);
+      
+      if (state.items.length === 0) {
+        state.restaurant = null;
+      }
+      
+      saveCartToStorage(state);
+    },
+
     // Incrémenter la quantité
     incrementQuantity: (state, action) => {
       const platId = action.payload;
@@ -118,15 +130,16 @@ const cartSlice = createSlice({
 
     // Mettre à jour la quantité directement
     updateQuantity: (state, action) => {
-      const { platId, quantity } = action.payload;
+      const { platId, productId, quantity } = action.payload;
+      const id = platId || productId; // Support les deux noms
       
       if (quantity <= 0) {
-        state.items = state.items.filter(item => item.id !== platId);
+        state.items = state.items.filter(item => item.id !== id);
         if (state.items.length === 0) {
           state.restaurant = null;
         }
       } else {
-        const item = state.items.find(item => item.id === platId);
+        const item = state.items.find(item => item.id === id);
         if (item) {
           item.quantite = quantity;
         }
@@ -153,6 +166,7 @@ const cartSlice = createSlice({
 export const {
   addToCart,
   removeFromCart,
+  removeItem,
   incrementQuantity,
   decrementQuantity,
   updateQuantity,

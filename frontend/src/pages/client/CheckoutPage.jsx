@@ -1,4 +1,4 @@
-// src/pages/client/CheckoutPage.jsx - Version optimisée
+// src/pages/client/CheckoutPage.jsx - Version corrigée avec Redux
 import { useState, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { useNavigate, Link } from 'react-router-dom';
@@ -11,10 +11,10 @@ import {
   decrementQuantity,
   removeFromCart,
   clearCart,
-} from '@store/slices/cartSlice';
-import { commandeAPI, restaurantAPI } from '@services/api';
-import { useToast } from '@/contexts/ToastContext';
-import { formatPrice } from '@/utils';  // ✅ Import centralisé
+} from '@/store/slices/cartSlice';
+import { commandeAPI, restaurantAPI } from '@/services/api';
+import { useToast } from '@/hooks/useToast';  // ✅ Import corrigé
+import { formatPrice } from '@/utils';
 import { 
   ArrowLeft, 
   AlertCircle, 
@@ -36,7 +36,7 @@ import {
 function CheckoutPage() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const toast = useToast();
+  const toast = useToast();  // ✅ Utilise le hook Redux
   const { user } = useSelector((state) => state.auth);
   const items = useSelector(selectCartItems);
   const restaurant = useSelector(selectCartRestaurant);
@@ -59,9 +59,6 @@ function CheckoutPage() {
   });
   const [loading, setLoading] = useState(false);
   const [error, setError] = useState(null);
-
-  // ❌ SUPPRIMÉ - formatPrice local (maintenant importé de @/utils)
-  // const formatPrice = (price) => { ... }
 
   // Vérifier si le restaurant est ouvert
   useEffect(() => {
@@ -171,9 +168,7 @@ function CheckoutPage() {
       if (response.data.success) {
         const commande = response.data.data;
         dispatch(clearCart());
-        toast.success('Votre commande a été envoyée au restaurant !', {
-          title: 'Commande confirmée',
-        });
+        toast.success('Votre commande a été envoyée au restaurant !');
         navigate(`/commande/${commande.id}/confirmation`, {
           state: { commande, token: commande.token_suivi },
         });

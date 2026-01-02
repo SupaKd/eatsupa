@@ -1,13 +1,14 @@
+// src/pages/client/LoginPage.jsx - Version corrigée avec Redux
 import { useState } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { useNavigate, Link } from 'react-router-dom';
-import { login } from '@store/slices/authSlice';
-import { useToast } from '@/contexts/ToastContext';
+import { login } from '@/store/slices/authSlice';
+import { useToast } from '@/hooks/useToast';  // ✅ Import corrigé
 
 function LoginPage() {
   const dispatch = useDispatch();
   const navigate = useNavigate();
-  const toast = useToast();
+  const toast = useToast();  // ✅ Utilise le hook Redux
   const { loading, error } = useSelector((state) => state.auth);
 
   const [formData, setFormData] = useState({
@@ -27,9 +28,7 @@ function LoginPage() {
     
     try {
       const result = await dispatch(login(formData)).unwrap();
-      toast.success(`Bienvenue ${result.user.prenom} !`, {
-        title: 'Connexion réussie',
-      });
+      toast.success(`Bienvenue ${result.user.prenom} !`);
       navigate('/');
     } catch (err) {
       toast.error(err || 'Email ou mot de passe incorrect');

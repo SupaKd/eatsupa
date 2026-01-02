@@ -1,4 +1,4 @@
-// ===== src/components/client/CartSidebar.jsx ===== (VERSION CORRIGÉE)
+// src/components/client/CartSidebar.jsx
 import { useSelector, useDispatch } from "react-redux";
 import { Link } from "react-router-dom";
 import { X, ShoppingCart, Trash2, Plus, Minus } from "lucide-react";
@@ -6,28 +6,28 @@ import {
   selectCartItems, 
   selectCartTotal, 
   selectCartItemsCount,
-  removeItem,
+  removeFromCart,
   updateQuantity,
   clearCart 
-} from "../../store/cartSlice";
+} from "@/store/slices/cartSlice";
 
 const CartSidebar = ({ isOpen, onClose }) => {
   const dispatch = useDispatch();
   
-  // ✅ CORRECTION : Utiliser des sélecteurs sécurisés avec valeurs par défaut
+  // ✅ Utiliser les sélecteurs Redux
   const items = useSelector(selectCartItems) || [];
   const total = useSelector(selectCartTotal) || 0;
   const itemCount = useSelector(selectCartItemsCount) || 0;
 
   const handleRemoveItem = (productId) => {
-    dispatch(removeItem(productId));
+    dispatch(removeFromCart(productId));
   };
 
   const handleUpdateQuantity = (productId, newQuantity) => {
     if (newQuantity <= 0) {
-      dispatch(removeItem(productId));
+      dispatch(removeFromCart(productId));
     } else {
-      dispatch(updateQuantity({ productId, quantity: newQuantity }));
+      dispatch(updateQuantity({ platId: productId, quantity: newQuantity }));
     }
   };
 
@@ -121,14 +121,14 @@ const CartSidebar = ({ isOpen, onClose }) => {
           ) : (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '1rem' }}>
               {items.map((item) => {
-                if (!item?.product) return null;
+                if (!item) return null;
                 
-                const price = parseFloat(item.product.price) || 0;
-                const quantity = parseInt(item.quantity) || 0;
+                const price = parseFloat(item.prix) || 0;
+                const quantity = parseInt(item.quantite) || 0;
                 
                 return (
                   <div 
-                    key={item.product.id}
+                    key={item.id}
                     style={{
                       display: 'flex',
                       gap: '1rem',
@@ -138,10 +138,10 @@ const CartSidebar = ({ isOpen, onClose }) => {
                     }}
                   >
                     {/* Image */}
-                    {item.product.image_url && (
+                    {item.image_url && (
                       <img 
-                        src={item.product.image_url}
-                        alt={item.product.name}
+                        src={item.image_url}
+                        alt={item.nom}
                         style={{
                           width: '60px',
                           height: '60px',
@@ -154,7 +154,7 @@ const CartSidebar = ({ isOpen, onClose }) => {
                     {/* Info */}
                     <div style={{ flex: 1 }}>
                       <h4 style={{ margin: '0 0 0.25rem', fontSize: '0.95rem' }}>
-                        {item.product.name}
+                        {item.nom}
                       </h4>
                       <p style={{ margin: 0, color: '#666', fontSize: '0.85rem' }}>
                         {price.toFixed(2)} €
@@ -170,7 +170,7 @@ const CartSidebar = ({ isOpen, onClose }) => {
                         }}
                       >
                         <button
-                          onClick={() => handleUpdateQuantity(item.product.id, quantity - 1)}
+                          onClick={() => handleUpdateQuantity(item.id, quantity - 1)}
                           style={{
                             width: '28px',
                             height: '28px',
@@ -191,7 +191,7 @@ const CartSidebar = ({ isOpen, onClose }) => {
                         </span>
                         
                         <button
-                          onClick={() => handleUpdateQuantity(item.product.id, quantity + 1)}
+                          onClick={() => handleUpdateQuantity(item.id, quantity + 1)}
                           style={{
                             width: '28px',
                             height: '28px',
@@ -266,7 +266,7 @@ const CartSidebar = ({ isOpen, onClose }) => {
             </div>
             
             <Link
-              to="/cart"
+              to="/commander"
               onClick={onClose}
               style={{
                 display: 'block',
@@ -281,7 +281,7 @@ const CartSidebar = ({ isOpen, onClose }) => {
                 fontSize: '1rem',
               }}
             >
-              Voir le panier
+              Commander
             </Link>
           </div>
         )}

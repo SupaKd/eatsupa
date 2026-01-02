@@ -11,7 +11,6 @@ import serviceStatusReducer from './slices/serviceStatusSlice';
 const toastAutoRemoveMiddleware = (store) => (next) => (action) => {
   const result = next(action);
   
-  // Si un toast a été ajouté, programmer sa suppression automatique
   if (action.type === 'toast/addToast') {
     const state = store.getState();
     const toasts = state.toast?.toasts || [];
@@ -28,7 +27,7 @@ const toastAutoRemoveMiddleware = (store) => (next) => (action) => {
 };
 
 // Middleware pour logger les erreurs en développement
-const errorMiddleware = (store) => (next) => (action) => {
+const errorMiddleware = () => (next) => (action) => {
   try {
     return next(action);
   } catch (error) {
@@ -47,17 +46,12 @@ export const store = configureStore({
   middleware: (getDefaultMiddleware) =>
     getDefaultMiddleware({
       serializableCheck: {
-        // Ignorer les actions avec des fonctions (comme les callbacks des toasts)
         ignoredActions: ['toast/addToast'],
         ignoredPaths: ['toast.toasts'],
       },
     }).concat(toastAutoRemoveMiddleware, errorMiddleware),
   devTools: import.meta.env.DEV,
 });
-
-// Types pour TypeScript (optionnel, mais utile)
-// export type RootState = ReturnType<typeof store.getState>;
-// export type AppDispatch = typeof store.dispatch;
 
 export default store;
 

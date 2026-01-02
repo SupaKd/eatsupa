@@ -1,5 +1,5 @@
 // src/store/slices/serviceStatusSlice.js
-// Remplace ServiceStatusContext - Gestion du statut du service/restaurant
+// Gestion du statut du service/restaurant via Redux
 
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 
@@ -8,8 +8,6 @@ export const checkServiceStatus = createAsyncThunk(
   'serviceStatus/check',
   async (_, { rejectWithValue }) => {
     try {
-      // Ici vous pouvez ajouter un appel API pour vérifier le statut du service
-      // Pour l'instant, on retourne un statut par défaut
       return {
         isOnline: true,
         lastCheck: Date.now(),
@@ -26,7 +24,6 @@ const initialState = {
   lastCheck: null,
   loading: false,
   error: null,
-  // Statut spécifique au restaurant (si applicable)
   restaurantStatus: {
     isOpen: true,
     nextOpeningTime: null,
