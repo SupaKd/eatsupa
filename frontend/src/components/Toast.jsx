@@ -1,5 +1,9 @@
-import { useState, useEffect } from 'react';
-import { useToast, TOAST_TYPES } from '@/contexts/ToastContext';
+// src/components/Toast.jsx
+// Composant Toast utilisant Redux (remplace la version avec Context)
+
+import { useState, useEffect, memo } from 'react';
+import { useSelector, useDispatch } from 'react-redux';
+import { selectToasts, selectToastPosition, removeToast, TOAST_TYPES } from '@/store/slices/toastSlice';
 import {
   CheckCircle,
   XCircle,
@@ -17,7 +21,7 @@ const TOAST_ICONS = {
 };
 
 // Composant individuel Toast
-function ToastItem({ toast, onRemove }) {
+const ToastItem = memo(function ToastItem({ toast, onRemove }) {
   const [isExiting, setIsExiting] = useState(false);
   const [progress, setProgress] = useState(100);
 
@@ -96,18 +100,24 @@ function ToastItem({ toast, onRemove }) {
       )}
     </div>
   );
-}
+});
 
-// Container principal des toasts
+// Container principal des toasts (utilise Redux)
 function ToastContainer() {
-  const { toasts, position, removeToast } = useToast();
+  const dispatch = useDispatch();
+  const toasts = useSelector(selectToasts);
+  const position = useSelector(selectToastPosition);
+
+  const handleRemove = (id) => {
+    dispatch(removeToast(id));
+  };
 
   if (toasts.length === 0) return null;
 
   return (
     <div className={`toast-container toast-container--${position}`}>
       {toasts.map((toast) => (
-        <ToastItem key={toast.id} toast={toast} onRemove={removeToast} />
+        <ToastItem key={toast.id} toast={toast} onRemove={handleRemove} />
       ))}
     </div>
   );

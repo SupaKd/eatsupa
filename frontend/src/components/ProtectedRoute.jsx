@@ -1,5 +1,14 @@
+// src/components/ProtectedRoute.jsx
+// Composant pour protéger les routes - Utilise Redux
+
 import { Navigate, useLocation } from 'react-router-dom';
 import { useSelector } from 'react-redux';
+import { 
+  selectIsAuthenticated, 
+  selectUser, 
+  selectSessionChecked,
+  selectAuthLoading 
+} from '@/store/slices/authSlice';
 
 /**
  * Composant pour protéger les routes nécessitant une authentification
@@ -29,7 +38,31 @@ import { useSelector } from 'react-redux';
  */
 function ProtectedRoute({ children, allowedRoles = [], requireAuth = true }) {
   const location = useLocation();
-  const { user, isAuthenticated } = useSelector((state) => state.auth);
+  
+  // Sélecteurs Redux
+  const isAuthenticated = useSelector(selectIsAuthenticated);
+  const user = useSelector(selectUser);
+  const sessionChecked = useSelector(selectSessionChecked);
+  const loading = useSelector(selectAuthLoading);
+
+  // Attendre que la session soit vérifiée
+  if (!sessionChecked || loading) {
+    return (
+      <div style={{
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'center',
+        minHeight: '100vh',
+        fontSize: '1.25rem',
+        color: '#666'
+      }}>
+        <div style={{ textAlign: 'center' }}>
+          <div style={{ marginBottom: '1rem', fontSize: '2rem' }}>⏳</div>
+          <div>Vérification de la session...</div>
+        </div>
+      </div>
+    );
+  }
 
   // Si l'authentification est requise et que l'utilisateur n'est pas connecté
   if (requireAuth && !isAuthenticated) {

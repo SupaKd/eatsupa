@@ -1,7 +1,15 @@
 // src/hooks/index.js
-// Hooks personnalisés réutilisables
+// Point d'entrée unique pour tous les hooks personnalisés
 
-import { useState, useEffect, useCallback, useRef, useMemo } from 'react';
+import { useState, useEffect, useCallback, useRef } from 'react';
+
+// ===== HOOKS REDUX =====
+export { useAuth, useSessionCheck } from './useAuth';
+export { useToast, TOAST_TYPES, TOAST_POSITIONS } from './useToast';
+export { useServiceStatus } from './useServiceStatus';
+export { useOrderNotifications } from './useOrderNotifications';
+
+// ===== HOOKS UTILITAIRES =====
 
 /**
  * Hook pour gérer les appels API avec loading/error
@@ -264,9 +272,3 @@ export function useScrollTo() {
 
   return scrollTo;
 }
-
-// Re-export du hook useToast existant
-export { useToast, ToastProvider, TOAST_TYPES, TOAST_POSITIONS } from '@/contexts/ToastContext';
-
-// Hook pour les notifications sonores des commandes
-export { useOrderNotifications } from './useOrderNotifications';
