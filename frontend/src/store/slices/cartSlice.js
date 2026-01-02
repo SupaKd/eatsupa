@@ -1,147 +1,163 @@
+// ===== src/store/cartSlice.js ===== (VERSION CORRIGÉE)
 import { createSlice } from '@reduxjs/toolkit';
+
+const initialState = {
+  items: [],
+  restaurant: null,
+};
 
 // Charger le panier depuis localStorage
 const loadCartFromStorage = () => {
   try {
-    const cart = localStorage.getItem('cart');
-    return cart ? JSON.parse(cart) : { items: [], restaurantId: null, restaurantName: null };
-  } catch {
-    return { items: [], restaurantId: null, restaurantName: null };
+    const saved = localStorage.getItem('cart');
+    if (!saved) return initialState;
+    
+    const parsed = JSON.parse(saved);
+    return {
+      items: Array.isArray(parsed.items) ? parsed.items : Array.isArray(parsed) ? parsed : [],
+      restaurant: parsed.restaurant || null,
+    };
+  } catch (error) {
+    console.error('Erreur chargement panier:', error);
+    return initialState;
   }
 };
 
-// Sauvegarder le panier dans localStorage
-const saveCartToStorage = (cart) => {
-  localStorage.setItem('cart', JSON.stringify(cart));
-};
-
-const initialState = loadCartFromStorage();
-
 const cartSlice = createSlice({
   name: 'cart',
-  initialState,
+  initialState: loadCartFromStorage(),
   reducers: {
-    // Ajouter un article au panier
-    addToCart: (state, action) => {
-      const { plat, restaurantId, restaurantName } = action.payload;
+    addItem: (state, action) => {
+      const { product, quantity = 1 } = action.payload;
       
-      // Si le panier contient des articles d'un autre restaurant, le vider
-      if (state.restaurantId && state.restaurantId !== restaurantId) {
+      if (!product || !product.id) return;
+      
+      // S'assurer que items est un tableau
+      if (!Array.isArray(state.items)) {
         state.items = [];
       }
       
-      state.restaurantId = restaurantId;
-      state.restaurantName = restaurantName;
+      const existingIndex = state.items.findIndex(
+        item => item.product?.id === product.id
+      );
       
-      // Vérifier si l'article existe déjà
-      const existingItem = state.items.find(item => item.id === plat.id);
-      
-      if (existingItem) {
-        existingItem.quantite += 1;
+      if (existingIndex > -1) {
+        state.items[existingIndex].quantity += quantity;
       } else {
-        state.items.push({
-          id: plat.id,
-          nom: plat.nom,
-          prix: parseFloat(plat.prix),
-          quantite: 1,
-          image_url: plat.image_url,
-        });
+        state.items.push({ product, quantity });
       }
       
-      saveCartToStorage(state);
+      // Sauvegarder dans localStorage
+      localStorage.setItem('cart', JSON.stringify(state));
     },
     
-    // Retirer un article du panier
-    removeFromCart: (state, action) => {
-      const platId = action.payload;
-      state.items = state.items.filter(item => item.id !== platId);
+    removeItem: (state, action) => {
+      const productId = action.payload;
       
-      // Si le panier est vide, réinitialiser
-      if (state.items.length === 0) {
-        state.restaurantId = null;
-        state.restaurantName = null;
+      if (!Array.isArray(state.items)) {
+        state.items = [];
+        return;
       }
       
-      saveCartToStorage(state);
+      state.items = state.items.filter(item => item.product?.id !== productId);
+      localStorage.setItem('cart', JSON.stringify(state));
     },
     
-    // Mettre à jour la quantité
     updateQuantity: (state, action) => {
-      const { platId, quantite } = action.payload;
+      const { productId, quantity } = action.payload;
       
-      if (quantite <= 0) {
-        state.items = state.items.filter(item => item.id !== platId);
-        if (state.items.length === 0) {
-          state.restaurantId = null;
-          state.restaurantName = null;
-        }
+      if (!Array.isArray(state.items)) {
+        state.items = [];
+        return;
+      }
+      
+      if (quantity <= 0) {
+        state.items = state.items.filter(item => item.product?.id !== productId);
       } else {
-        const item = state.items.find(item => item.id === platId);
+        const item = state.items.find(item => item.product?.id === productId);
         if (item) {
-          item.quantite = quantite;
+          item.quantity = quantity;
         }
       }
       
-      saveCartToStorage(state);
+      localStorage.setItem('cart', JSON.stringify(state));
     },
     
-    // Incrémenter la quantité
-    incrementQuantity: (state, action) => {
-      const platId = action.payload;
-      const item = state.items.find(item => item.id === platId);
-      if (item) {
-        item.quantite += 1;
-      }
-      saveCartToStorage(state);
-    },
-    
-    // Décrémenter la quantité
-    decrementQuantity: (state, action) => {
-      const platId = action.payload;
-      const item = state.items.find(item => item.id === platId);
-      if (item) {
-        if (item.quantite > 1) {
-          item.quantite -= 1;
-        } else {
-          state.items = state.items.filter(i => i.id !== platId);
-          if (state.items.length === 0) {
-            state.restaurantId = null;
-            state.restaurantName = null;
-          }
-        }
-      }
-      saveCartToStorage(state);
-    },
-    
-    // Vider le panier
     clearCart: (state) => {
       state.items = [];
-      state.restaurantId = null;
-      state.restaurantName = null;
-      saveCartToStorage(state);
+      state.restaurant = null;
+      localStorage.removeItem('cart');
+    },
+    
+    setRestaurant: (state, action) => {
+      state.restaurant = action.payload;
+      localStorage.setItem('cart', JSON.stringify(state));
     },
   },
 });
 
-// Sélecteurs
-export const selectCartItems = (state) => state.cart.items;
-export const selectCartRestaurant = (state) => ({
-  id: state.cart.restaurantId,
-  name: state.cart.restaurantName,
-});
-export const selectCartItemsCount = (state) => 
-  state.cart.items.reduce((total, item) => total + item.quantite, 0);
-export const selectCartTotal = (state) => 
-  state.cart.items.reduce((total, item) => total + (item.prix * item.quantite), 0);
-export const selectIsCartEmpty = (state) => state.cart.items.length === 0;
-
-export const {
-  addToCart,
-  removeFromCart,
-  updateQuantity,
-  incrementQuantity,
-  decrementQuantity,
-  clearCart,
+export const { 
+  addItem, 
+  removeItem, 
+  updateQuantity, 
+  clearCart, 
+  setRestaurant 
 } = cartSlice.actions;
+
+// ===== SÉLECTEURS CORRIGÉS =====
+// Ces sélecteurs gèrent maintenant les cas où state.cart ou state.cart.items est undefined
+
+export const selectCartItems = (state) => {
+  // Vérification défensive
+  if (!state?.cart?.items) return [];
+  return Array.isArray(state.cart.items) ? state.cart.items : [];
+};
+
+export const selectCartItemsCount = (state) => {
+  // ✅ CORRECTION : Vérifier que items existe et est un tableau
+  const items = state?.cart?.items;
+  
+  if (!items || !Array.isArray(items)) {
+    return 0;
+  }
+  
+  return items.reduce((sum, item) => {
+    const quantity = parseInt(item?.quantity) || 0;
+    return sum + quantity;
+  }, 0);
+};
+
+export const selectCartTotal = (state) => {
+  // ✅ CORRECTION : Vérifier que items existe et est un tableau
+  const items = state?.cart?.items;
+  
+  if (!items || !Array.isArray(items)) {
+    return 0;
+  }
+  
+  return items.reduce((sum, item) => {
+    if (!item?.product?.price) return sum;
+    const price = parseFloat(item.product.price) || 0;
+    const quantity = parseInt(item.quantity) || 0;
+    return sum + (price * quantity);
+  }, 0);
+};
+
+export const selectCartRestaurant = (state) => {
+  // ✅ CORRECTION : Retourner null au lieu d'un nouvel objet vide
+  // Cela évite les re-renders inutiles
+  return state?.cart?.restaurant ?? null;
+};
+
+export const selectProductQuantityInCart = (productId) => (state) => {
+  const items = state?.cart?.items;
+  
+  if (!items || !Array.isArray(items)) {
+    return 0;
+  }
+  
+  const item = items.find(item => item.product?.id === productId);
+  return item ? parseInt(item.quantity) || 0 : 0;
+};
 
 export default cartSlice.reducer;

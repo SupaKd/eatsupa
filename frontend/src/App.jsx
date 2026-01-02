@@ -1,205 +1,99 @@
-// src/App.jsx - Version optimisée avec lazy loading
-import { useState, lazy, Suspense } from 'react';
-import { Routes, Route, Navigate, useLocation } from 'react-router-dom';
-import { useSelector } from 'react-redux';
-import './styles/main.scss';
+// ===== src/App.jsx ===== (VERSION CORRIGÉE AVEC REDUX)
+import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
+import { lazy, Suspense } from 'react';
+import { Provider } from 'react-redux';
+import { store } from './store/store';
+import { AuthProvider } from './context/AuthContext';
+import { ServiceStatusProvider } from './context/ServiceStatusContext';
+import { Toaster } from "react-hot-toast";
+import ScrollToTop from "./components/ScrollToTop";
+import ErrorBoundary from "./components/ErrorBoundary";
 
-// Layouts - Chargés immédiatement car essentiels
-import AdminLayout from '@components/AdminLayout';
-import RestaurantLayout from '@components/RestaurantLayout';
+// Client pages - chargement immédiat (pages principales)
+import Home from './pages/client/Home';
+import Cart from './pages/client/Cart';
+import Checkout from './pages/client/Checkout';
+import CheckoutSuccess from './pages/client/CheckoutSuccess';
 
-// Composants essentiels - Chargés immédiatement
-import Header from '@components/Header';
-import Footer from '@components/Footer';
-import CartSidebar from '@components/client/CartSidebar';
-import ProtectedRoute from '@components/ProtectedRoute';
+// ✅ LAZY LOADING - Pages secondaires (CGV, politique, etc.)
+const Cgv = lazy(() => import('./pages/client/Cgv'));
+const Politique = lazy(() => import('./pages/client/Politique'));
+const Mention = lazy(() => import('./pages/client/Mention'));
+const NotFound = lazy(() => import('./pages/NotFound'));
 
-// Composant de chargement pour Suspense
-import { LoadingState } from '@components/ui/StateViews';
+// ✅ LAZY LOADING - Admin pages (code splitting)
+const AdminLogin = lazy(() => import('./pages/admin/Login'));
+const AdminDashboard = lazy(() => import('./pages/admin/Dashboard'));
+const AdminOrders = lazy(() => import('./pages/admin/Orders'));
+const AdminProducts = lazy(() => import('./pages/admin/Products'));
+const AdminServiceHours = lazy(() => import('./pages/admin/AdminServiceHours'));
 
-// ============================================
-// LAZY LOADING DES PAGES
-// Réduit le bundle initial de ~40%
-// ============================================
+// Components
+import ProtectedRoute from './components/ProtectedRoute';
 
-// Pages publiques
-const HomePage = lazy(() => import('@pages/client/HomePage'));
-const RestaurantPage = lazy(() => import('@pages/client/RestaurantPage'));
-const CheckoutPage = lazy(() => import('@pages/client/CheckoutPage'));
-const OrderConfirmationPage = lazy(() => import('@pages/client/OrderConfirmationPage'));
-const OrderTrackingPage = lazy(() => import('@pages/client/OrderTrackingPage'));
-const LoginPage = lazy(() => import('@pages/client/LoginPage'));
-const RegisterPage = lazy(() => import('@pages/client/RegisterPage'));
-const MyOrdersPage = lazy(() => import('@pages/client/MyOrdersPage'));
-const ProfilePage = lazy(() => import('@pages/ProfilePage'));
-const Restaurateur = lazy(() => import('@pages/client/Restaurateur'));
+// Layout
+import Navbar from './layout/Navbar';
+import Footer from './layout/Footer';
 
-// Pages Admin - Ne chargées que si admin
-const AdminDashboardPage = lazy(() => import('@pages/admin/AdminDashboardPage'));
-const AdminUsersPage = lazy(() => import('@pages/admin/AdminUsersPage'));
-const AdminRestaurantsPage = lazy(() => import('@pages/admin/AdminRestaurantsPage'));
-const AdminOrdersPage = lazy(() => import('@pages/admin/AdminOrdersPage'));
-
-// Pages Restaurateur - Ne chargées que si restaurateur
-const RestaurantDashboardPage = lazy(() => import('@pages/restaurant/RestaurantDashboardPage'));
-const RestaurantOrdersPage = lazy(() => import('@pages/restaurant/RestaurantOrdersPage'));
-const RestaurantMenuPage = lazy(() => import('@pages/restaurant/RestaurantMenuPage'));
-const RestaurantSettingsPage = lazy(() => import('@pages/restaurant/RestaurantSettingsPage'));
-const RestaurantPaymentPage = lazy(() => import('@pages/restaurant/RestaurantPaymentPage'));
-
-// ============================================
-// COMPOSANTS DE ROUTING
-// ============================================
-
-// Composant pour bloquer l'accès client aux admin/restaurateur
-function ClientRoute({ children }) {
-  const { user, isAuthenticated } = useSelector((state) => state.auth);
-  
-  if (isAuthenticated && user?.role === 'admin') {
-    return <Navigate to="/admin" replace />;
-  }
-  
-  if (isAuthenticated && user?.role === 'restaurateur') {
-    return <Navigate to="/dashboard" replace />;
-  }
-  
-  return children;
-}
-
-// Composant pour rediriger après login selon le rôle
-function LoginRoute() {
-  const { user, isAuthenticated } = useSelector((state) => state.auth);
-  const location = useLocation();
-  
-  if (isAuthenticated && user) {
-    if (user.role === 'admin') return <Navigate to="/admin" replace />;
-    if (user.role === 'restaurateur') return <Navigate to="/dashboard" replace />;
-    const from = location.state?.from?.pathname || '/';
-    return <Navigate to={from} replace />;
-  }
-  
-  return <LoginPage />;
-}
-
-// Page 404
-function NotFoundPage() {
-  return (
-    <div className="not-found-page">
-      <div className="not-found-page__content">
-        <h1>404</h1>
-        <p>Page non trouvée</p>
-        <a href="/" className="not-found-page__btn">
-          Retour à l'accueil
-        </a>
-      </div>
+// ✅ Composant de fallback pour le lazy loading
+const LoadingFallback = () => (
+  <div style={{
+    display: 'flex',
+    alignItems: 'center',
+    justifyContent: 'center',
+    minHeight: '100vh',
+    fontSize: '1.5rem',
+    color: '#666'
+  }}>
+    <div style={{ textAlign: 'center' }}>
+      <div style={{ 
+        marginBottom: '1rem',
+        fontSize: '3rem'
+      }}>⏳</div>
+      <div>Chargement...</div>
     </div>
-  );
-}
-
-// Wrapper Suspense réutilisable
-const PageLoader = ({ children }) => (
-  <Suspense fallback={<LoadingState message="Chargement de la page..." size="lg" />}>
-    {children}
-  </Suspense>
+  </div>
 );
 
-// ============================================
-// APP PRINCIPAL
-// ============================================
-
 function App() {
-  const [isCartOpen, setIsCartOpen] = useState(false);
-
   return (
-    <div className="app">
-      <Routes>
-        {/* Routes Admin */}
-        <Route
-          path="/admin/*"
-          element={
-            <ProtectedRoute allowedRoles={['admin']}>
-              <AdminLayout>
-                <PageLoader>
+    <ErrorBoundary>
+      {/* ✅ Redux Provider doit envelopper tout le contenu */}
+      <Provider store={store}>
+        <AuthProvider>
+          <ServiceStatusProvider>
+            <Toaster position="bottom-right" />
+            <Router>
+              <ScrollToTop />
+              <div className="app">
+                <Suspense fallback={<LoadingFallback />}>
                   <Routes>
-                    <Route index element={<AdminDashboardPage />} />
-                    <Route path="users" element={<AdminUsersPage />} />
-                    <Route path="restaurants" element={<AdminRestaurantsPage />} />
-                    <Route path="orders" element={<AdminOrdersPage />} />
-                    <Route path="profil" element={<ProfilePage />} />
-                  </Routes>
-                </PageLoader>
-              </AdminLayout>
-            </ProtectedRoute>
-          }
-        />
+                    {/* Routes Client */}
+                    <Route path="/" element={<><Navbar /><Home /><Footer /></>} />
+                    <Route path="/cart" element={<><Navbar /><Cart /><Footer /></>} />
+                    <Route path="/checkout" element={<><Navbar /><Checkout /><Footer /></>} />
+                    <Route path="/checkout/success" element={<><Navbar /><CheckoutSuccess /><Footer /></>} /> 
+                    <Route path="/cgv" element={<><Navbar /><Cgv /><Footer /></>}/>
+                    <Route path="/politique" element={<><Navbar /><Politique /><Footer /></>} />
+                    <Route path="/mention" element={<><Navbar /><Mention /><Footer /></>} />
 
-        {/* Routes Dashboard Restaurateur */}
-        <Route
-          path="/dashboard/*"
-          element={
-            <ProtectedRoute allowedRoles={['restaurateur']}>
-              <RestaurantLayout>
-                <PageLoader>
-                  <Routes>
-                    <Route index element={<RestaurantDashboardPage />} />
-                    <Route path="commandes" element={<RestaurantOrdersPage />} />
-                    <Route path="menu" element={<RestaurantMenuPage />} />
-                    <Route path="restaurant" element={<RestaurantSettingsPage />} />
-                    <Route path="paiement" element={<RestaurantPaymentPage />} />
-                    <Route path="profil" element={<ProfilePage />} />
-                  </Routes>
-                </PageLoader>
-              </RestaurantLayout>
-            </ProtectedRoute>
-          }
-        />
+                    {/* Routes Admin (pas de footer ici) */}
+                    <Route path="/admin/login" element={<AdminLogin />} />
+                    <Route path="/admin" element={<ProtectedRoute><AdminDashboard /></ProtectedRoute>} />
+                    <Route path="/admin/orders" element={<ProtectedRoute><AdminOrders /></ProtectedRoute>} />
+                    <Route path="/admin/products" element={<ProtectedRoute><AdminProducts /></ProtectedRoute>} />
+                    <Route path="/admin/horaires" element={<ProtectedRoute><AdminServiceHours /></ProtectedRoute>} />
 
-        {/* Routes Publiques/Client */}
-        <Route
-          path="/*"
-          element={
-            <ClientRoute>
-              <Header onCartClick={() => setIsCartOpen(true)} />
-              
-              <main className="app__main">
-                <PageLoader>
-                  <Routes>
-                    <Route path="/" element={<HomePage />} />
-                    <Route path="/restaurant/:id" element={<RestaurantPage />} />
-                    <Route path="/commander" element={<CheckoutPage />} />
-                    <Route path="/commande/:id/confirmation" element={<OrderConfirmationPage />} />
-                    <Route path="/suivi/:token" element={<OrderTrackingPage />} />
-                    <Route path="/devenir-restaurateur" element={<Restaurateur />} />
-                    <Route path="/login" element={<LoginRoute />} />
-                    <Route path="/register" element={<RegisterPage />} />
-                    <Route
-                      path="/profil"
-                      element={
-                        <ProtectedRoute allowedRoles={['client']}>
-                          <ProfilePage />
-                        </ProtectedRoute>
-                      }
-                    />
-                    <Route
-                      path="/mes-commandes"
-                      element={
-                        <ProtectedRoute allowedRoles={['client']}>
-                          <MyOrdersPage />
-                        </ProtectedRoute>
-                      }
-                    />
-                    <Route path="*" element={<NotFoundPage />} />
+                    {/* 404 - Doit être en dernier */}
+                    <Route path="*" element={<><Navbar /><NotFound /><Footer /></>} />
                   </Routes>
-                </PageLoader>
-              </main>
-
-              <Footer />
-              <CartSidebar isOpen={isCartOpen} onClose={() => setIsCartOpen(false)} />
-            </ClientRoute>
-          }
-        />
-      </Routes>
-    </div>
+                </Suspense>
+              </div>
+            </Router>
+          </ServiceStatusProvider>
+        </AuthProvider>
+      </Provider>
+    </ErrorBoundary>
   );
 }
 
