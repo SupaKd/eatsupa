@@ -1,2 +1,2 @@
-Notifications sonores pour les restaurateurs (risque de perdre des commandes)
+regler le perimetre de livraison
 option personnalisation produits

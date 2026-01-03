@@ -10,6 +10,8 @@ import {
   updateQuantity,
   clearCart 
 } from "@/store/slices/cartSlice";
+// ✅ Import du helper pour les URLs d'images
+import { getImageUrl, DEFAULT_PLAT_IMAGE } from "@/services/imageUtils";
 
 const CartSidebar = ({ isOpen, onClose }) => {
   const dispatch = useDispatch();
@@ -82,7 +84,7 @@ const CartSidebar = ({ isOpen, onClose }) => {
           }}
         >
           <h2 style={{ margin: 0, fontSize: '1.25rem', fontWeight: 700 }}>
-            <ShoppingCart size={20} style={{ marginRight: '0.5rem' }} />
+           
             Mon panier ({itemCount})
           </h2>
           <button 
@@ -126,6 +128,9 @@ const CartSidebar = ({ isOpen, onClose }) => {
                 const price = parseFloat(item.prix) || 0;
                 const quantity = parseInt(item.quantite) || 0;
                 
+                // ✅ Utiliser getImageUrl pour construire l'URL complète de l'image
+                const imageUrl = getImageUrl(item.image_url, DEFAULT_PLAT_IMAGE);
+                
                 return (
                   <div 
                     key={item.id}
@@ -137,19 +142,21 @@ const CartSidebar = ({ isOpen, onClose }) => {
                       borderRadius: '8px',
                     }}
                   >
-                    {/* Image */}
-                    {item.image_url && (
-                      <img 
-                        src={item.image_url}
-                        alt={item.nom}
-                        style={{
-                          width: '60px',
-                          height: '60px',
-                          objectFit: 'cover',
-                          borderRadius: '6px',
-                        }}
-                      />
-                    )}
+                    {/* Image - ✅ Toujours afficher avec image par défaut si nécessaire */}
+                    <img 
+                      src={imageUrl}
+                      alt={item.nom}
+                      style={{
+                        width: '60px',
+                        height: '60px',
+                        objectFit: 'cover',
+                        borderRadius: '6px',
+                      }}
+                      onError={(e) => {
+                        // Fallback si l'image ne charge pas
+                        e.target.src = DEFAULT_PLAT_IMAGE;
+                      }}
+                    />
                     
                     {/* Info */}
                     <div style={{ flex: 1 }}>
