@@ -5,7 +5,6 @@ import { BrowserRouter as Router, Routes, Route } from 'react-router-dom';
 import { lazy, Suspense, useEffect } from 'react';
 import { useDispatch, useSelector } from 'react-redux';
 import { checkSession, selectSessionChecked, selectAuthLoading } from '@/store/slices/authSlice';
-import { Toaster } from "react-hot-toast";
 import ScrollToTop from "./components/ScrollToTop";
 import ErrorBoundary from "./components/ErrorBoundary";
 import ToastContainer from "./components/Toast";
@@ -29,9 +28,9 @@ const ProfilePage = lazy(() => import('./pages/ProfilePage'));
 const NotFound = lazy(() => import('./pages/NotFound'));
 
 // ✅ LAZY LOADING - Admin pages (code splitting)
-const AdminLogin = lazy(() => import('./pages/admin/Login'));
-const AdminDashboard = lazy(() => import('./pages/admin/Dashboard'));
-const AdminOrders = lazy(() => import('./pages/admin/Orders'));
+//const AdminLogin = lazy(() => import('./pages/admin/Login'));
+const AdminDashboard = lazy(() => import('./pages/admin/AdminDashboardPage'));
+const AdminOrders = lazy(() => import('./pages/admin/AdminOrdersPage'));
 const AdminUsers = lazy(() => import('./pages/admin/AdminUsersPage'));
 const AdminRestaurants = lazy(() => import('./pages/admin/AdminRestaurantsPage'));
 
@@ -46,8 +45,8 @@ const RestaurantPaymentPage = lazy(() => import('./pages/restaurant/RestaurantPa
 import ProtectedRoute from './components/ProtectedRoute';
 
 // Layout
-import Navbar from './layout/Navbar';
-import Footer from './layout/Footer';
+import Header from './components/Header';
+import Footer from './components/Footer';
 import RestaurantLayout from './components/RestaurantLayout';
 import AdminLayout from './components/AdminLayout';
 
@@ -95,9 +94,6 @@ function SessionInitializer({ children }) {
 function App() {
   return (
     <ErrorBoundary>
-      {/* Toast de react-hot-toast (garde pour compatibilité) */}
-      <Toaster position="bottom-right" />
-      
       {/* Toast Redux */}
       <ToastContainer />
       
@@ -108,27 +104,27 @@ function App() {
             <Suspense fallback={<LoadingFallback />}>
               <Routes>
                 {/* ========== Routes Client Public ========== */}
-                <Route path="/" element={<><Navbar /><Home /><Footer /></>} />
-                <Route path="/restaurant/:id" element={<><Navbar /><RestaurantPage /><Footer /></>} />
-                <Route path="/commander" element={<><Navbar /><Checkout /><Footer /></>} />
-                <Route path="/commande/:id/confirmation" element={<><Navbar /><OrderConfirmationPage /><Footer /></>} />
-                <Route path="/suivi/:token" element={<><Navbar /><OrderTrackingPage /><Footer /></>} />
+                <Route path="/" element={<><Header /><Home /><Footer /></>} />
+                <Route path="/restaurant/:id" element={<><Header /><RestaurantPage /><Footer /></>} />
+                <Route path="/commander" element={<><Header /><Checkout /><Footer /></>} />
+                <Route path="/commande/:id/confirmation" element={<><Header /><OrderConfirmationPage /><Footer /></>} />
+                <Route path="/suivi/:token" element={<><Header /><OrderTrackingPage /><Footer /></>} />
                 
                 {/* Auth */}
-                <Route path="/login" element={<><Navbar /><LoginPage /><Footer /></>} />
-                <Route path="/register" element={<><Navbar /><RegisterPage /><Footer /></>} />
+                <Route path="/login" element={<><Header /><LoginPage /><Footer /></>} />
+                <Route path="/register" element={<><Header /><RegisterPage /><Footer /></>} />
                 
                 {/* Pages client authentifié */}
-                <Route path="/mes-commandes" element={<><Navbar /><MyOrdersPage /><Footer /></>} />
-                <Route path="/profil" element={<ProtectedRoute><><Navbar /><ProfilePage /><Footer /></></ProtectedRoute>} />
+                <Route path="/mes-commandes" element={<><Header /><MyOrdersPage /><Footer /></>} />
+                <Route path="/profil" element={<ProtectedRoute><><Header /><ProfilePage /><Footer /></></ProtectedRoute>} />
                 
                 {/* Pages info */}
-                <Route path="/devenir-restaurateur" element={<><Navbar /><Restaurateur /><Footer /></>} />
-                <Route path="/cgv" element={<><Navbar /><Cgv /><Footer /></>} />
-                <Route path="/politique" element={<><Navbar /><Politique /><Footer /></>} />
-                <Route path="/mention" element={<><Navbar /><Mention /><Footer /></>} />
-                <Route path="/mentions-legales" element={<><Navbar /><Mention /><Footer /></>} />
-                <Route path="/confidentialite" element={<><Navbar /><Politique /><Footer /></>} />
+                <Route path="/devenir-restaurateur" element={<><Header /><Restaurateur /><Footer /></>} />
+                <Route path="/cgv" element={<><Header /><Cgv /><Footer /></>} />
+                <Route path="/politique" element={<><Header /><Politique /><Footer /></>} />
+                <Route path="/mention" element={<><Header /><Mention /><Footer /></>} />
+                <Route path="/mentions-legales" element={<><Header /><Mention /><Footer /></>} />
+                <Route path="/confidentialite" element={<><Header /><Politique /><Footer /></>} />
 
                 {/* ========== Routes Restaurant Dashboard ========== */}
                 <Route path="/dashboard" element={
@@ -158,7 +154,6 @@ function App() {
                 } />
 
                 {/* ========== Routes Admin ========== */}
-                <Route path="/admin/login" element={<AdminLogin />} />
                 <Route path="/admin" element={
                   <ProtectedRoute allowedRoles={['admin']}>
                     <AdminLayout><AdminDashboard /></AdminLayout>
@@ -181,7 +176,7 @@ function App() {
                 } />
 
                 {/* 404 - Doit être en dernier */}
-                <Route path="*" element={<><Navbar /><NotFound /><Footer /></>} />
+                <Route path="*" element={<><Header /><NotFound /><Footer /></>} />
               </Routes>
             </Suspense>
           </div>

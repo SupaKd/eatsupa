@@ -6,6 +6,7 @@ import ReactDOM from 'react-dom/client'
 import { Provider } from 'react-redux'
 import { store } from './store'
 import App from './App'
+import "./styles/main.scss";
 
 // Import des styles (à ajuster selon votre structure)
 // import './styles/index.css'

@@ -1,8 +1,9 @@
+// src/pages/ProfilePage.jsx - Version corrigée
 import { useState, useEffect } from 'react';
 import { useSelector, useDispatch } from 'react-redux';
 import { useNavigate, Link } from 'react-router-dom';
-import { getProfile, updateProfile, logout } from '@store/slices/authSlice';
-import { authAPI } from '@services/api';
+import { getProfile, updateProfile, logout } from '@/store/slices/authSlice';
+import { authAPI } from '@/services/api';
 import {
   ArrowLeft,
   User,

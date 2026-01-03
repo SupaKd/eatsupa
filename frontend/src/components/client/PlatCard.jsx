@@ -1,9 +1,9 @@
-// src/components/PlatCard.jsx - Version optimisée
+// src/components/client/PlatCard.jsx - Version corrigée
 import { useDispatch } from 'react-redux';
-import { addToCart } from '@store/slices/cartSlice';
+import { addToCart } from '@/store/slices/cartSlice';
 import { Plus } from 'lucide-react';
-import { getImageUrl } from '@services/imageUtils';
-import { formatPrice } from '@/utils';  // ✅ Import centralisé
+import { getImageUrl } from '@/services/imageUtils';
+import { formatPrice } from '@/utils';
 
 function PlatCard({ plat, restaurantId, restaurantName, restaurantOuvert = true }) {
   const dispatch = useDispatch();
@@ -11,8 +11,6 @@ function PlatCard({ plat, restaurantId, restaurantName, restaurantOuvert = true 
   const { id, nom, description, prix, image_url, disponible, allergenes } = plat;
 
   const imageSource = getImageUrl(image_url);
-
-  // ❌ SUPPRIMÉ - formatPrice local (importé de @/utils)
 
   const handleAddToCart = () => {
     if (!disponible || !restaurantOuvert) return;

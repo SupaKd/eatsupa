@@ -1,6 +1,7 @@
+// src/components/AdminLayout.jsx
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useSelector, useDispatch } from 'react-redux';
-import { logout } from '@store/slices/authSlice';
+import { logout } from '@/store/slices/authSlice';
 import { useState } from 'react';
 
 function AdminLayout({ children }) {
